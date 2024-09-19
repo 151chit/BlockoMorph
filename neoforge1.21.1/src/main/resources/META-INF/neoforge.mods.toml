@@ -1,0 +1,38 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT License"
+
+[[mods]]
+modId="blockomorph"
+version="3.0.1"
+displayName="Block'oMorph"
+displayURL="https://null.info"
+logoFile="logo.png"
+credits="."
+authors="151gamemode1chit"
+description="This mod allows players morph into blocks with all the main features of the block."
+
+# Start of user code block mod configuration
+# End of user code block mod configuration
+
+[[dependencies.blockomorph]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.12,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.blockomorph]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+ordering="AFTER"
+side="BOTH"
+
+
+
+
+# Start of user code block dependencies configuration
+[[mixins]]
+config="mixins.blockomorph.json"
+# End of user code block dependencies configuration
