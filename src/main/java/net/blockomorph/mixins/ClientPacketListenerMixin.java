@@ -19,7 +19,7 @@ public abstract class ClientPacketListenerMixin {
    @Inject(method = "handlePlayerCombatKill", at = @At("HEAD"), cancellable = true)
    public void autoRespawn(ClientboundPlayerCombatKillPacket packet, CallbackInfo ci) {
    	  LocalPlayer player = Minecraft.getInstance().player;
-   	  Entity entity = player.level().getEntity(packet.getPlayerId());
+   	  Entity entity = player.level().getEntity(packet.playerId());
    	  if (entity == player && ((PlayerAccessor)player).isActive()) {
    	  	  ci.cancel();
           player.respawn();

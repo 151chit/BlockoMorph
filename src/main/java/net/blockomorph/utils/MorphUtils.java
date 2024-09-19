@@ -1,24 +1,9 @@
 package net.blockomorph.utils;
 
 import net.blockomorph.BlockomorphMod;
-import net.blockomorph.network.ServerBoundStopDestroyPacket;
+import net.blockomorph.network.ServerBoundInteractBlockPacket;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.GamemodeAccessor;
-
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.client.event.RenderBlockScreenEffectEvent;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.event.entity.living.LivingDrownEvent;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.damagesource.DamageSource;
@@ -84,10 +69,29 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-@Mod.EventBusSubscriber
+import net.neoforged.neoforge.client.event.RenderBlockScreenEffectEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDrownEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent.Post;
+import net.minecraft.core.Registry;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+
+
+@EventBusSubscriber
 public class MorphUtils {
-   public static final ResourceKey<DamageType> PLAYER_DESTROYED = ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("blockomorph:player_destroyed"));
-   public static final ResourceKey<DamageType> PLAYER_DESTROYED_NULL = ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("blockomorph:player_destroyed_null"));
+   public static final ResourceKey<DamageType> PLAYER_DESTROYED = ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath("blockomorph", "player_destroyed"));
+   public static final ResourceKey<DamageType> PLAYER_DESTROYED_NULL = ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath("blockomorph", "player_destroyed_null"));
    private static boolean attackPressed;
    public static Entity hitEntity;
    public static EntityHitResult hit;
@@ -125,10 +129,7 @@ public class MorphUtils {
     	}
    }
 
-   @SubscribeEvent
-   public static void onPlayerAttacked(LivingAttackEvent event) {
-   	    Entity attacked = event.getEntity();
-   	    DamageSource damage = event.getSource();
+   public static boolean onPlayerAttacked(DamageSource damage, Entity attacked) {
    	    if (attacked instanceof PlayerAccessor pl) {
    	        boolean allowed =
    	        damage.is(DamageTypes.GENERIC_KILL) || 
@@ -136,12 +137,14 @@ public class MorphUtils {
    	        damage.is(DamageTypes.PLAYER_EXPLOSION) ||
    	        damage.is(DamageTypes.EXPLOSION);
    	        if (pl.isActive()) {
-   	        	if (!(damage.is(PLAYER_DESTROYED) || damage.is(PLAYER_DESTROYED_NULL))) event.setCanceled(true);
    	        	if (allowed) {
+   	        		BlockomorphMod.LOGGER.fatal("test: " + damage);
    	        		destroy(pl, damage.getEntity());
    	        	}
+   	        	if (!(damage.is(PLAYER_DESTROYED) || damage.is(PLAYER_DESTROYED_NULL))) return true;
    	        }
    	    }
+   	    return false;
    }
 
    @SubscribeEvent
@@ -153,14 +156,14 @@ public class MorphUtils {
 
    @OnlyIn(Dist.CLIENT)
    @SubscribeEvent
-   public static void onClientTick(TickEvent.ClientTickEvent event) {
+   public static void onClientTick(ClientTickEvent.Post event) {
    	Minecraft mc = Minecraft.getInstance();
-   	        if (mc.player != null && event.phase == TickEvent.Phase.END) {
+   	        if (mc.player != null) {
                 boolean isAttackPressed = mc.options.keyAttack.isDown();
 
                 if (hitEntity instanceof PlayerAccessor pl && pl.isActive()) {
                 	if ((!isAttackPressed && pl.getProgress() > -1) || (attackPressed && !isAttackPressed)) {
-                        BlockomorphMod.PACKET_HANDLER.sendToServer(new ServerBoundStopDestroyPacket());
+                        PacketDistributor.sendToServer(new ServerBoundInteractBlockPacket(false)); //stop destroy
                         pl.setReady(true);
                 	}
                     HitResult hito = hit;
@@ -172,7 +175,7 @@ public class MorphUtils {
                     	if (gm.getDelay() > 0) {
                     		gm.setDelay(gm.getDelay() - 1);
                     	} else {
-                    		mc.player.connection.send(ServerboundInteractPacket.createAttackPacket(hitEntity, mc.player.isShiftKeyDown()));
+                    		PacketDistributor.sendToServer(new ServerBoundInteractBlockPacket(true));
    	    	                if (mc.gameMode.getPlayerMode() != GameType.SPECTATOR) {
                                 mc.player.attack(hitEntity);
                             }
@@ -185,7 +188,7 @@ public class MorphUtils {
    }
 
    public static EntityHitResult getPlayerLookedResult(Player player, double distance) {
-   	    if (distance < 0) distance = player.getBlockReach();
+   	    if (distance < 0) distance = player.blockInteractionRange();
    	    
         Vec3 eyePosition = player.getEyePosition();
         Vec3 lookVector = player.getViewVector(1.0F);
@@ -245,7 +248,7 @@ public class MorphUtils {
    	    if (hit != null && hit.getEntity() instanceof PlayerAccessor pl && pl.isActive() && event.isAttack()) {
    	    	event.setCanceled(true);
    	    	if (hitEntity instanceof Player) {
-   	    	    mc.player.connection.send(ServerboundInteractPacket.createAttackPacket(hitEntity, mc.player.isShiftKeyDown()));
+   	    	    PacketDistributor.sendToServer(new ServerBoundInteractBlockPacket(true));
    	    	    if (mc.gameMode.getPlayerMode() != GameType.SPECTATOR) {
                     mc.player.attack(hitEntity);
                 }
@@ -269,22 +272,22 @@ public class MorphUtils {
 
    @OnlyIn(Dist.CLIENT)
    @SubscribeEvent
-   public static void onHudRender(RenderGuiOverlayEvent.Pre event) {
+   public static void onHudRender(RenderGuiLayerEvent.Pre event) {
    	    Minecraft mc = Minecraft.getInstance();
    	    Entity player = mc.getCameraEntity();
-   	    ResourceLocation overlayId = event.getOverlay().id();
+   	    ResourceLocation overlayId = event.getName();
    	    boolean flag = mc.gameMode.canHurtPlayer();
    	    
    	    if (player instanceof PlayerAccessor pl && pl.isActive()) {
-   	        if (flag && overlayId.equals(new ResourceLocation("minecraft", "player_health"))) {
-   	           Window w = event.getWindow();
-   	           int width = w.getGuiScaledWidth();
-               int height = w.getGuiScaledHeight();
-               renderBlockHeart(event.getGuiGraphics(), (Player)player, pl, width, height);
-               ((ForgeGui)mc.gui).leftHeight += 10;
+   	        if (flag && overlayId.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "player_health"))) {
+   	           GuiGraphics w = event.getGuiGraphics();
+   	           int width = w.guiWidth();
+               int height = w.guiHeight();
+               renderBlockHeart(w, (Player)player, pl, width, height);
+               mc.gui.leftHeight += 10;
                event.setCanceled(true);
    	        }
-   	        if (overlayId.equals(new ResourceLocation("minecraft", "air_level")))
+   	        if (overlayId.equals(ResourceLocation.fromNamespaceAndPath("minecraft", "air_level")))
                event.setCanceled(true);
         }
    }
@@ -318,9 +321,9 @@ public class MorphUtils {
    @OnlyIn(Dist.CLIENT)
    private static void renderBar(GuiGraphics graphics, int x, int y, int progress) {
         if (progress == 9) {
-        	graphics.blit(new ResourceLocation("blockomorph:textures/screens/icons.png"), x, y, 0, 10, 81, 9, 81, 19);
+        	graphics.blit(ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/icons.png"), x, y, 0, 10, 81, 9, 81, 19);
         } else {
-        	graphics.blit(new ResourceLocation("blockomorph:textures/screens/icons.png"), x, y, 0, 0, 81, 9, 81, 19);
+        	graphics.blit(ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/icons.png"), x, y, 0, 0, 81, 9, 81, 19);
         }    
    }
 
@@ -343,22 +346,10 @@ public class MorphUtils {
    }
 
    public static void destroy(PlayerAccessor mob_pl, @Nullable Entity attacker) {
-    	Entity mob = (Player)mob_pl;
-
-        Collection<TagKey<DamageType>> type = Set.of(
-        	DamageTypeTags.BYPASSES_INVULNERABILITY,
-        	DamageTypeTags.BYPASSES_RESISTANCE,
-        	DamageTypeTags.BYPASSES_EFFECTS,
-        	DamageTypeTags.BYPASSES_COOLDOWN,
-        	DamageTypeTags.BYPASSES_ENCHANTMENTS,
-        	DamageTypeTags.BYPASSES_SHIELD,
-        	DamageTypeTags.BYPASSES_ARMOR
-        );
+    	LivingEntity mob = (Player)mob_pl;
         
         Holder<DamageType> damage = mob.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).
         getHolderOrThrow(attacker == null ? PLAYER_DESTROYED_NULL : PLAYER_DESTROYED);
-        ((Holder.Reference<DamageType>) damage).bindTags(type);
-    	
     	mob.hurt(new DamageSource(damage, attacker), Float.MAX_VALUE);
 
     	if (mob.level() instanceof ServerLevel lv) {
@@ -440,7 +431,6 @@ public class MorphUtils {
          double k = pl.getZ();
          float f = 0.1F;
          AABB aabb2 = pl.getBoundingBox();
-         System.out.println(aabb2);
          AABB aabb = blockstate.getShape(level, pl.blockPosition()).bounds();
          aabb = aabb.move(-0.5, 0, -0.5);
          RandomSource random = RandomSource.create();

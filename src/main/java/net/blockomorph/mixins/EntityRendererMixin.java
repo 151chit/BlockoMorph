@@ -14,6 +14,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
+import org.joml.Quaternionf;
+
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRendererMixin {
 
@@ -22,7 +24,7 @@ public abstract class EntityRendererMixin {
       at = {@At("HEAD")},
       cancellable = true
    )
-   private static void renderHitbox(PoseStack posestack, VertexConsumer vertex, Entity player, float delta, CallbackInfo info) {
+   private static void renderHitbox(PoseStack posestack, VertexConsumer vertex, Entity player, float r, float g, float b, float a, CallbackInfo info) {
    	  if (player instanceof PlayerAccessor pl) {
    	  	if (pl.isActive()) info.cancel();
    	  }
@@ -33,7 +35,7 @@ public abstract class EntityRendererMixin {
       at = {@At("HEAD")},
       cancellable = true
    )
-   private void renderFire(PoseStack posestack, MultiBufferSource buffer, Entity player, CallbackInfo info) {
+   private void renderFire(PoseStack posestack, MultiBufferSource buffer, Entity player, Quaternionf quat, CallbackInfo info) {
    	  if (player instanceof PlayerAccessor pl) {
    	  	if (pl.isActive()) info.cancel();
    	  }

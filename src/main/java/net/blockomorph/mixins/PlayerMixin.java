@@ -43,9 +43,10 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraft.world.level.block.entity.BlockEntity;
+
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -71,11 +72,11 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    }
 
    @Inject(method = "defineSynchedData", at = @At("TAIL"), cancellable = true)
-   protected void defineSynchedData(CallbackInfo ci) {
-   	  this.entityData.define(DATA_PROGRESS, -1);
+   protected void defineSynchedData(SynchedEntityData.Builder builder, CallbackInfo ci) {
+   	  builder.define(DATA_PROGRESS, -1);
       CompoundTag morphblocktag = new CompoundTag();
       morphblocktag.put("BlockState", NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
-      this.entityData.define(DATA_BlockMorph, morphblocktag);
+      builder.define(DATA_BlockMorph, morphblocktag);
    }
 
    @Inject(method = "readAdditionalSaveData", at = @At("TAIL"))
@@ -146,7 +147,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    	    try {
    	      BlockEntity ent = bl.newBlockEntity(this.blockPosition(), state);
    	      if (ent != null) {
-   	          blockEntityTag = ent.saveWithoutMetadata();
+   	          blockEntityTag = ent.saveWithoutMetadata(this.level().registryAccess());
    	      } else {
    	      	  blockEntityTag = new CompoundTag();
    	      }
@@ -280,17 +281,10 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
     	return this.entityData.get(DATA_PROGRESS);
    }
 
-   @Inject(method = "getDimensions", at = @At("HEAD"), cancellable = true)
+   @Inject(method = "getDefaultDimensions", at = @At("HEAD"), cancellable = true)
    public void getDimensions(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
       if (this.isActive()) {
-      	cir.setReturnValue(new EntityDimensions(1f, 1f, true));
-      }
-   }
-
-   @Inject(method = "getStandingEyeHeight", at = @At("HEAD"), cancellable = true)
-   private void getStandingEyeHeight(Pose pose, EntityDimensions dimensions, CallbackInfoReturnable<Float> cir) {
-      if(this.isActive()) {
-         cir.setReturnValue(0.83300006f);
+      	cir.setReturnValue(EntityDimensions.fixed(1f, 1f).withEyeHeight(0.83300006f));
       }
    }
 

@@ -1,11 +1,11 @@
 modLoader="javafml"
-loaderVersion="[47,)"
+loaderVersion="[2,)"
 license="MIT License"
 
 [[mods]]
 modId="blockomorph"
 version="1.0.1"
-displayName="Block'oMorph"
+displayName="Block'oMorphTWENTY_FOUR"
 displayURL="https://null.info"
 logoFile="logo.png"
 credits="."
@@ -16,11 +16,21 @@ description="This mod allows players morph into blocks with all the main feature
 # End of user code block mod configuration
 
 [[dependencies.blockomorph]]
+    modId="neoforge"
+    type="required"
+    versionRange="[20.4.223,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.blockomorph]]
     modId="minecraft"
-    mandatory=true
-    versionRange="[1.20.1]"
+    type="required"
+    versionRange="[1.20.4]"
     ordering="NONE"
     side="BOTH"
 
 
 
+
+[[mixins]]
+    config="mixins.blockomorph.json"

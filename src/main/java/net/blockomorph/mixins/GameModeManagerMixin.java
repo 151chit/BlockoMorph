@@ -23,16 +23,15 @@ import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.GameType;
 
-
 @Mixin(MultiPlayerGameMode.class)
 public abstract class GameModeManagerMixin implements GamemodeAccessor {
    @Shadow private int destroyDelay;
    
    @Inject(method = "destroyBlock", at = @At(value = "TAIL"), cancellable = true)
    public void stopMine(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
-    Minecraft mc = Minecraft.getInstance();
-    MorphUtils.onPick(null);
-    mc.gameRenderer.pick(1.0F);
+      Minecraft mc = Minecraft.getInstance();
+      MorphUtils.onPick(null);
+      mc.gameRenderer.pick(1.0F);
    }
 
    public int getDelay() {

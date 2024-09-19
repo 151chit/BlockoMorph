@@ -3,10 +3,10 @@ package net.blockomorph.command;
 
 import org.checkerframework.checker.units.qual.s;
 
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.common.util.FakePlayerFactory;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.BlockAccessor;
@@ -28,7 +28,7 @@ import net.minecraft.world.level.block.Block;
 import java.util.Collection;
 import java.util.Collections;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class BlockmorphCommand {
 	@SubscribeEvent
 	public static void registerCommand(RegisterCommandsEvent event) {

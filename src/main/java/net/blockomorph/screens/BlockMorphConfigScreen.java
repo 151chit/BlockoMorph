@@ -41,7 +41,8 @@ import com.mojang.math.Axis;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import org.joml.Matrix4f;
 
@@ -52,8 +53,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class BlockMorphConfigScreen extends Screen {
-   private static final ResourceLocation texture = new ResourceLocation("blockomorph:textures/screens/morph_config_gui.png");
-   private static final ResourceLocation PROP = new ResourceLocation("blockomorph:textures/screens/properties.png");
+   private static final ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/morph_config_gui.png");
+   private static final ResourceLocation PROP = ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/properties.png");
    private final BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
    private final BlockEntityRenderDispatcher blockEntityRenderDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
    private final SoundManager sound = Minecraft.getInstance().getSoundManager();
@@ -81,9 +82,8 @@ public class BlockMorphConfigScreen extends Screen {
 
    @Override
    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-		this.renderBackground(guiGraphics);
-		this.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
 		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		this.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
 		this.renderLb(guiGraphics);
 		tagsBox.render(guiGraphics, mouseX, mouseY, partialTicks);
 		this.renderBlockAsIcon(guiGraphics, partialTicks);
@@ -133,8 +133,8 @@ public class BlockMorphConfigScreen extends Screen {
 		RenderSystem.defaultBlendFunc();
 		guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
 		if (!tagsBox.canConsumeInput()) 
-		    guiGraphics.blit(new ResourceLocation("blockomorph:textures/screens/morph_gui_icons.png"), this.leftPos + 7, this.topPos + 139, 0, 0, 162, 19, 162, 19);
-		guiGraphics.blit(new ResourceLocation("blockomorph:textures/screens/exit_tabs.png"), this.leftPos + 4, this.topPos - 19, 0, 23, 80, 22, 80, 46);
+		    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/morph_gui_icons.png"), this.leftPos + 7, this.topPos + 139, 0, 0, 162, 19, 162, 19);
+		guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/exit_tabs.png"), this.leftPos + 4, this.topPos - 19, 0, 23, 80, 22, 80, 46);
 		this.renderProp(guiGraphics, gx, gy);
 		RenderSystem.disableBlend();
    }
@@ -230,7 +230,7 @@ public class BlockMorphConfigScreen extends Screen {
    	    return null;
    }
 
-   public boolean mouseScrolled(double x, double y, double type) {
+   public boolean mouseScrolled(double x, double y, double unkown, double type) {
    	    if (x < this.leftPos + 93 || x > this.leftPos + 159 || y < this.topPos + 24 || y > this.topPos + 118) return false;
    	    Collection<Property<?>> properties = this.playerState.getProperties();
    	    if (!(this.getProp(x, y, false) instanceof IntegerProperty prop)) {
@@ -253,7 +253,7 @@ public class BlockMorphConfigScreen extends Screen {
               state = state.setValue(prop, value - 1);
               sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
            }
-           BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
+           PacketDistributor.sendToServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
    	    }
    	    return true;
    }
@@ -304,7 +304,7 @@ public class BlockMorphConfigScreen extends Screen {
    	    		if (prop instanceof BooleanProperty bool) {
    	    			BlockState state = this.playerState;
    	    			state = state.setValue(bool, !this.playerState.getValue(bool));
-                    BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
+                    PacketDistributor.sendToServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
                     sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
    	    	    } else if (prop instanceof EnumProperty enumprop) {
                     this.listProp = enumprop;
@@ -342,7 +342,7 @@ public class BlockMorphConfigScreen extends Screen {
 
                 if (isMouseOver(mouseX, mouseY, textX, textY - 2, maxWidth, 12)) {
                 	BlockState state = this.setEnum(this.listProp, string);
-                    BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
+                    PacketDistributor.sendToServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
                     sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                     return true;
                 }
@@ -366,7 +366,7 @@ public class BlockMorphConfigScreen extends Screen {
    	    try {
    	    	CompoundTag tag = TagParser.parseTag(s);
    	    	BlockState blockState = this.playerState;
-   	    	BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.create(blockState, tag));
+   	    	PacketDistributor.sendToServer(ServerBoundBlockMorphPacket.create(blockState, tag));
    	    	this.tagException = "";
    	    } catch (CommandSyntaxException e) {
    	    	this.tagException = e.getMessage();
@@ -379,7 +379,7 @@ public class BlockMorphConfigScreen extends Screen {
 		super.init();
         this.leftPos = (this.width - this.imageWidth) / 2;
         this.topPos = (this.height - this.imageHeight) / 2;
-        tagsBox = new EditBox(this.font, this.leftPos + 10, this.topPos + 145, 158, 17, null);
+        tagsBox = new EditBox(this.font, this.leftPos + 10, this.topPos + 145, 158, 17, Component.literal("nbt box"));
 		tagsBox.setMaxLength(32767);
 		tagsBox.setBordered(false);
 		tagsBox.setTextColor(-1);
@@ -398,11 +398,6 @@ public class BlockMorphConfigScreen extends Screen {
 		}
    }
 
-   public void tick() {
-   	    super.tick();
-   	    tagsBox.tick();
-   }
-
    @Override
    public void resize(Minecraft minecraft, int width, int height) {
 		String tagsBoxV = tagsBox.getValue();
@@ -415,7 +410,7 @@ public class BlockMorphConfigScreen extends Screen {
         MultiBufferSource.BufferSource bufferSource = guiGraphics.bufferSource();
         poseStack.pushPose();
         poseStack.translate(this.leftPos + 71, this.topPos + 63.8, 20); 
-        poseStack.mulPoseMatrix((new Matrix4f()).scaling(1.0F, -1.0F, 1.0F));
+        poseStack.mulPose((new Matrix4f()).scaling(1.0F, -1.0F, 1.0F));
         poseStack.scale(36.0F, 36.0F, 36.0F); 
         poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(225.0F)); 
@@ -435,7 +430,7 @@ public class BlockMorphConfigScreen extends Screen {
             if (blockEntity != null) {
               try {
       	        blockEntity.setLevel(world);
-      	        blockEntity.load(playerTag);
+      	        blockEntity.loadWithComponents(playerTag, world.registryAccess());
                 BlockEntityRenderer renderer = blockEntityRenderDispatcher.getRenderer(blockEntity);
                 if (renderer != null) {
            	        posestack.pushPose();

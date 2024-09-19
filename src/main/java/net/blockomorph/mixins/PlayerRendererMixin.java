@@ -10,7 +10,7 @@ import net.blockomorph.utils.LevelRendererAccessor;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.screens.BlockMorphConfigScreen;
 
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -82,8 +82,8 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
         posestack.pushPose();
         posestack.translate(-0.5D, 0.0D, -0.5D);
         var model = this.dispatcher.getBlockModel(blockstate);
-        for (var renderType : model.getRenderTypes(blockstate, random, net.minecraftforge.client.model.data.ModelData.EMPTY))
-           this.dispatcher.getModelRenderer().tesselateBlock(level, model, blockstate, pos, posestack, buffer.getBuffer(renderType), false, RandomSource.create(), blockstate.getSeed(pos), OverlayTexture.NO_OVERLAY, net.minecraftforge.client.model.data.ModelData.EMPTY, renderType);
+        for (var renderType : model.getRenderTypes(blockstate, random, ModelData.EMPTY))
+           this.dispatcher.getModelRenderer().tesselateBlock(level, model, blockstate, pos, posestack, buffer.getBuffer(renderType), false, RandomSource.create(), blockstate.getSeed(pos), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType);
         posestack.popPose();
    }
 
@@ -94,7 +94,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
             if (blockEntity != null) {
               try {
       	        blockEntity.setLevel(player.level());
-      	        blockEntity.load(pl.getTag());
+      	        blockEntity.loadWithComponents(pl.getTag(), player.level().registryAccess());
                 BlockEntityRenderer renderer = blockEntityRenderDispatcher.getRenderer(blockEntity);
                 if (renderer != null) {
            	        posestack.pushPose();
@@ -119,7 +119,7 @@ public abstract class PlayerRendererMixin extends LivingEntityRenderer<AbstractC
         PoseStack.Pose posestack$pose1 = posestack.last();
         if (k > -1 && k < 10) {
             posestack.translate(-0.5, 0.0, -0.5);
-            VertexConsumer vertexconsumer1 = new SheetedDecalTextureGenerator(buffer.getBuffer(ModelBakery.DESTROY_TYPES.get(k)), posestack$pose1.pose(), posestack$pose1.normal(), 1.0F);
+            VertexConsumer vertexconsumer1 = new SheetedDecalTextureGenerator(buffer.getBuffer(ModelBakery.DESTROY_TYPES.get(k)), posestack$pose1, 1.0F);
             this.dispatcher.renderBreakingTexture(blockstate, AIR, player.level(), posestack, vertexconsumer1);
         }
  
