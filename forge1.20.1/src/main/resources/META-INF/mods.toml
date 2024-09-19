@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT License"
+
+[[mods]]
+modId="blockomorph"
+version="1.0.1"
+displayName="Block'oMorph"
+displayURL="https://null.info"
+logoFile="logo.png"
+credits="."
+authors="151gamemode1chit"
+description="This mod allows players morph into blocks with all the main features of the block."
+
+# Start of user code block mod configuration
+# End of user code block mod configuration
+
+[[dependencies.blockomorph]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1]"
+    ordering="NONE"
+    side="BOTH"
+
+
+
