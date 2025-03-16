@@ -1,29 +1,25 @@
 package net.blockomorph.utils.config;
 
+import com.google.gson.*;
 import net.blockomorph.core.MainBus;
-
-import java.util.ArrayList;
-import java.io.FileWriter;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
-import java.nio.file.Path;
-import java.nio.file.Files;
+import net.blockomorph.network.ClientBoundConfigUpdatePacket;
+import net.blockomorph.utils.MorphUtils;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.players.PlayerList;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.blockomorph.BlockomorphMod;
-import net.blockomorph.network.ClientBoundConfigUpdatePacket;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonElement;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.network.chat.Component;
+
+import javax.print.DocFlavor;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Config {
    private static final String configDir = FabricLoader.getInstance().getGameDir() + "\\config\\blockomorph.json";
@@ -40,7 +36,10 @@ public class Config {
    static MinecraftServer server;
 
    private Config() {
-   	  INSTANCE = this;
+   }
+
+   public static MinecraftServer getServer() {
+	   return server;
    }
 
    public <T> T getValue(String option) {
@@ -58,9 +57,7 @@ public class Config {
 
    public void makeDirty() {
    	  write();
-   	  for (ServerPlayer p : server.getPlayerList().getPlayers()) {
-   	    	ServerPlayNetworking.send(p, MainBus.CLIENT_CONFIG, new ClientBoundConfigUpdatePacket(this));
-   	  }
+	  MorphUtils.sendAll(new ClientBoundConfigUpdatePacket(this));
    }
 
    public void parse(String op, String val, boolean isPacket) {
@@ -82,11 +79,11 @@ public class Config {
    }
 
    public static Config readFromBufer(FriendlyByteBuf buf) {
-   	  new Config();
-   	  for (ConfigInstance<?> con : INSTANCE.options) {
-   	  	con.readBufer(buf);
-   	  }
-   	  return INSTANCE;
+		Config cfg = new Config();
+		for (ConfigInstance<?> con : cfg.options) {
+			con.readBufer(buf);
+		}
+		return cfg;
    }
 
    public static Config getInstance() {
@@ -97,9 +94,13 @@ public class Config {
    	  server = s;
    }
 
+   public static void load(Config cfg) {
+		INSTANCE = cfg;
+   }
+
    public static Config load() {
    	  Path path = Path.of(configDir);
-   	  new Config();
+   	  INSTANCE = new Config();
    	  if (!Files.exists(path)) {
    	  	INSTANCE.write();
    	  	return INSTANCE;

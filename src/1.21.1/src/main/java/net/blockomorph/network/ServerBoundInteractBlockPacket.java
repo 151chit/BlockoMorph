@@ -1,70 +1,55 @@
 package net.blockomorph.network;
 
-import net.blockomorph.BlockomorphMod;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
-
-import java.util.function.Supplier;
-
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
-public record ServerBoundInteractBlockPacket(boolean click, int id, BlockPos pos) implements CustomPacketPayload {
-   public static final Type<ServerBoundInteractBlockPacket> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(BlockomorphMod.MODID, "server_bound_stop_destroy_packet"));
+public class ServerBoundInteractBlockPacket implements BlockMorphPacket {
+    public static final String ID = "server_bound_interact_block_packet";
+    boolean click;
+    int id;
+    BlockPos pos;
+    public ServerBoundInteractBlockPacket(boolean click, int id, BlockPos pos) {
+        this.click = click;
+        this.id = id;
+        this.pos = pos;
+    }
 
-   public static final StreamCodec<RegistryFriendlyByteBuf, ServerBoundInteractBlockPacket> STREAM_CODEC = StreamCodec.of((RegistryFriendlyByteBuf buffer, ServerBoundInteractBlockPacket message) -> {
-   	    buffer.writeBoolean(message.click);
-   	    buffer.writeInt(message.id);
-   	    buffer.writeBlockPos(message.pos);
-	}, (RegistryFriendlyByteBuf buffer) -> new ServerBoundInteractBlockPacket(buffer.readBoolean(), buffer.readInt(), buffer.readBlockPos()));
+    public ServerBoundInteractBlockPacket(FriendlyByteBuf buffer) {
+        this.click = buffer.readBoolean();
+        this.id = buffer.readInt();
+        this.pos = buffer.readBlockPos();
+    }
 
-   public static void handler(final ServerBoundInteractBlockPacket message, final IPayloadContext context) {
-		if (context.flow() == PacketFlow.SERVERBOUND) {
-		  context.enqueueWork(() -> {
-			Player player = context.player();
-			if (message.pos == null) return;
-            if (message.click) {
-            	Entity ent = ((ServerLevel)player.level()).getEntityOrPart(message.id);
-            	if (message.id < 0 || !(ent instanceof Player)) return;
-            	MorphUtils.onPlayerAttack(player, ent, message.pos);
-            } else {
-            	if (MorphUtils.getEntityLookedAt(player, -1, 1) instanceof PlayerAccessor mob) {
-            		mob.removePlayer(message.pos, player);
-            	}
+    @Override
+    public void write(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(this.click);
+        buffer.writeInt(this.id);
+        buffer.writeBlockPos(this.pos);
+    }
+
+    @Override
+    public String getId() {
+        return ID;
+    }
+
+    @Override
+    public void handle(Player player) {
+        if (pos == null)
+            return;
+        if (click) {
+            Entity ent = ((ServerLevel) player.level()).getEntityOrPart(id);
+            if (id < 0 || !(ent instanceof Player))
+                return;
+            MorphUtils.onPlayerAttack(player, ent, pos);
+        } else {
+            if (MorphUtils.getEntityLookedAt(player, -1, 1) instanceof PlayerAccessor mob) {
+                mob.removePlayer(pos, player);
             }
-		  }).exceptionally(e -> {
-				context.connection().disconnect(Component.literal(e.getMessage()));
-				return null;
-		  });
-		}
-   }
-   
-   @SubscribeEvent
-   public static void init(FMLCommonSetupEvent event) {
-		BlockomorphMod.addNetworkMessage(
-		ID, 
-		STREAM_CODEC, 
-		ServerBoundInteractBlockPacket::handler);
-  }
-
-  @Override
-  public Type<ServerBoundInteractBlockPacket> type() {
-		return ID;
-  }
+        }
+    }
 }

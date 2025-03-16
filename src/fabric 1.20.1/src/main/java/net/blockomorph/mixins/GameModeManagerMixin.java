@@ -1,27 +1,15 @@
 package net.blockomorph.mixins;
 
+import net.blockomorph.utils.GamemodeAccessor;
+import net.blockomorph.utils.MorphUtils;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.MultiPlayerGameMode;
+import net.minecraft.core.BlockPos;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.Shadow;
-
-import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.PlayerAccessor;
-import net.blockomorph.utils.GamemodeAccessor;
-
-import net.minecraft.world.entity.Entity;
-import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.world.level.Level;
-import net.minecraft.core.BlockPos;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.GameType;
 
 
 @Mixin(MultiPlayerGameMode.class)

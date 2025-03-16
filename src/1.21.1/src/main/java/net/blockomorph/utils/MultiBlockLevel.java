@@ -3,6 +3,7 @@ package net.blockomorph.utils;
 import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.CrashReportCategory;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -11,6 +12,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
@@ -45,15 +47,17 @@ import net.minecraft.world.ticks.ScheduledTick;
 import net.minecraft.world.ticks.TickPriority;
 import net.minecraft.world.level.material.Fluid;
 import java.util.HashMap;
+import java.util.function.Predicate;
+
 import net.minecraft.world.item.crafting.RecipeManager;
 
 public class MultiBlockLevel 
 extends Level {
     private final HashMap<BlockPos, BlockState> blocks = new HashMap();
-    private final Level realLevel;
+    protected final Level realLevel;
     
-    public MultiBlockLevel(Level lv) {
-        super((WritableLevelData)lv.getLevelData(), lv.dimension(), lv.registryAccess(), lv.dimensionTypeRegistration(), lv.getProfilerSupplier(), false, lv.isDebug(), 0, 5);
+    public MultiBlockLevel(Level lv, boolean client) {
+        super((WritableLevelData)lv.getLevelData(), lv.dimension(), lv.registryAccess(), lv.dimensionTypeRegistration(), lv.getProfilerSupplier(), client, lv.isDebug(), 0, 5);
         this.realLevel = lv;
     }
 
@@ -73,6 +77,14 @@ extends Level {
 
 
     //suppliers
+
+    public List<Entity> getEntities(@Nullable Entity e, AABB ab, Predicate<? super Entity> p) {
+        return realLevel.getEntities(e, ab, p);
+    }
+
+    public <T extends Entity> void getEntities(EntityTypeTest<Entity, T> test, AABB ab, Predicate<? super T> p, List<? super T> l, int i) {
+        realLevel.getEntities(test, ab, p, l, i);
+    }
 
     public RecipeManager getRecipeManager() {
     	return realLevel.getRecipeManager();
@@ -194,4 +206,7 @@ extends Level {
     	return realLevel.getFluidTicks();
     }
 
+    public Level getRealLevel() {
+        return this.realLevel;
+    }
 }

@@ -4,9 +4,9 @@ plugins {
     id 'org.spongepowered.mixin' version '0.7.+'
 }
 
-version = '1.0'
-group = 'com.yourname.modid'
-archivesBaseName = 'modid'
+version = '1.0.7'
+group = 'blockomorph'
+archivesBaseName = 'blockomorph-1.20.1-forge'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
@@ -52,8 +52,6 @@ dependencies {
 }
 
 mixin {
-    add sourceSets.main, 'mixins.blockomorph.refmap.json'
-
     config 'mixins.blockomorph.json'
 
     debug.verbose = true

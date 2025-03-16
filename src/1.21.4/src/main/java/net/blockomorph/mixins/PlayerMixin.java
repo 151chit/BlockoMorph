@@ -1,5 +1,16 @@
 package net.blockomorph.mixins;
 
+import net.blockomorph.Blockomorph;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.TntBlock;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -9,32 +20,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.blockomorph.utils.*;
 import net.blockomorph.screens.BlockMorphConfigScreen;
 
-import net.blockomorph.BlockomorphMod;
-
-import net.minecraft.world.entity.Entity;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.network.syncher.EntityDataSerializer;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.level.block.SoundType;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
@@ -48,13 +46,11 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.util.Mth;
 import java.util.function.Predicate;
-import net.minecraft.world.entity.EntitySelector;
 import java.util.HashMap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -72,6 +68,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    private boolean readyForDestroy = true;
    private BlockPos minPos = new BlockPos(0, 0, 0);
    private BlockPos maxPos = new BlockPos(0, 0, 0);
+   private PrimedTnt tnt;
 
    public PlayerMixin(EntityType<? extends LivingEntity> type, Level world) {
       super(type, world);
@@ -113,6 +110,39 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    	   for (Iterator<BlockBracker> iterator = this.brackers.iterator(); iterator.hasNext();) {
    	   	   iterator.next().tick();
    	   }
+       this.tntTick();
+   }
+
+   private void tntTick() {
+        if (this.tnt != null) {
+            try {
+                tnt.setPosRaw(this.getX(), this.getY() + 0.06125D, this.getZ());
+                tnt.setOldPosAndRot();
+                tnt.tick();
+                if (!this.level().isClientSide) {
+                    this.setFuse(tnt.getFuse());
+                    if (!tnt.isAlive()) {
+                        //tnt = null;
+                        MorphUtils.destroy(this, null);
+                        tnt = null;
+                        this.setFuse(-1);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                if (!this.level().isClientSide) this.applyBlockMorph(Blocks.AIR.defaultBlockState(), new CompoundTag());
+            }
+        }
+        if (this.getRemainingFireTicks() > 0 && !this.level().isClientSide) {
+            this.setTnt();
+        }
+   }
+
+   private void setFuse(int i) {
+        CompoundTag progress = this.entityData.get(BRAKE_PROGRESS);
+        progress = progress.copy();
+        progress.putInt("fuse", i);
+        this.entityData.set(BRAKE_PROGRESS, progress);
    }
 
    @Inject(method = "causeFallDamage", at = @At("HEAD"), cancellable = true)
@@ -150,16 +180,10 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    	      	  blockEntityTag = new CompoundTag();
    	      }
           if (tag != null) {
-          	  if (false)
-              for (String key : tag.getAllKeys()) {
-                if (blockEntityTag.contains(key)) {
-                    blockEntityTag.put(key, tag.get(key));
-                }
-              } 
               blockEntityTag.merge(tag);
           }
    	    } catch (Exception e) {
-   	    	BlockomorphMod.LOGGER.warn("When receiving original tags from the block entity of the player " + this + " an error occurred: " + e.getMessage());
+   	    	Blockomorph.LOGGER.warn("When receiving original tags from the block entity of the player " + this + " an error occurred: " + e.getMessage());
    	    	blockEntityTag = new CompoundTag();
    	    	blockEntityTag.merge(tag);
    	    }
@@ -170,13 +194,79 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    	  morphblocktag.put("BlockState", NbtUtils.writeBlockState(state));
    	  morphblocktag.putBoolean("MultiBlock", mb);
    	  this.entityData.set(DATA_BlockMorph, morphblocktag, true);
+      this.setFuse(-1);
+      this.tnt = null;
    	  this.refreshDimensions();
    	  
    }
 
    public BlockState getBlockState() {
-   	  BlockState blockstate = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), this.entityData.get(DATA_BlockMorph).getCompound("BlockState"));
-   	  return blockstate;
+        BlockState blockstate = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), this.entityData.get(DATA_BlockMorph).getCompound("BlockState"));
+        return blockstate;
+   }
+
+   public InteractionResult clickPlayer(Player clicker, BlockHitResult hiter, InteractionHand hand) {
+        return this.clckTnt(clicker, hiter, hand);
+   }
+
+   private InteractionResult clckTnt(Player clicker, BlockHitResult hiter, InteractionHand hand) {
+        ItemStack itemstack = clicker.getItemInHand(hand);
+        if (!itemstack.is(Items.FLINT_AND_STEEL) && !itemstack.is(Items.FIRE_CHARGE)) {
+            return InteractionResult.PASS;
+        } else {
+            if (!clicker.level().isClientSide)this.setTnt();
+            Item item = itemstack.getItem();
+            if (!clicker.isCreative()) {
+                if (itemstack.is(Items.FLINT_AND_STEEL)) {
+                    itemstack.hurtAndBreak(1, clicker, LivingEntity.getSlotForHand(hand));
+                } else {
+                    itemstack.shrink(1);
+                }
+            }
+
+            clicker.awardStat(Stats.ITEM_USED.get(item));
+            return InteractionResult.SUCCESS;
+        }
+   }
+
+   public void setTnt() {
+        BlockState state = this.getBlockState();
+        if (state.getBlock() instanceof TntBlock tnt && this.tnt == null) {
+            TntSpawnLevel lv = new TntSpawnLevel(this.level(), false, state);
+            PrimedTnt TNT;
+            try {
+                tnt.onCaughtFire(state, lv, this.blockPosition(), null, (Player) (Object) this);
+            } catch (Exception e) {
+                TNT = lv.extractTnt();
+                if (TNT == null) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+            TNT = lv.extractTnt();
+            if (TNT == null) {
+                BlockPos ps = this.blockPosition();
+                PrimedTnt primedtnt = new PrimedTnt(this.level(), (double)ps.getX() + 0.5D, (double)ps.getY(), (double)ps.getZ() + 0.5D, null);
+                this.level().playSound((Player)null, primedtnt.getX(), primedtnt.getY(), primedtnt.getZ(), SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F, 1.0F);
+                this.level().gameEvent(null, GameEvent.PRIME_FUSE, ps);
+                this.tnt = primedtnt;
+            } else
+                this.tnt = TNT;
+            this.tnt.level();
+            this.tnt.setNoGravity(true);
+            if (this.level().isClientSide()) {
+                double d0 = this.level().random.nextDouble() * (double)((float)Math.PI * 2F);
+                this.setDeltaMovement(new Vec3(-Math.sin(d0) * 0.02D, (double)0.2F, -Math.cos(d0) * 0.02D));
+            }
+        }
+   }
+
+   public PrimedTnt getTnt() {
+        return this.tnt;
+   }
+
+   public boolean isFullActive() {
+        return this.isActive() && this.tnt == null;
    }
 
    public CompoundTag getTag() {
@@ -311,10 +401,12 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 
    private void updateBlocks() {
    	    this.blocks.clear();
-		MultiBlockLevel lv = new MultiBlockLevel(this.level());
+		MultiBlockLevel lv = new MultiBlockLevel(this.level(), false);
 		this.getBlockState().getBlock().setPlacedBy(lv, new BlockPos(0, 0, 0), this.getBlockState(), (LivingEntity)(Object)this, ItemStack.EMPTY);
 		if (this.isMultiBlock()) this.blocks = lv.getBlocks();
-		this.entityData.set(BRAKE_PROGRESS, new CompoundTag());
+        CompoundTag tg = new CompoundTag();
+        tg.putInt("fuse", -1);
+		this.entityData.set(BRAKE_PROGRESS, tg);
 		this.brackers.clear();
 		this.brackers.add(new BlockBracker(
 			this,
@@ -372,7 +464,19 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
       	 this.maxPos = this.findMaxPos();
          this.refreshDimensions();
          if (this.level().isClientSide()) this.clientUpdate();
-      } 
+      } else if (this.level().isClientSide() && BRAKE_PROGRESS.equals(p_20059_)) {
+          int i = this.entityData.get(BRAKE_PROGRESS).getInt("fuse");
+          if (i < 0) {
+              this.tnt = null;
+          } else {
+              if (this.tnt == null) {
+                  this.setTnt();
+              }
+              if (this.tnt != null) {
+                  this.tnt.setFuse(i);
+              }
+          }
+      }
    }
 
    @OnlyIn(Dist.CLIENT)
@@ -434,6 +538,14 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    @Override
    protected void pushEntities() {
       if (!this.isActive()) super.pushEntities();
+   }
+
+   @Inject(method = "maybeBackOffFromEdge", at = @At(value = "RETURN"), cancellable = true)
+   public void fixMovement(Vec3 originalVector, MoverType moverType, CallbackInfoReturnable<Vec3> cir) {
+        if (this.isActive() && (moverType == MoverType.PLAYER || moverType == MoverType.SELF)) {
+            MovementCalculator calculator = new MovementCalculator(this);
+            calculator.calculateEnterCorrection(originalVector);
+        }
    }
 
 }

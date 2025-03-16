@@ -1,14 +1,13 @@
 package net.blockomorph.utils.config;
 
-import net.minecraft.network.FriendlyByteBuf;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonElement;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.network.chat.Component;
+import com.google.gson.JsonPrimitive;
 import com.mojang.brigadier.builder.ArgumentBuilder;
-import net.minecraft.commands.Commands;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandBuildContext;
-import com.mojang.brigadier.arguments.BoolArgumentType;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.server.command.EnumArgument;
 
 public class EnumConfig<T extends Enum<T>> extends ConfigInstance<T> {

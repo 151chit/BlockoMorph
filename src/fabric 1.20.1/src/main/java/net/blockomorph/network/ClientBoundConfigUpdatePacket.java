@@ -1,38 +1,37 @@
 package net.blockomorph.network;
 
-import net.blockomorph.BlockomorphMod;
-import net.blockomorph.screens.*;
-import net.blockomorph.utils.config.*;
-
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.function.Supplier;
-import io.netty.buffer.Unpooled;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.blockomorph.screens.MorphScreen;
+import net.blockomorph.utils.config.Config;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-public class ClientBoundConfigUpdatePacket extends FriendlyByteBuf {
-   public ClientBoundConfigUpdatePacket(Config c) {
-   	    super(Unpooled.buffer());
-   	    c.writeInBufer(this);
-   }
+public class ClientBoundConfigUpdatePacket implements BlockMorphPacket {
+    public static final String ID = "client_bound_config_update_packet";
+    Config config;
+    public ClientBoundConfigUpdatePacket(FriendlyByteBuf buf) {
+        this.config = Config.readFromBufer(buf);
+    }
 
-   public static void apply(Minecraft client, ClientPacketListener handler, FriendlyByteBuf buf, PacketSender responseSender) {
-   	    Config.readFromBufer(buf);
-		client.execute(() -> {
-		  if (client.screen instanceof MorphScreen s) {
-				s.updateAllowed();
-		  }
-		});
-   }
-   
+    public ClientBoundConfigUpdatePacket(Config cfg) {
+        this.config = cfg;
+    }
+
+    @Override
+    public void write(FriendlyByteBuf buffer) {
+        this.config.writeInBufer(buffer);
+    }
+
+    @Override
+    public String getId() {
+        return ID;
+    }
+
+    @Override
+    public void handle(Player player) {
+        Config.load(this.config);
+        if (Minecraft.getInstance().screen instanceof MorphScreen s) {
+            s.updateAllowed();
+        }
+    }
 }

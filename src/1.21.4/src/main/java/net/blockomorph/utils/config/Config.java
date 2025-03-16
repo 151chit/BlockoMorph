@@ -10,11 +10,9 @@ import java.io.IOException;
 import java.util.List;
 import java.nio.file.Path;
 import java.nio.file.Files;
+
+import net.blockomorph.utils.MorphUtils;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.players.PlayerList;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.blockomorph.BlockomorphMod;
 import net.blockomorph.network.ClientBoundConfigUpdatePacket;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -37,7 +35,6 @@ public class Config {
    static Config INSTANCE;
 
    private Config() {
-   	  INSTANCE = this;
    }
 
    public <T> T getValue(String option) {
@@ -55,7 +52,7 @@ public class Config {
 
    public void makeDirty() {
    	  write();
-   	  PacketDistributor.sendToAllPlayers(new ClientBoundConfigUpdatePacket(this));
+	  MorphUtils.sendAll(new ClientBoundConfigUpdatePacket(this));
    }
 
    public void parse(String op, String val, boolean isPacket) {
@@ -77,25 +74,28 @@ public class Config {
    }
 
    public static Config readFromBufer(FriendlyByteBuf buf) {
-   	  new Config();
-   	  for (ConfigInstance<?> con : INSTANCE.options) {
-   	  	con.readBufer(buf);
-   	  }
-   	  return INSTANCE;
+		Config cfg = new Config();
+		for (ConfigInstance<?> con : cfg.options) {
+			con.readBufer(buf);
+		}
+		return cfg;
    }
 
    public static Config getInstance() {
    	  return INSTANCE;
    }
 
+   public static void load(Config cfg) {
+		INSTANCE = cfg;
+	}
+
    public static Config load() {
    	  Path path = Path.of(configDir);
-   	  new Config();
+   	  INSTANCE = new Config();
    	  if (!Files.exists(path)) {
    	  	INSTANCE.write();
    	  	return INSTANCE;
    	  }
-   	  Gson gson = new GsonBuilder().setPrettyPrinting().create();
       try (BufferedReader reader = new BufferedReader(new FileReader(configDir))) {
             JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
             for (ConfigInstance<?> option : INSTANCE.options) {

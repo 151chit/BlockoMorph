@@ -1,22 +1,18 @@
 
 package net.blockomorph.screens;
 
-import net.blockomorph.utils.*;
-
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.client.event.RenderGuiEvent;
-import net.minecraftforge.api.distmarker.Dist;
-
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.Minecraft;
-
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.GlStateManager;
-import java.util.List;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.blockomorph.utils.PlayerAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.RenderGuiEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber({Dist.CLIENT})
 public class PlayerCrackOverlay {

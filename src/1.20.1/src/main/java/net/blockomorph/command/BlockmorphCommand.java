@@ -1,37 +1,27 @@
 
 package net.blockomorph.command;
 
-import org.checkerframework.checker.units.qual.s;
-
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.common.util.FakePlayerFactory;
-
-import net.blockomorph.utils.*;
-import net.blockomorph.utils.config.*;
-
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.core.Direction;
-import net.minecraft.commands.arguments.blocks.BlockStateArgument;
-import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.Commands;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import net.blockomorph.utils.accessors.BlockAccessor;
+import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.config.Config;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 import java.util.Collection;
 import java.util.Collections;
-import com.mojang.brigadier.arguments.BoolArgumentType;
-
-import net.minecraftforge.registries.RegisterEvent;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 
 @Mod.EventBusSubscriber
 public class BlockmorphCommand {
@@ -73,50 +63,31 @@ public class BlockmorphCommand {
 			);
 			return 0;
 		}
-		String mess = MorphUtils.isBannedBlock(blockstate);
-		if (!mess.isEmpty()) {
-			if (mess.contains("black")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.blacklist")
-				);
-			} else if (mess.contains("white")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.whitelist")
-				);
-			} else if (mess.contains("solid")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.solid")
-				);
-			}
+		MorphUtils.BannedBlock mess = MorphUtils.isBannedBlock(blockstate, null);
+		if (mess != null) {
+			stack.sendFailure(
+					mess.text()
+			);
 			return 0;
 		}
 		for (Entity entityiterator : players) {
 			if (entityiterator instanceof PlayerAccessor pl) {
 				if (mbUse) {
-					pl.applyBlockMorph(blockstate, tag, mb);
+					//pl.applyBlockMorph(blockstate, tag, mb);
+					pl.applyBlockMorph(blockstate, tag);
 				} else {
 					pl.applyBlockMorph(blockstate, tag);
-				}
-				//debug 
-				if (false){
-					entityiterator.level().explode(entityiterator, entityiterator.getX(), entityiterator.getY(0.0625D), entityiterator.getZ(), 4.0F, Level.ExplosionInteraction.TNT);
 				}
 			}
 		}
 		if (many) {
 			if (players.size() == 1) {
-				stack.sendSuccess(() -> {
-                    return Component.translatable("commands.blockmorph.single", players.iterator().next().getDisplayName(), state.getName());
-                }, true);
+				stack.sendSuccess(() -> Component.translatable("commands.blockmorph.single", players.iterator().next().getDisplayName(), state.getName()), true);
 			} else {
-				stack.sendSuccess(() -> {
-                    return Component.translatable("commands.blockmorph.many", players.size(), state.getName());
-                }, true);
+				stack.sendSuccess(() -> Component.translatable("commands.blockmorph.many", players.size(), state.getName()), true);
 			}
 		} else {
-			stack.sendSuccess(() -> {
-            return Component.translatable("commands.blockmorph.you", state.getName());
-            }, true);
+			stack.sendSuccess(() -> Component.translatable("commands.blockmorph.you", state.getName()), true);
 		}
 		return players.size();
 	}

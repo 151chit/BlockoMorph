@@ -1,86 +1,58 @@
 package net.blockomorph.screens;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.blockomorph.network.MainPacket;
+import net.blockomorph.network.ServerBoundBlockMorphPacket;
+import net.blockomorph.network.ServerBoundConfigUpdatePacket;
+import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.SavedBlock;
+import net.blockomorph.utils.config.Config;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.client.gui.CreativeTabsScreenPage;
 import net.minecraftforge.common.CreativeModeTabRegistry;
-
-import net.blockomorph.utils.*;
-import net.blockomorph.utils.config.*;
-import net.blockomorph.BlockomorphMod;
-import net.blockomorph.network.*;
-import net.blockomorph.screens.BlockMorphConfigScreen;
-
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.network.chat.Component;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.util.RandomSource;
-import net.minecraft.core.BlockPos;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.animal.Pig;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.player.RemotePlayer;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.world.entity.item.FallingBlockEntity;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.world.item.Items;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.advancements.AdvancementsScreen;
-
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.world.entity.ai.behavior.OneShot;
-import net.minecraft.world.entity.ai.behavior.OneShot;
-import net.minecraft.util.Mth;
-
+import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Matrix4f;
 
-import com.mojang.math.Axis;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.systems.RenderSystem;
-
-import java.util.stream.Collectors;
-import java.util.Objects;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.client.gui.screens.FaviconTexture;
-import javax.annotation.Nullable;
-import net.minecraft.client.gui.components.ImageButton;
-import net.minecraft.world.level.block.TntBlock;
+import java.util.stream.Collectors;
 
 @OnlyIn(Dist.CLIENT)
 public class MorphScreen extends Screen {
@@ -159,7 +131,7 @@ public class MorphScreen extends Screen {
             }
         }
         sortedBlocks.put("allowed", (this.reg.stream()
-            .filter(block -> MorphUtils.isBannedBlock(block.defaultBlockState()).isEmpty())
+            .filter(block -> MorphUtils.isBannedBlock(block.defaultBlockState(), entity) != null)
             .collect(Collectors.toList())));
 
         return sortedBlocks;
@@ -167,7 +139,7 @@ public class MorphScreen extends Screen {
 
     public void updateAllowed() {
     	this.content.put("allowed", (this.reg.stream()
-            .filter(block -> MorphUtils.isBannedBlock(block.defaultBlockState()).isEmpty())
+            .filter(block -> MorphUtils.isBannedBlock(block.defaultBlockState(), entity) != null)
             .collect(Collectors.toList())));
         this.unmask.visible = this.needUnmorphBut();
     }
@@ -207,8 +179,8 @@ public class MorphScreen extends Screen {
 
 	public void refreshList() {
 		this.list.clear();
+		this.savedBlocks.clear();
 		if (selectedTab == loved_blocks) {
-			this.savedBlocks.clear();
 			this.savedBlocks.addAll(this.savedBlockContent);
 			for (SavedBlock b : savedBlockContent) {
 				this.list.add(null);
@@ -230,10 +202,11 @@ public class MorphScreen extends Screen {
 
 	public void searchBlock(String searchName) {
 		this.scrollOff = 0;
-		if (searchName.equals("")) {
+		if (searchName.isEmpty()) {
 			this.refreshList();
 		}
 		this.list.clear();
+		this.savedBlocks.clear();
 		if (selectedTab == loved_blocks) {
 			this.savedBlocks.clear();
 			for (SavedBlock entry : this.savedBlockContent) {
@@ -326,7 +299,7 @@ public class MorphScreen extends Screen {
     private void renderFrame(GuiGraphics guiGraphics, BlockState blockState, int xO, int yO, @Nullable CompoundTag tag) {
     	String name = ForgeRegistries.BLOCKS.getKey(blockState.getBlock()).toString();
         if (!this.isConfig()) {
-        	if (!MorphUtils.isBannedBlock(blockState).isEmpty()) {
+        	if (MorphUtils.isBannedBlock(blockState, entity) != null) {
         		guiGraphics.blit(new ResourceLocation("blockomorph:textures/screens/sel_lock.png"), this.leftPos + 10 + xO*36, this.topPos + 15 + yO*36, 0, 0, 36, 36, 36, 36);
         		return;
         	}
@@ -363,8 +336,7 @@ public class MorphScreen extends Screen {
         int col = (int) ((x - leftPos) / 35.5);
         int row = (int) ((y - topPos) / 35.5);
 
-        int index = row * 4 + col;
-        return index;
+        return row * 4 + col;
     }
 
     private boolean needAllowedTab() {
@@ -535,8 +507,8 @@ public class MorphScreen extends Screen {
 				}
 				String name = ForgeRegistries.BLOCKS.getKey(st.getBlock()).toString();
 				if (!this.isConfig()) {
-					if (MorphUtils.isBannedBlock(st).isEmpty()) {
-				        BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.create(st, tg));
+					if (MorphUtils.isBannedBlock(st, entity) == null) {
+				        MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(st, tg));
 					}
 				} else if (this.mode == Config.Mode.WHITELIST) {
 					if (((List<String>)Config.getInstance().getValue("allowedBlocks")).contains(name)) {
@@ -571,13 +543,12 @@ public class MorphScreen extends Screen {
     }
 
 	private void send(ServerBoundConfigUpdatePacket p) {
-   	    BlockomorphMod.PACKET_HANDLER.sendToServer(p);
+		MorphUtils.sendServer(p);
     }
 
 	private boolean canScroll() {
-		if (this.list.size() > 16) return true;
-		return false;
-	}
+        return this.list.size() > 16;
+    }
 
 	public boolean mouseDragged(double x, double y, int type, double prevX, double prevY) {
 		if (this.scrollWork) {
@@ -653,7 +624,7 @@ public class MorphScreen extends Screen {
 	}
 
 	private boolean needUnmorphBut() {
-		return !this.isConfig() && MorphUtils.isBannedBlock(Blocks.AIR.defaultBlockState()).isEmpty();
+		return !this.isConfig() && MorphUtils.isBannedBlock(Blocks.AIR.defaultBlockState(), null) == null;
 	}
 
 	private boolean needFlameBut() {
@@ -685,10 +656,11 @@ public class MorphScreen extends Screen {
 		this.setInitialFocus(this.searchBox);
 		searchBox.active = this.hasSearchBar();
 		this.unmask = new ImageButton(this.leftPos + 10, this.topPos + this.imageHeight + 1, 26, 26, 0, 0, 26, new ResourceLocation("blockomorph:textures/screens/unmorph_but.png"), 26, 78, e -> {
-			 BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.create(Blocks.AIR.defaultBlockState(), new CompoundTag()));
+			 MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(Blocks.AIR.defaultBlockState(), new CompoundTag()));
 		});
 		this.fuse = new ImageButton(this.leftPos - 28, this.topPos + this.imageHeight + 1, 26, 26, 0, 0, 26, new ResourceLocation("blockomorph:textures/screens/flame_but.png"), 26, 78, e -> {
-			 BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.fuse());
+			 //MorphUtils.sendServer(ServerBoundBlockMorphPacket.fuse());
+			MorphUtils.sendServer(ServerBoundBlockMorphPacket.fuse());
 		});
 		this.unmask.active = ((PlayerAccessor)this.entity).isFullActive();
 		this.unmask.visible = this.needUnmorphBut();
@@ -699,7 +671,7 @@ public class MorphScreen extends Screen {
 		if (this.isConfig()) this.addRenderableWidget(Button.builder(Component.literal("<--"), b -> this.minecraft.setScreen(new ConfigScreen()) ).pos(this.leftPos + 10, this.topPos + this.imageHeight + 1).size(20, 20).build());
 		if (pageCount > 1) {
             this.addRenderableWidget(Button.builder(Component.literal("<"), b -> this.setPage(false)).pos(leftPos - 22,  topPos - 22).size(20, 20).build());
-            this.addRenderableWidget(Button.builder(Component.literal(">"), b -> this.setPage(true)).pos(leftPos + imageWidth - 0, topPos - 22).size(20, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal(">"), b -> this.setPage(true)).pos(leftPos + imageWidth, topPos - 22).size(20, 20).build());
         }
 	}
 }

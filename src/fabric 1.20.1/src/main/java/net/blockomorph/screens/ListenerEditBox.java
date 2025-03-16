@@ -1,10 +1,11 @@
 package net.blockomorph.screens;
 
-import net.minecraft.client.gui.components.EditBox;
-import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
-import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.Component;
+
+import java.util.function.Consumer;
 
 public class ListenerEditBox extends EditBox {
     private Consumer<String> run;

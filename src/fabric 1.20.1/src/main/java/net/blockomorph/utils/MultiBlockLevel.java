@@ -1,56 +1,45 @@
 package net.blockomorph.utils;
 
-import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.Difficulty;
-import net.minecraft.world.level.storage.WritableLevelData;
-import net.minecraft.CrashReportCategory;
-import net.minecraft.world.level.LevelHeightAccessor;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.storage.LevelData;
-import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Nullable;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.ExplosionDamageCalculator;
-import net.minecraft.core.particles.ParticleOptions;
-import java.util.Collection;
-import com.google.common.collect.ImmutableCollection;
-import net.minecraft.world.entity.boss.EnderDragonPart;
-import java.util.List;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
-import net.minecraft.world.item.alchemy.PotionBrewing;
-import net.minecraft.world.level.entity.LevelEntityGetter;
-import net.minecraft.world.scores.Scoreboard;
-import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.flag.FeatureFlagSet;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.lighting.LevelLightEngine;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.ColorResolver;
-import net.minecraft.world.ticks.LevelTickAccess;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.ticks.ScheduledTick;
-import net.minecraft.world.ticks.TickPriority;
-import net.minecraft.world.level.material.Fluid;
-import java.util.HashMap;
 import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.level.ColorResolver;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.entity.EntityTypeTest;
+import net.minecraft.world.level.entity.LevelEntityGetter;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.lighting.LevelLightEngine;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.level.storage.WritableLevelData;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.scores.Scoreboard;
+import net.minecraft.world.ticks.LevelTickAccess;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.function.Predicate;
 
 public class MultiBlockLevel 
 extends Level {
     private final HashMap<BlockPos, BlockState> blocks = new HashMap();
-    private final Level realLevel;
+    protected final Level realLevel;
     
-    public MultiBlockLevel(Level lv) {
-        super((WritableLevelData)lv.getLevelData(), lv.dimension(), lv.registryAccess(), lv.dimensionTypeRegistration(), lv.getProfilerSupplier(), false, lv.isDebug(), 0, 5);
+    public MultiBlockLevel(Level lv, boolean cl) {
+        super((WritableLevelData)lv.getLevelData(), lv.dimension(), lv.registryAccess(), lv.dimensionTypeRegistration(), lv.getProfilerSupplier(), cl, lv.isDebug(), 0, 5);
         this.realLevel = lv;
     }
 
@@ -108,6 +97,14 @@ extends Level {
 
     public Scoreboard getScoreboard() {
     	return realLevel.getScoreboard();
+    }
+
+    public List<Entity> getEntities(@Nullable Entity e, AABB ab, Predicate<? super Entity> p) {
+        return realLevel.getEntities(e, ab, p);
+    }
+
+    public <T extends Entity> void getEntities(EntityTypeTest<Entity, T> test, AABB ab, Predicate<? super T> p, List<? super T> l, int i) {
+        realLevel.getEntities(test, ab, p, l, i);
     }
 
     //levelAccessor
@@ -168,4 +165,7 @@ extends Level {
     	return realLevel.getFluidTicks();
     }
 
+    public Level getRealLevel() {
+        return this.realLevel;
+    }
 }

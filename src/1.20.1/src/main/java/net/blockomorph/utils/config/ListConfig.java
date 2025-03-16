@@ -1,23 +1,22 @@
 package net.blockomorph.utils.config;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
-import java.util.List;
-import net.minecraft.network.FriendlyByteBuf;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.google.gson.JsonElement;
 import com.mojang.brigadier.builder.ArgumentBuilder;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.blocks.BlockPredicateArgument;
-import net.minecraft.world.level.block.state.pattern.BlockInWorld;
-import net.minecraft.commands.CommandSourceStack;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import net.minecraft.commands.CommandBuildContext;
-import net.minecraft.commands.arguments.ResourceArgument;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.core.Holder;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.network.chat.Component;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceArgument;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.Block;
+
+import java.util.List;
 
 public class ListConfig extends ConfigInstance<List<String>> {
     public ListConfig(String name, List<String> value) {

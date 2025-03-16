@@ -2,9 +2,7 @@ package net.blockomorph.screens;
 
 import net.blockomorph.utils.*;
 import net.blockomorph.utils.config.*;
-import net.blockomorph.BlockomorphMod;
 import net.blockomorph.network.*;
-import net.blockomorph.screens.MorphScreen;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
@@ -19,7 +17,6 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
@@ -51,7 +48,7 @@ import java.util.Optional;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.components.ImageButton;
 
@@ -320,7 +317,7 @@ public class BlockMorphConfigScreen extends Screen {
               state = state.setValue(prop, value - 1);
               sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
            }
-           PacketDistributor.sendToServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
+           MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
    	    }
    	    return true;
    }
@@ -345,7 +342,7 @@ public class BlockMorphConfigScreen extends Screen {
    	    	if (!flag && prop == null) {
    	    		if (x > this.leftPos + 93 && x < this.leftPos + 93 + 67 && y > this.topPos + 120 && y < this.topPos + 130) {
    	    			if (Config.getInstance() != null && (boolean)Config.getInstance().getValue("advancedMode")) {
-   	    				PacketDistributor.sendToServer(ServerBoundBlockMorphPacket.create(this.playerState, this.playerTag, !this.mb));
+   	    				MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(this.playerState, this.playerTag, !this.mb));
    	    			    sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
    	    			}
    	    		}
@@ -367,7 +364,7 @@ public class BlockMorphConfigScreen extends Screen {
    }
 
    private void send(BlockState blockState, CompoundTag tag) {
-   	    PacketDistributor.sendToServer(ServerBoundBlockMorphPacket.create(blockState, tag));
+   	    MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(blockState, tag));
    }
 
    private int getLongWord(Collection<Enum<?>> values) {
@@ -410,7 +407,7 @@ public class BlockMorphConfigScreen extends Screen {
 
                 if (isMouseOver(mouseX, mouseY, textX, textY - 2, maxWidth, 12)) {
                 	BlockState state = this.setEnum(this.listProp, string);
-                    PacketDistributor.sendToServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
+                    MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
                     sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                     return true;
                 }

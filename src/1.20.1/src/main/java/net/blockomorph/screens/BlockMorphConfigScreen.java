@@ -1,57 +1,51 @@
 package net.blockomorph.screens;
 
-import net.blockomorph.utils.*;
-import net.blockomorph.utils.config.*;
-import net.blockomorph.BlockomorphMod;
-import net.blockomorph.network.ServerBoundBlockMorphPacket;
-import net.blockomorph.screens.MorphScreen;
-
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.nbt.TagParser;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.network.chat.Component;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.core.BlockPos;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
-import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
-import net.minecraft.client.gui.components.EditBox;
-
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.math.Axis;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.systems.RenderSystem;
-
+import net.blockomorph.network.ServerBoundBlockMorphPacket;
+import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.SavedBlock;
+import net.blockomorph.utils.config.Config;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraftforge.client.model.data.ModelData;
-
 import org.joml.Matrix4f;
 
-import java.util.Optional;
-import java.util.Collection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
-import net.minecraft.client.gui.components.ImageButton;
+import java.util.Optional;
 
 public class BlockMorphConfigScreen extends Screen {
    private static final ResourceLocation texture = new ResourceLocation("blockomorph:textures/screens/morph_config_gui.png");
@@ -61,7 +55,7 @@ public class BlockMorphConfigScreen extends Screen {
    private final SoundManager sound = Minecraft.getInstance().getSoundManager();
    private BlockState playerState = Blocks.AIR.defaultBlockState();
    private CompoundTag playerTag = new CompoundTag();
-   private boolean mb = false;
+   private final boolean mb = true;
    private static final BlockPos AIR = new BlockPos(0, 512, 0); 
    private final Level world;
    private final Player entity;
@@ -130,7 +124,7 @@ public class BlockMorphConfigScreen extends Screen {
 		}
 		this.playerState = state;
 		this.playerTag = tag;
-		this.mb = ((PlayerAccessor)this.entity).isMultiBlock();
+		//this.mb = false;//((PlayerAccessor)this.entity).isMultiBlock();
 		this.validSave(savebox.getValue());
    }
 
@@ -151,10 +145,14 @@ public class BlockMorphConfigScreen extends Screen {
 		RenderSystem.disableBlend();
    }
 
-   private void renderMbButton(GuiGraphics guiGraphics, float partialTicks, int gx, int gy) {
+   private void renderMbButton(GuiGraphics guiGraphics, float partialTicks, int x, int y) {
    	    if (Config.getInstance() != null && (boolean)Config.getInstance().getValue("advancedMode")) {
    	    	guiGraphics.blit(new ResourceLocation("blockomorph:textures/screens/mb_but.png"), this.leftPos + 93, this.topPos + 120, 0, this.mb ? 10:0, 67, 10, 67, 20);
    	    	guiGraphics.drawCenteredString(this.font, Component.translatable("gui.blockomorph.mb"), this.leftPos + 93 + 33, this.topPos + 121, -1);
+			if (x > this.leftPos + 93 && x < this.leftPos + 93 + 67 && y > this.topPos + 120 && y < this.topPos + 130) {
+				guiGraphics.renderTooltip(this.font, Component.translatable("gui.blockomorph.mb.deprecated1"), x, y);
+				guiGraphics.renderTooltip(this.font, Component.translatable("gui.blockomorph.mb.deprecated2"), x, y + 20);
+			}
    	    }
    }
 
@@ -332,7 +330,7 @@ public class BlockMorphConfigScreen extends Screen {
    	    	if (!flag && prop == null) {
    	    		if (x > this.leftPos + 93 && x < this.leftPos + 93 + 67 && y > this.topPos + 120 && y < this.topPos + 130) {
    	    			if (Config.getInstance() != null && (boolean)Config.getInstance().getValue("advancedMode")) {
-   	    				BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.create(this.playerState, this.playerTag, !this.mb));
+   	    				MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(this.playerState, this.playerTag, !this.mb));
    	    			    sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
    	    			}
    	    		}
@@ -425,7 +423,8 @@ public class BlockMorphConfigScreen extends Screen {
    }
 
    private void send(BlockState blockState, CompoundTag tag) {
-   	    BlockomorphMod.PACKET_HANDLER.sendToServer(ServerBoundBlockMorphPacket.create(blockState, tag));
+   	    MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(blockState, tag));
+
    }
 
    @Override
@@ -446,7 +445,7 @@ public class BlockMorphConfigScreen extends Screen {
 		this.addRenderableWidget(tagsBox);
 		this.addRenderableWidget(this.savebox);
 		this.playerState = ((PlayerAccessor)this.entity).getBlockState();
-		this.mb = ((PlayerAccessor)this.entity).isMultiBlock();
+		//this.mb = false;//((PlayerAccessor)this.entity).isMultiBlock();
 		BlockState blockState = this.playerState;
 		if (blockState.getBlock() instanceof EntityBlock) {
 			this.setInitialFocus(tagsBox);

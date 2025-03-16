@@ -1,17 +1,15 @@
 package net.blockomorph.mixins;
 
+import net.blockomorph.utils.PlayerAccessor;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import net.blockomorph.utils.PlayerAccessor;
-
-import net.minecraft.world.entity.Entity;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 
 @Mixin(ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {

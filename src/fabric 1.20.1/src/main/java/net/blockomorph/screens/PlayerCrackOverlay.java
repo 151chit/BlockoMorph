@@ -1,16 +1,14 @@
 
 package net.blockomorph.screens;
 
-import net.blockomorph.utils.PlayerAccessor;
-
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.Minecraft;
-
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.blockomorph.utils.PlayerAccessor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 
 public class PlayerCrackOverlay {
 	public static void render(GuiGraphics guiGraphics, float tickDelta) {

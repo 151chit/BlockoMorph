@@ -1,15 +1,12 @@
 package net.blockomorph.utils.config;
 
-import net.minecraft.network.FriendlyByteBuf;
 import com.google.gson.JsonElement;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.minecraft.commands.CommandSourceStack;
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandBuildContext;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class ConfigInstance<T> {
    private final String name;

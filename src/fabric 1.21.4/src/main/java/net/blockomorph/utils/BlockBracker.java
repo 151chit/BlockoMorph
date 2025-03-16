@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.TntBlock;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -51,13 +55,17 @@ public class BlockBracker {
 
     public void tick() {
     	if (this.braking) {
+			if (player.getTnt() != null) {
+				this.stopDestroy();
+				return;
+			}
    		    //progressCount
       	    if (this.brake) {
                 this.progress += 1 / this.pie;
                 while (this.progress >= 1.0f) {
                 	this.setProgress(this.getProgress() + 1);
                     if (this.getProgress() > 9) {
-                        MorphUtils.destroy(player, this.getAttacker());
+                        this.destroy(this.getAttacker());
                     }
                     this.progress -= 1;
                 }
@@ -111,7 +119,26 @@ public class BlockBracker {
        }
     }
 
-    private String getKey() {
+	private void destroy(Player attacker) {
+		BlockState st = player.getBlockState();
+		if (st.getBlock() instanceof TntBlock && player.getTnt() == null && st.getValue(BlockStateProperties.UNSTABLE)) {
+			player.setTnt();
+			if (owner.level() instanceof ServerLevel lv) {
+				BlockPos pos = this.offset;
+				BlockState val = this.blockstate;
+				Player mob = this.owner;
+				VoxelShape shape2 = val.getCollisionShape(lv, mob.blockPosition(), CollisionContext.of(mob));
+				MorphUtils.particle(lv, mob.getX() + pos.getX(), mob.getY() + pos.getY(), mob.getZ() + pos.getZ(), val, shape2);
+				SoundType soundtype = val.getSoundType();
+				lv.playSound(null, mob.blockPosition().offset(pos), soundtype.getBreakSound(), SoundSource.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+			}
+			return;
+		}
+		MorphUtils.destroy(player, attacker);
+	}
+
+
+	private String getKey() {
     	return this.offset.getX() +
     		" " +
     		this.offset.getY() +
@@ -154,7 +181,7 @@ public class BlockBracker {
         float progress = blockState.getDestroyProgress(pl, pl.level(), blockPos);
         if (Float.isInfinite(progress) || progress == 0) {
         	if (Float.isInfinite(progress)) {
-        		MorphUtils.destroy(player, pl);
+        		this.destroy(pl);
         		pl.swing(InteractionHand.MAIN_HAND, true);
         	}
         	return -1;

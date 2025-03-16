@@ -25,7 +25,7 @@ public abstract class EntityRendererMixin {
    )
    private static void renderHitbox(PoseStack posestack, VertexConsumer vertex, Entity player, float f, float g, float h, float i, CallbackInfo info) {
    	  if (player instanceof PlayerAccessor pl) {
-   	  	if (pl.isActive()) info.cancel();
+   	  	if (pl.isFullActive()) info.cancel();
    	  }
    }
 

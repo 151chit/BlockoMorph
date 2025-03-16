@@ -3,9 +3,9 @@ plugins {
     id 'maven-publish'
 }
 
-version = '1.0'
-group = 'com.yourname.modid'
-archivesBaseName = "modid"
+version = '4.0.3'
+group = 'net.blockomorph'
+archivesBaseName = "blockomorph-1.21.3-fabric"
 testmodid = 'blockomorph'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -31,6 +31,7 @@ processResources {
 		expand "version": project.version
 	}
 }
+
 
 java {
     withSourcesJar()

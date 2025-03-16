@@ -4,16 +4,11 @@ license="MIT License"
 
 [[mods]]
 modId="blockomorph"
-version="4.0.1"
+version="4.0.3"
 displayName="Block'oMorph"
-displayURL="https://null.info"
 logoFile="logo.png"
-credits="."
 authors="151gamemode1chit"
 description="This mod allows players morph into blocks with all the main features of the block."
-
-# Start of user code block mod configuration
-# End of user code block mod configuration
 
 [[dependencies.blockomorph]]
 modId="neoforge"
@@ -29,10 +24,5 @@ versionRange="[1.21.3]"
 ordering="AFTER"
 side="BOTH"
 
-
-
-
-# Start of user code block dependencies configuration
 [[mixins]]
 config="mixins.blockomorph.json"
-# End of user code block dependencies configuration

@@ -1,23 +1,24 @@
 package net.blockomorph.command;
 
-import java.util.stream.Stream;
-import java.util.stream.Collectors;
-import net.minecraft.commands.SharedSuggestionProvider;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import com.mojang.brigadier.context.CommandContext;
-import java.util.concurrent.CompletableFuture;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
-import net.minecraft.network.chat.Component;
+import com.google.gson.JsonObject;
 import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import java.util.Arrays;
-import java.util.Collection;
+import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.network.FriendlyByteBuf;
-import com.google.gson.JsonObject;
-import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class EnumArgument<T extends Enum<T>> implements ArgumentType<T> {
     private static final Dynamic2CommandExceptionType INVALID_ENUM = new Dynamic2CommandExceptionType(

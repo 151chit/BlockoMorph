@@ -1,66 +1,42 @@
 package net.blockomorph.network;
 
-import org.apache.logging.log4j.core.appender.rolling.action.Action;
-
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.core.BlockPos;
-
-import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.BlockomorphMod;
-
-import java.util.function.Supplier;
-import net.minecraft.world.phys.BlockHitResult;
+import net.blockomorph.utils.PlayerAccessor;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
-public class ServerBoundUseBlockPacket {
+public class ServerBoundUseBlockPacket implements BlockMorphPacket {
+    public static final String ID = "server_bound_use_block_packet";
     BlockHitResult hit;
     InteractionHand hand;
 
-	public ServerBoundUseBlockPacket(BlockHitResult bl, InteractionHand h) {
-		this.hit = bl;
-		this.hand = h;
-	}
+    public ServerBoundUseBlockPacket(BlockHitResult bl, InteractionHand h) {
+        this.hit = bl;
+        this.hand = h;
+    }
 
-	public ServerBoundUseBlockPacket(FriendlyByteBuf buffer) {
-		this.hit = buffer.readBlockHitResult();
-		this.hand = buffer.readEnum(InteractionHand.class);
-	}
+    public ServerBoundUseBlockPacket(FriendlyByteBuf buffer) {
+        this.hit = buffer.readBlockHitResult();
+        this.hand = buffer.readEnum(InteractionHand.class);
+    }
 
-	public static void buffer(ServerBoundUseBlockPacket message, FriendlyByteBuf buffer) {
-		buffer.writeBlockHitResult(message.hit);
-		buffer.writeEnum(message.hand);
-	}
+    @Override
+    public void write(FriendlyByteBuf buffer) {
+        buffer.writeBlockHitResult(this.hit);
+        buffer.writeEnum(this.hand);
+    }
 
-	public static void handler(ServerBoundUseBlockPacket message, Supplier<NetworkEvent.Context> contextSupplier) {
-		NetworkEvent.Context context = contextSupplier.get();
-		context.enqueueWork(() -> {
-			Player player = context.getSender();
-			BlockHitResult hit = message.hit;
-			InteractionHand hand = message.hand;
-			if (MorphUtils.getEntityLookedAt(player, -1, 1) instanceof PlayerAccessor pl) {
-				if (pl.clickPlayer(player, hit, hand).shouldSwing()) player.swing(hand, true);
-			}
-		});
-		context.setPacketHandled(true);
-	}
+    @Override
+    public String getId() {
+        return ID;
+    }
 
-	@SubscribeEvent
-	public static void init(FMLCommonSetupEvent event) {
-		BlockomorphMod.addNetworkMessage(
-			ServerBoundUseBlockPacket.class, 
-			ServerBoundUseBlockPacket::buffer, 
-			ServerBoundUseBlockPacket::new, 
-			ServerBoundUseBlockPacket::handler
-		);
-	}
+    @Override
+    public void handle(Player player) {
+        if (MorphUtils.getEntityLookedAt(player, -1, 1) instanceof PlayerAccessor pl) {
+            if (pl.clickPlayer(player, hit, hand).shouldSwing()) player.swing(hand, true);
+        }
+    }
 }

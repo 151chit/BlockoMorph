@@ -1,24 +1,29 @@
 package net.blockomorph.utils;
 
-import net.blockomorph.BlockomorphMod;
+import net.blockomorph.BlockomorphServer;
 import net.blockomorph.network.*;
-import net.blockomorph.utils.*;
 import net.blockomorph.utils.config.*;
-import net.blockomorph.core.MainBus;
 
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.*;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -27,7 +32,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,48 +40,28 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.tags.TagKey;
 import net.minecraft.core.Holder;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.core.Direction;
-import net.minecraft.world.entity.item.FallingBlockEntity;
-import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.searchtree.IdSearchTree;
-import net.minecraft.world.phys.HitResult.Type;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.world.level.block.EntityBlock;
 
-import com.mojang.blaze3d.platform.Window;
-
-import java.util.Set;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.world.level.block.BarrierBlock;
 import net.minecraft.world.level.block.piston.MovingPistonBlock;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.references.Blocks;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
@@ -87,6 +71,7 @@ import java.util.AbstractMap;
 import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public class MorphUtils {
    public static final ResourceKey<DamageType> PLAYER_DESTROYED = ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.fromNamespaceAndPath("blockomorph", "player_destroyed"));
@@ -101,26 +86,59 @@ public class MorphUtils {
    	    return new SavedBlockManager(FabricLoader.getInstance().getGameDir());
    }
 
-   public static String isBannedBlock(BlockState state) {
-   	    String name = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
-        Config.Mode mode = (Config.Mode) Config.getInstance().getValue("listMode");
-        if ((!state.isSolid() || state.getBlock() instanceof BarrierBlock || state.getBlock() instanceof MovingPistonBlock) && (state.getBlock() != net.minecraft.world.level.block.Blocks.AIR) && (boolean)Config.getInstance().getValue("solidBlocksOnly")) {
-        	return "Block " + name + " not allowed because is solid!";
-        } else if (mode == Config.Mode.WHITELIST) {
-             if (!((List<String>)Config.getInstance().getValue("allowedBlocks")).contains(name)) 
-                return "Block " + name + " not allowed because it not in whitelist!";
-        } else if (mode == Config.Mode.BLACKLIST) {
-             if (((List<String>)Config.getInstance().getValue("bannedBlocks")).contains(name)) 
-                return "Block " + name + " not allowed because it in blacklist!";
-        }
-        return "";
+   private static final HashMap<ResourceLocation, PacketInfo> handlers = new HashMap<>();
+   public static PacketInfo getHandler(ResourceLocation id) {
+        return handlers.get(id);
    }
+
+   public static void sendServer(BlockMorphPacket packet) {
+        ClientPlayNetworking.send(new MainPacket(packet));
+   }
+
+   public static void sendAll(BlockMorphPacket packet) {
+        for (ServerPlayer p : Config.getServer().getPlayerList().getPlayers()) {
+            ServerPlayNetworking.send(p, new MainPacket(packet));
+        }
+   } //config
+
+   public static void sendPlayer(BlockMorphPacket packet, ServerPlayer pl) {
+        ServerPlayNetworking.send(pl, new MainPacket(packet));
+   } //onJoin
+
+   public static void registerPacket(String id, Function<FriendlyByteBuf, BlockMorphPacket> bl, boolean client) {
+        ResourceLocation res = ResourceLocation.fromNamespaceAndPath(BlockomorphServer.MOD_ID, id);
+        if (handlers.containsKey(res)) {
+            throw new IllegalArgumentException("Packet with Id: " + id + " alredy registered!");
+        }
+        handlers.put(ResourceLocation.fromNamespaceAndPath(BlockomorphServer.MOD_ID, id), new PacketInfo(bl, client));
+   }
+
+   public record PacketInfo(Function<FriendlyByteBuf, BlockMorphPacket> packet, boolean isClient) {}
+
+   @Nullable
+   public static BannedBlock isBannedBlock(BlockState state, @Nullable Player pl) {
+        String name = BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
+        Config.Mode mode = Config.getInstance().getValue("listMode");
+        if ((!state.isSolid() || state.getBlock() instanceof BarrierBlock || state.getBlock() instanceof MovingPistonBlock) && (state.getBlock() != Blocks.AIR) && (boolean)Config.getInstance().getValue("solidBlocksOnly")) {
+            return new BannedBlock("Block " + name + " not allowed because is solid!", Component.translatable("commands.blockmorph.solid"));
+        } else if (pl != null && ((PlayerAccessor)pl).getTnt() != null) {
+            return new BannedBlock("Block " + name + " not allowed because player-tnt caught fire!", Component.translatable("commands.blockmorph.tnt"));
+        } else if (mode == Config.Mode.WHITELIST) {
+            if (!((List<String>)Config.getInstance().getValue("allowedBlocks")).contains(name))
+                return new BannedBlock("Block " + name + " not allowed because it not in whitelist!", Component.translatable("commands.blockmorph.whitelist"));
+        } else if (mode == Config.Mode.BLACKLIST) {
+            if (((List<String>)Config.getInstance().getValue("bannedBlocks")).contains(name))
+                return new BannedBlock("Block " + name + " not allowed because it in blacklist!", Component.translatable("commands.blockmorph.blacklist"));
+        }
+        return null;
+   }
+
+   public record BannedBlock(String reason, Component text) {}
 
    public static void onPlayerClone(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean alive) {
         CompoundTag originalNBT = oldPlayer.saveWithoutId(new CompoundTag());
-        CompoundTag newNBT = newPlayer.saveWithoutId(new CompoundTag());
 
-        if (originalNBT.contains("BlockMorph")) {
+       if (originalNBT.contains("BlockMorph")) {
             CompoundTag tag = new CompoundTag();
             tag.put("BlockMorph", originalNBT.getCompound("BlockMorph"));
             newPlayer.load(tag);
@@ -133,8 +151,6 @@ public class MorphUtils {
         Player player = (Player)pl;
         AABB hitbox = player.getBoundingBox();
         Vec3 playerCenter = player.position();
-        double hitboxMinX = hitbox.minX;
-        double hitboxMinZ = hitbox.minZ;
 
         double offsetX = hitbox.minX - (playerCenter.x + minpos.getX());
         double offsetZ = hitbox.minZ - (playerCenter.z + minpos.getZ());
@@ -144,7 +160,7 @@ public class MorphUtils {
 
    public static boolean onPlayerAttack(Player player, Entity mob, BlockPos part) {
    	    if (mob.level().isClientSide() && mob instanceof PlayerAccessor mb2) mb2.setReady(false);
-   	    if (mob instanceof PlayerAccessor mb && player instanceof ServerPlayer pl && mb.isActive() && part != null) {
+   	    if (mob instanceof PlayerAccessor mb && player instanceof ServerPlayer pl && mb.isFullActive() && part != null) {
    	    	GameType gm = pl.gameMode.getGameModeForPlayer();
     	    if (player.isCreative()) {
     	    	destroy(mb, player);
@@ -159,15 +175,24 @@ public class MorphUtils {
 
    public static boolean onPlayerAttacked(LivingEntity attacked, DamageSource damage, float amount) {
    	    if (attacked instanceof PlayerAccessor pl) {
-   	        boolean allowed =
-   	        damage.is(DamageTypes.GENERIC_KILL) || 
-   	        damage.is(DamageTypes.FELL_OUT_OF_WORLD) ||
-   	        damage.is(DamageTypes.PLAYER_EXPLOSION) ||
-   	        damage.is(DamageTypes.EXPLOSION);
+            boolean noTnt = pl.getTnt() == null;
+            boolean tntBlock = pl.getBlockState().getBlock() instanceof TntBlock;
+            boolean tntDamage =
+                    damage.is(DamageTypes.PLAYER_EXPLOSION) ||
+                            damage.is(DamageTypes.EXPLOSION);
+            boolean allowed =
+                    damage.is(DamageTypes.GENERIC_KILL) ||
+                            damage.is(DamageTypes.FELL_OUT_OF_WORLD);
    	        if (pl.isActive()) {
-   	        	if (allowed) {
-   	        		destroy(pl, damage.getEntity());
-   	        	}
+                if (allowed || (!tntBlock && tntDamage)) {
+                    destroy(pl, damage.getEntity());
+                } else if (tntBlock && tntDamage && noTnt) {
+                    pl.setTnt();
+                    PrimedTnt tnt = pl.getTnt();
+                    if (tnt != null) {
+                        tnt.setFuse(tnt.getFuse() / 2);
+                    }
+                }
    	        	if (!(damage.is(PLAYER_DESTROYED) || damage.is(PLAYER_DESTROYED_NULL))) return true; 
    	        }
    	    }
@@ -180,10 +205,10 @@ public class MorphUtils {
    	        if (mc.player != null) {
                 boolean isAttackPressed = mc.options.keyAttack.isDown();
 
-                if (hitEntity instanceof PlayerAccessor pl && pl.isActive()) {
+                if (hitEntity instanceof PlayerAccessor pl && pl.isFullActive()) {
                 	int i = pl.getBiggestProgress();
                 	if ((hitPart != null && !isAttackPressed && i > -1) || (attackPressed && !isAttackPressed)) {
-                        ClientPlayNetworking.send(new ServerBoundInteractBlockPacket(false, -1, hitPart));
+                        MorphUtils.sendServer(new ServerBoundInteractBlockPacket(false, -1, hitPart));
                         pl.setReady(true);
                 	}
                     if (i > -1 && hit != null && isAttackPressed) {
@@ -195,7 +220,7 @@ public class MorphUtils {
                     	if (gm.getDelay() > 0) {
                     		gm.setDelay(gm.getDelay() - 1);
                     	} else {
-                    		ClientPlayNetworking.send(new ServerBoundInteractBlockPacket(true, hitEntity.getId(), hitPart));
+                    		MorphUtils.sendServer(new ServerBoundInteractBlockPacket(true, hitEntity.getId(), hitPart));
                     		onPlayerAttack(mc.player, hitEntity, null);
                     	}
                     }
@@ -274,14 +299,57 @@ public class MorphUtils {
    @Environment(EnvType.CLIENT)
    public static boolean onAttackBlockPlayer() { 
    	    Minecraft mc = Minecraft.getInstance();
-   	    if (hit != null && hit.getEntity() instanceof PlayerAccessor pl && pl.isActive()) {
+   	    if (hit != null && hit.getEntity() instanceof PlayerAccessor pl && pl.isFullActive()) {
    	    	if (hitEntity instanceof Player) {
-   	    	    ClientPlayNetworking.send(new ServerBoundInteractBlockPacket(true, hitEntity.getId(), hitPart));
+   	    	    MorphUtils.sendServer(new ServerBoundInteractBlockPacket(true, hitEntity.getId(), hitPart));
    	    	    onPlayerAttack(mc.player, hitEntity, null);
    	    	}
    	    	return true;
    	    }
    	    return false;
+   }
+
+   @Environment(EnvType.CLIENT)
+   public static boolean performClientUse() {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (!attackPressed && hit != null && hit.getEntity() instanceof PlayerAccessor pl && pl.isFullActive()) {
+            for(InteractionHand interactionhand : InteractionHand.values()) {
+                ItemStack itemstack = player.getItemInHand(interactionhand);
+                if (!itemstack.isItemEnabled(mc.level.enabledFeatures())) {
+                    return false;
+                }
+
+                Vec3 mb_pos = hitEntity.position();
+                VoxelShape shape = pl.getRenderShape(hitPart).move(mb_pos.x, mb_pos.y, mb_pos.z).move(-0.5, 0, -0.5);
+                Direction dir = getClosestHitSide(shape, hit.getLocation());
+                boolean flag = false;
+                for (AABB aabb : shape.toAabbs()) {
+                    if (aabb.contains(hit.getLocation())) {
+                        flag = true;
+                        break;
+                    }
+                }
+
+                BlockHitResult hiting = new BlockHitResult(hit.getLocation(), dir, hitPart, flag);
+                int i = itemstack.getCount();
+                InteractionResult interactionresult1 = pl.clickPlayer(player, hiting, interactionhand);
+                sendServer(new ServerBoundUseBlockPacket(hiting, interactionhand));
+                if (interactionresult1.consumesAction()) {
+                    if (interactionresult1 instanceof InteractionResult.Success s && s.swingSource() == InteractionResult.SwingSource.CLIENT) {
+                        player.swing(interactionhand);
+                        if (!itemstack.isEmpty() && (itemstack.getCount() != i || mc.gameMode.hasInfiniteItems())) {
+                            mc.gameRenderer.itemInHandRenderer.itemUsed(interactionhand);
+                        }
+                    }
+                    return true;
+                }
+                if (interactionresult1 == InteractionResult.FAIL) {
+                    return false;
+                }
+            }
+        }
+        return false;
    }
 
    @Environment(EnvType.CLIENT)
@@ -373,6 +441,7 @@ public class MorphUtils {
     	Entity mob = (Player)mob_pl;
     	HashMap<BlockPos, BlockState> blocks = new HashMap(mob_pl.getBlocks());
     	blocks.put(new BlockPos(0, 0, 0), mob_pl.getBlockState());
+        boolean hasTnt = mob_pl.getTnt() != null;
         
         Holder<DamageType> damage = mob.level().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).
         getOrThrow(attacker == null ? PLAYER_DESTROYED_NULL : PLAYER_DESTROYED);
@@ -383,7 +452,7 @@ public class MorphUtils {
     		mob_pl.applyBlockMorph(net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), new CompoundTag(), false);
     	}
 
-    	if (mob.level() instanceof ServerLevel lv) {
+    	if (mob.level() instanceof ServerLevel lv &&!hasTnt) {
         	for (Map.Entry<BlockPos, BlockState> entry : blocks.entrySet()) {
             	BlockPos pos = entry.getKey();
             	BlockState val = entry.getValue();
@@ -441,7 +510,7 @@ public class MorphUtils {
            (f >= ab.minZ - tolerance && f <= ab.maxZ + tolerance);
    }
 
-   private static void particle(ServerLevel world, double x, double y, double z, BlockState blockState, VoxelShape shape) {
+   static void particle(ServerLevel world, double x, double y, double z, BlockState blockState, VoxelShape shape) {
     if (!blockState.isAir() && blockState.shouldSpawnTerrainParticles()) {
         VoxelShape voxelShape = shape;
         double d0 = 0.25D;

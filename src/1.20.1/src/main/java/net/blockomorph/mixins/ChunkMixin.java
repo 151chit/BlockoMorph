@@ -1,27 +1,25 @@
 package net.blockomorph.mixins;
 
 import net.blockomorph.utils.PlayerAccessor;
-
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.AABB;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.ChunkPos;
-import org.spongepowered.asm.mixin.Shadow;
-import net.minecraft.world.entity.player.Player;
 import java.util.List;
-import net.minecraft.world.phys.AABB;
 
 @Mixin(LevelChunk.class)
 public abstract class ChunkMixin {
 
+   @Final
    @Shadow Level level;
    
    @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true)

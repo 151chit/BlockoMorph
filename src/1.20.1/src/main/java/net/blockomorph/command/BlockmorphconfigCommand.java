@@ -1,24 +1,14 @@
 
 package net.blockomorph.command;
 
-import net.blockomorph.utils.config.*;
-
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.common.util.FakePlayerFactory;
-
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.core.Direction;
-import net.minecraft.commands.arguments.MessageArgument;
-import net.minecraft.commands.Commands;
-
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.blockomorph.utils.config.Config;
+import net.blockomorph.utils.config.ConfigInstance;
 import net.minecraft.commands.CommandSourceStack;
-import com.mojang.brigadier.tree.CommandNode;
+import net.minecraft.commands.Commands;
+import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber
 public class BlockmorphconfigCommand {

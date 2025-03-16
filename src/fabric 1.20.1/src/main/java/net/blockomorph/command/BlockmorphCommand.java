@@ -1,29 +1,26 @@
 
 package net.blockomorph.command;
 
-import net.blockomorph.utils.*;
-import net.blockomorph.utils.config.*;
-
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.core.Direction;
-import net.minecraft.commands.arguments.blocks.BlockStateArgument;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.Commands;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.block.Block;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import net.blockomorph.utils.BlockAccessor;
+import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.config.Config;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.commands.arguments.blocks.BlockStateArgument;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.BoolArgumentType;
 
 public class BlockmorphCommand {
 
@@ -52,7 +49,6 @@ public class BlockmorphCommand {
 	}
 
 	private static int morphBlock(CommandSourceStack stack, BlockState blockstate, Collection<ServerPlayer> players, CompoundTag tag, boolean many, boolean mb, boolean mbUse) {
-        String mess = MorphUtils.isBannedBlock(blockstate);
         if (Config.getInstance() == null) {
 			stack.sendFailure(
 				Component.literal("Config not loaded, something works like that... :/")
@@ -64,20 +60,11 @@ public class BlockmorphCommand {
 			);
 			return 0;
 		}
-		if (!mess.isEmpty()) {
-			if (mess.contains("black")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.blacklist")
-				);
-			} else if (mess.contains("white")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.whitelist")
-				);
-			} else if (mess.contains("solid")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.solid")
-				);
-			}
+		MorphUtils.BannedBlock mess = MorphUtils.isBannedBlock(blockstate, null);
+		if (mess != null) {
+			stack.sendFailure(
+					mess.text()
+			);
 			return 0;
 		}
 		Block state = blockstate.getBlock();

@@ -1,28 +1,20 @@
 package net.blockomorph.utils.config;
 
-import java.util.ArrayList;
-import java.io.FileWriter;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
+import net.blockomorph.network.ClientBoundConfigUpdatePacket;
+import net.blockomorph.utils.MorphUtils;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.fml.loading.FMLPaths;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
-import java.nio.file.Path;
 import java.nio.file.Files;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.players.PlayerList;
-import net.minecraft.client.Minecraft;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.PacketDistributor;
-import net.blockomorph.BlockomorphMod;
-import net.blockomorph.network.ClientBoundConfigUpdatePacket;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonElement;
-import net.minecraft.network.chat.Component;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Config {
    private static final String configDir = FMLPaths.GAMEDIR.get() + "\\config\\blockomorph.json";
@@ -38,7 +30,6 @@ public class Config {
    static Config INSTANCE;
 
    private Config() {
-   	  INSTANCE = this;
    }
 
    public <T> T getValue(String option) {
@@ -55,8 +46,8 @@ public class Config {
    }
 
    public void makeDirty() {
-   	  write();
-   	  BlockomorphMod.PACKET_HANDLER.send(PacketDistributor.ALL.noArg(), new ClientBoundConfigUpdatePacket(this));
+	   write();
+	   MorphUtils.sendAll(new ClientBoundConfigUpdatePacket(this));
    }
 
    public void parse(String op, String val, boolean isPacket) {
@@ -77,20 +68,25 @@ public class Config {
    	  }
    }
 
-   public static void readFromBufer(FriendlyByteBuf buf) {
-   	  new Config();
-   	  for (ConfigInstance<?> con : INSTANCE.options) {
+   public static Config readFromBufer(FriendlyByteBuf buf) {
+   	  Config cfg = new Config();
+   	  for (ConfigInstance<?> con : cfg.options) {
    	  	con.readBufer(buf);
    	  }
+	  return cfg;
    }
 
    public static Config getInstance() {
    	  return INSTANCE;
    }
 
+   public static void load(Config cfg) {
+	   INSTANCE = cfg;
+   }
+
    public static Config load() {
    	  Path path = Path.of(configDir);
-   	  new Config();
+   	  INSTANCE = new Config();
    	  if (!Files.exists(path)) {
    	  	INSTANCE.write();
    	  	return INSTANCE;

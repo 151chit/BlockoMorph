@@ -1,27 +1,23 @@
 package net.blockomorph.screens;
 
-import net.blockomorph.utils.config.*;
-import net.blockomorph.screens.MorphScreen;
-import net.blockomorph.network.ServerBoundConfigUpdatePacket;
-import net.blockomorph.BlockomorphMod;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.blockomorph.core.MainBus;
-
-
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.blockomorph.network.ServerBoundConfigUpdatePacket;
+import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.config.*;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
-import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
-import java.util.List;
-import java.util.ArrayList;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+
 import java.util.Arrays;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import java.util.List;
 
 public class ConfigScreen extends Screen {
    private static final ResourceLocation texture = new ResourceLocation("blockomorph:textures/screens/config_screen.png");
@@ -116,7 +112,7 @@ public class ConfigScreen extends Screen {
    }
 
    private void send(ServerBoundConfigUpdatePacket p) {
-   	    ClientPlayNetworking.send(MainBus.SERVER_CONFIG, p);
+   	    MorphUtils.sendServer(p);
    }
 
    private boolean isMouseOver(double mouseX, double mouseY, int x, int y, int width, int height) {

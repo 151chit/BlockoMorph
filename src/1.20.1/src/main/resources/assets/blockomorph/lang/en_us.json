@@ -13,6 +13,8 @@
   "gui.blockomorph.save": "Save",
   "commands.blockmorph.you": "You have been morphed into %s.",
   "gui.blockomorph.mb": "Multiblock",
+  "gui.blockomorph.mb.deprecated1": "Multiblock mode is deprecated, it will be integrated",
+  "gui.blockomorph.mb.deprecated2": "and always enabled in the next update on all versions!",
   "gui.blockomorph.listMode": "List mode",
   "gui.blockomorph.playerDieAfterDestroy": "Player die after destroy",
   "commands.blockmorph.config": "Value of option \"%s\" changed to %s.",

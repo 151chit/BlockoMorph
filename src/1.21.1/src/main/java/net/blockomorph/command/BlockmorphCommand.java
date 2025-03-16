@@ -67,21 +67,11 @@ public class BlockmorphCommand {
 			);
 			return 0;
 		}
-		String mess = MorphUtils.isBannedBlock(blockstate);
-		if (!mess.isEmpty()) {
-			if (mess.contains("black")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.blacklist")
-				);
-			} else if (mess.contains("white")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.whitelist")
-				);
-			} else if (mess.contains("solid")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.solid")
-				);
-			}
+		MorphUtils.BannedBlock mess = MorphUtils.isBannedBlock(blockstate, null);
+		if (mess != null) {
+			stack.sendFailure(
+					mess.text()
+			);
 			return 0;
 		}
 		for (Entity entityiterator : players) {
@@ -95,18 +85,12 @@ public class BlockmorphCommand {
 		}
 		if (many) {
 			if (players.size() == 1) {
-				stack.sendSuccess(() -> {
-                return Component.translatable("commands.blockmorph.single", players.iterator().next().getDisplayName(), state.getName());
-                }, true);
+				stack.sendSuccess(() -> Component.translatable("commands.blockmorph.single", players.iterator().next().getDisplayName(), state.getName()), true);
 			} else {
-				stack.sendSuccess(() -> {
-                return Component.translatable("commands.blockmorph.many", players.size(), state.getName());
-                }, true);
+				stack.sendSuccess(() -> Component.translatable("commands.blockmorph.many", players.size(), state.getName()), true);
 			}
 		} else {
-			stack.sendSuccess(() -> {
-            return Component.translatable("commands.blockmorph.you", state.getName());
-            }, true);
+			stack.sendSuccess(() -> Component.translatable("commands.blockmorph.you", state.getName()), true);
 		}
 		return players.size();
 	}

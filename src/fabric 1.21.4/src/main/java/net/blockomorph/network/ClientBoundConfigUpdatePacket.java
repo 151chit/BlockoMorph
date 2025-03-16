@@ -1,45 +1,37 @@
 package net.blockomorph.network;
 
-import net.blockomorph.BlockomorphMod;
-import net.blockomorph.screens.*;
-import net.blockomorph.utils.config.*;
-
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.function.Supplier;
-import io.netty.buffer.Unpooled;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.blockomorph.screens.MorphScreen;
+import net.blockomorph.utils.config.Config;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.protocol.common.custom.DiscardedPayload;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 
-public record ClientBoundConfigUpdatePacket(Config c) implements CustomPacketPayload {
-   public static final Type<ClientBoundConfigUpdatePacket> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(BlockomorphMod.MOD_ID, "client_bound_config_update_packet"));
-   public static final StreamCodec<RegistryFriendlyByteBuf, ClientBoundConfigUpdatePacket> STREAM_CODEC = StreamCodec.of((RegistryFriendlyByteBuf buffer, ClientBoundConfigUpdatePacket message) -> {
-		message.c.writeInBufer(buffer);
-	}, (RegistryFriendlyByteBuf buffer) -> new ClientBoundConfigUpdatePacket(Config.readFromBufer(buffer)));
+public class ClientBoundConfigUpdatePacket implements BlockMorphPacket {
+    public static final String ID = "client_bound_config_update_packet";
+    Config config;
+    public ClientBoundConfigUpdatePacket(FriendlyByteBuf buf) {
+        this.config = Config.readFromBufer(buf);
+    }
 
-   public static void apply(Minecraft client) {
-		if (client.screen instanceof MorphScreen s) {
-		   s.updateAllowed();
-		}
-   }
+    public ClientBoundConfigUpdatePacket(Config cfg) {
+        this.config = cfg;
+    }
 
-   @Override
-   public Type<ClientBoundConfigUpdatePacket> type() {
-		return ID;
-   }
-   
+    @Override
+    public void write(FriendlyByteBuf buffer) {
+        this.config.writeInBufer(buffer);
+    }
+
+    @Override
+    public String getId() {
+        return ID;
+    }
+
+    @Override
+    public void handle(Player player) {
+        Config.load(this.config);
+        if (Minecraft.getInstance().screen instanceof MorphScreen s) {
+            s.updateAllowed();
+        }
+    }
 }

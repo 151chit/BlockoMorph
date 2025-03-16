@@ -6,6 +6,7 @@
     "BlockInputMixin",
     "PlayerMixin",
     "EntityGetterMixin",
+    "EntityMixin",
     "ServerMoveMixin",
     "ServerPlayerMixin",
     "DimensionMixin"

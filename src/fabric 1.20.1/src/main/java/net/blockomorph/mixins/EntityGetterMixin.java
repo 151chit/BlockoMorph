@@ -1,27 +1,24 @@
 package net.blockomorph.mixins;
 
-import org.spongepowered.asm.mixin.Mixin;
-
-import net.blockomorph.utils.*;
-
+import com.google.common.collect.ImmutableList;
+import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.PlayerAccessor;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.shapes.BooleanOp;
-import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.level.border.WorldBorder;
-
-import com.google.common.collect.ImmutableList;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.List;
 import java.util.function.Predicate;
-
-import org.jetbrains.annotations.Nullable;
 
 @Mixin(Level.class)
 public abstract class EntityGetterMixin implements LevelAccessor, CollisionGetter {
@@ -47,7 +44,7 @@ public abstract class EntityGetterMixin implements LevelAccessor, CollisionGette
         
                   shape = MorphUtils.centerVoxelShape(shape, pl);
 
-                  if (pl.isActive())
+                  if (pl.isFullActive())
                	      builder.add(shape);
                } else {
                   builder.add(Shapes.create(entity.getBoundingBox()));

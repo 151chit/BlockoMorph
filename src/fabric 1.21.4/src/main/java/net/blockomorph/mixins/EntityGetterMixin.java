@@ -48,7 +48,7 @@ public abstract class EntityGetterMixin implements LevelAccessor, CollisionGette
                   //shape = shape.move(entity.getX() - 0.5, entity.getY(), entity.getZ() - 0.5);
                   shape = MorphUtils.centerVoxelShape(shape, pl);
 
-                  if (pl.isActive())
+                  if (pl.isFullActive())
                	      builder.add(shape);
                } else {
                   builder.add(Shapes.create(entity.getBoundingBox()));

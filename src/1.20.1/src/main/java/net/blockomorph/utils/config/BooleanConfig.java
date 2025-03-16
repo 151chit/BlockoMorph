@@ -1,14 +1,14 @@
 package net.blockomorph.utils.config;
 
-import net.minecraft.network.FriendlyByteBuf;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.ArgumentBuilder;
-import net.minecraft.commands.Commands;
 import com.mojang.brigadier.arguments.BoolArgumentType;
-import net.minecraft.network.chat.Component;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 
 public class BooleanConfig extends ConfigInstance<Boolean> {
    public BooleanConfig(String n, boolean value) {

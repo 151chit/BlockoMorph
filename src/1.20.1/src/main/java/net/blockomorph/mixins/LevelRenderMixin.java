@@ -1,16 +1,12 @@
 package net.blockomorph.mixins;
 
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.gen.Invoker;
-
-import net.blockomorph.utils.LevelRendererAccessor;
-
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.blockomorph.utils.accessors.LevelRendererAccessor;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.world.phys.shapes.VoxelShape;
-
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.PoseStack;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(LevelRenderer.class)
 public abstract class LevelRenderMixin implements LevelRendererAccessor {

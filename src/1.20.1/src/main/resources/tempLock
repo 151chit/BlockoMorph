@@ -1,0 +1,3 @@
+playerMixin - public InteractionResult clickPlayer - other interaction
+useController - tick
+playerMixin - applyBlockMorph - always rewrite blockMap

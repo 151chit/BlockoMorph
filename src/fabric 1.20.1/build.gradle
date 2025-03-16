@@ -3,14 +3,16 @@ plugins {
     id 'maven-publish'
 }
 
-version = '1.0'
-group = 'com.yourname.modid'
-archivesBaseName = "modid"
+version = '1.0.7'
+group = 'net.blockomorph'
+archivesBaseName = "blockomorph-1.20.1-fabric"
 testmodid = 'blockomorph'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-loom {}
+loom {
+
+}
 
 dependencies {
     minecraft "com.mojang:minecraft:1.20.1"
@@ -35,8 +37,8 @@ processResources {
 java {
     withSourcesJar()
 
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 jar {

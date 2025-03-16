@@ -1,5 +1,8 @@
 package net.blockomorph.mixins;
 
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.TntRenderState;
+import net.minecraft.world.entity.item.PrimedTnt;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.At;
@@ -71,6 +74,7 @@ extends EntityRenderer<T, S> {
    private final BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
    private final BlockEntityRenderDispatcher blockEntityRenderDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
    private final ItemInHandRenderer itemRenderer = Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer();
+    private final EntityRenderDispatcher entityDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
    private final BlockPos AIR = new BlockPos(0, 512, 0); 
 
    private final Minecraft mc = Minecraft.getInstance();
@@ -100,22 +104,38 @@ extends EntityRenderer<T, S> {
    )
    public void render(S state, PoseStack posestack, MultiBufferSource buffer, int packedLight, CallbackInfo ci) {
       if (state instanceof PlayerRenderState r && this.getPl(r).getPlayer() instanceof PlayerAccessor pl) {
-      	if (pl.isActive()) { 
-      	   ci.cancel();
-      	   AbstractClientPlayer player = (AbstractClientPlayer)pl;
-      	   posestack.pushPose();
-      	   this.adjustMatrixForPlayer(posestack, pl, player);
-      	   this.renderBlock(player, posestack, buffer, pl);
-      	   float g = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(!Minecraft.getInstance().level.tickRateManager().isEntityFrozen(player));
-           this.renderBlockEntity(player, g, posestack, buffer, packedLight, pl);
-           this.renderBreak(player, posestack, buffer, pl);
-           this.renderFrame(player, posestack, buffer, pl);
-           posestack.popPose();
-           this.shadowRadius = 0.0f;
-      	} else {
-           this.shadowRadius = 0.5f;
-        }
+          AbstractClientPlayer player = (AbstractClientPlayer)pl;
+          float g = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(!Minecraft.getInstance().level.tickRateManager().isEntityFrozen(player));
+          if (pl.isFullActive()) {
+              ci.cancel();
+              posestack.pushPose();
+              this.adjustMatrixForPlayer(posestack, pl, player);
+              this.renderBlock(player, posestack, buffer, pl);
+              this.renderBlockEntity(player, g, posestack, buffer, packedLight, pl);
+              this.renderBreak(player, posestack, buffer, pl);
+              this.renderFrame(player, posestack, buffer, pl);
+              posestack.popPose();
+              this.shadowRadius = 0.0f;
+          } else {
+              if (pl.getTnt() != null) {
+                  ci.cancel();
+                  this.renderTnt(player, g, posestack, buffer, packedLight, pl);
+              }
+              this.shadowRadius = 0.5f;
+          }
       }
+   }
+
+   private void renderTnt(AbstractClientPlayer player, float ticks, PoseStack posestack, MultiBufferSource buffer, int light, PlayerAccessor pl) {
+        PrimedTnt tnt = pl.getTnt();
+        try {
+            EntityRenderer<PrimedTnt, TntRenderState> rend = (EntityRenderer<PrimedTnt, TntRenderState>) entityDispatcher.getRenderer(pl.getTnt());
+            TntRenderState state = rend.createRenderState(tnt, ticks);
+            rend.render(state, posestack, buffer, light);
+        } catch (Exception e) {
+            if (player == Minecraft.getInstance().player && Minecraft.getInstance().screen instanceof BlockMorphConfigScreen sc)
+                sc.tagException = e.getMessage();
+        }
    }
 
    private void adjustMatrixForPlayer(PoseStack poseStack, PlayerAccessor pl, AbstractClientPlayer player) {
@@ -131,34 +151,6 @@ extends EntityRenderer<T, S> {
         poseStack.translate(offsetX, 0.0, offsetZ);
    }
 
-   /*private void rotate(PoseStack poseStack, Direction dir) {
-    	switch (dir) {
-    	        case NORTH -> poseStack.mulPose(Axis.YP.rotationDegrees(180));
-				case EAST -> poseStack.mulPose(Axis.YP.rotationDegrees(90));
-				case WEST -> poseStack.mulPose(Axis.YP.rotationDegrees(270));
-    	};
-   }
-
-   private void renderTool(AbstractClientPlayer player, PoseStack posestack, MultiBufferSource buffer, int light) {
-   	    ItemStack right = player.getMainHandItem();
-        ItemStack left = player.getOffhandItem();
-        if (right != null && !right.isEmpty())
-   	       this.renderItems(posestack, buffer, light, true, right, player);
-   	    if (left != null && !left.isEmpty())
-   	       this.renderItems(posestack, buffer, light, false, left, player);
-   }
-
-   private void renderItems(PoseStack posestack, MultiBufferSource buffer, int light, boolean right, ItemStack stack, AbstractClientPlayer player) {
-   	    posestack.pushPose();
-   	    int swing = 10;
-        if (player.swinging) swing = swing + player.swingTime * 15;
-   	    posestack.mulPose(Axis.XP.rotationDegrees(swing));
-   	    posestack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-   	    posestack.translate((!right ? -8.5F : 8.5F) / 16.0F, 0.5F, 0.0F);
-   	    itemRenderer.renderItem(player, stack, right ? ItemDisplayContext.THIRD_PERSON_RIGHT_HAND : ItemDisplayContext.THIRD_PERSON_LEFT_HAND, false, posestack, buffer, light);
-   	    posestack.popPose();
-   }*/
-
    private void renderBlock(AbstractClientPlayer player, PoseStack posestack, MultiBufferSource buffer, PlayerAccessor pl) {
       	BlockState blockstate = pl.getBlockState();
       	this.renderBlock(player, blockstate, posestack, buffer, player.blockPosition());
@@ -173,7 +165,7 @@ extends EntityRenderer<T, S> {
 
    private void renderBlock(AbstractClientPlayer player, BlockState blockstate, PoseStack posestack, MultiBufferSource buffer, BlockPos offset) {
    	    Level level = player.level();
-   	    BlockPos pos = offset;// NEED REPAIR TO FIX LIGHT!!!!!!
+   	    BlockPos pos = offset;
    	    posestack.pushPose();
         var model = this.dispatcher.getBlockModel(blockstate);
         var renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockstate);
@@ -189,7 +181,7 @@ extends EntityRenderer<T, S> {
       		posestack.pushPose();
             posestack.translate(pos.getX(), pos.getY(), pos.getZ());
             BlockPos offset = player.blockPosition().offset(pos);
-            this.renderBlockEntity(entry.getValue(), player, partialticks, posestack, buffer, this.getRenderLight((T)player, offset), pl, offset); //getRenderLight USE TO FIX LIGHT
+            this.renderBlockEntity(entry.getValue(), player, partialticks, posestack, buffer, this.getRenderLight((T)player, offset), pl, offset);
       		posestack.popPose();
    	    }
    }
@@ -222,6 +214,7 @@ extends EntityRenderer<T, S> {
    private void renderBreak(AbstractClientPlayer player, PoseStack posestack, MultiBufferSource buffer, PlayerAccessor pl) {
    	    CompoundTag k = pl.getProgress();
    	    for (String key : k.getAllKeys()) {
+            if (key.equals("fuse")) continue;
    	    	posestack.pushPose();
    	    	
    	    	BlockPos pos = this.parseBlockPos(key);

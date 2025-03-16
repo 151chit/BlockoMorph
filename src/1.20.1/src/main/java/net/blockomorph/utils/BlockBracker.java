@@ -1,28 +1,25 @@
 package net.blockomorph.utils;
 
-import net.blockomorph.utils.*;
-import java.util.List;
-import net.minecraft.world.entity.player.Player;
-import java.util.ArrayList;
-import java.util.Iterator;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
-import org.jetbrains.annotations.Nullable;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.SoundType;
-import java.util.AbstractMap;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.entity.Entity;
-import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.world.level.block.TntBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.AbstractMap;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BlockBracker {
     private final PlayerAccessor player;
@@ -31,7 +28,7 @@ public class BlockBracker {
     private final BlockState blockstate;
     private final EntityDataAccessor<CompoundTag> PROGRESSES;
     private final SynchedEntityData entityData;
-    public List<Player> players = new CopyOnWriteArrayList<>();
+    public final List<Player> players = new CopyOnWriteArrayList<>();
     private Player attacker; 
     private boolean braking;
     private boolean brake;
@@ -76,13 +73,13 @@ public class BlockBracker {
       	    for (Player pl : this.players) {
                 //Player pl = iterator.next();
                 PlayerAccessor pla = (PlayerAccessor)pl;
-                AbstractMap.SimpleEntry<BlockPos, EntityHitResult> hit = MorphUtils.getPlayerLookedResult(pl, -1, 1);
+                MorphUtils.MorphedPlayerHit hit = MorphUtils.getPlayerLookedResult(pl, -1, 1);
                 if (pla.readyForDestroy()) {
-                	if (hit.getValue() == null || hit.getValue().getEntity() != owner) {
+                	if (hit == null || hit.hitResult().getEntity() != owner) {
                 		//iterator.remove();
                 	    this.players.remove(pl);
                 	} else {
-                		BlockPos pos = hit.getKey();
+                		BlockPos pos = hit.blockOffset();
                 		if (!pos.equals(this.offset)) {
                 			this.removePlayer(pl);
                 			this.player.addPlayer(pos, pl);
@@ -119,13 +116,9 @@ public class BlockBracker {
        }
     }
 
-    private String getKey() {
-    	return this.offset.getX() +
-    		" " +
-    		this.offset.getY() +
-    		" " +
-    		this.offset.getZ();
-    }
+	private String getKey() {
+		return MorphUtils.getBlockPos(this.offset);
+	}
 
     private void destroy(Player attacker) {
     	BlockState st = player.getBlockState();
@@ -168,7 +161,7 @@ public class BlockBracker {
     }
 
     public synchronized void removePlayer(Player pl) {
-        if (this.players.contains(pl)) this.players.remove(pl);
+        this.players.remove(pl);
     }
 
     @Nullable
@@ -191,8 +184,7 @@ public class BlockBracker {
     private float getTime(BlockState blockState, BlockPos blockPos, Player pl) {
    	    float cooldown = this.getCoolDown(blockState, blockPos, pl);
     	if (cooldown == -1) return cooldown;
-    	float time = cooldown / 20;
-    	return time;
+        return cooldown / 20;
     }
 
     private void setTimeFloat(float time2) {

@@ -21,10 +21,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.HitResult;
 
 @Mixin(GameRenderer.class)
-public abstract class GameRendererMixin { 
+public abstract class GameRendererMixin {
+ 
    @ModifyVariable(method = "pick(Lnet/minecraft/world/entity/Entity;DDF)Lnet/minecraft/world/phys/HitResult;", at = @At(value = "STORE", ordinal = 0), ordinal = 0)
    private EntityHitResult onPick(EntityHitResult hit) {
-     if ((hit != null && hit.getEntity() instanceof PlayerAccessor pl && pl.isActive()) || MorphUtils.hitPart != null) {
+     if ((hit != null && hit.getEntity() instanceof PlayerAccessor pl && pl.isFullActive()) || MorphUtils.hitPart != null) {
      	return null;
      }
      return hit;

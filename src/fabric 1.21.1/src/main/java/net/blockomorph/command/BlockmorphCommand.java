@@ -52,7 +52,6 @@ public class BlockmorphCommand {
 	}
 
 	private static int morphBlock(CommandSourceStack stack, BlockState blockstate, Collection<ServerPlayer> players, CompoundTag tag, boolean many, boolean mb, boolean mbUse) {
-		String mess = MorphUtils.isBannedBlock(blockstate);
 		if (Config.getInstance() == null) {
 			stack.sendFailure(
 				Component.literal("Config not loaded, something works like that... :/")
@@ -64,20 +63,11 @@ public class BlockmorphCommand {
 			);
 			return 0;
 		}
-		if (!mess.isEmpty()) {
-			if (mess.contains("black")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.blacklist")
-				);
-			} else if (mess.contains("white")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.whitelist")
-				);
-			} else if (mess.contains("solid")) {
-				stack.sendFailure(
-					Component.translatable("commands.blockmorph.solid")
-				);
-			}
+		MorphUtils.BannedBlock mess = MorphUtils.isBannedBlock(blockstate, null);
+		if (mess != null) {
+			stack.sendFailure(
+					mess.text()
+			);
 			return 0;
 		}
 		Block state = blockstate.getBlock();

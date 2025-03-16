@@ -13,6 +13,8 @@
   "gui.blockomorph.save": "Запись",
   "commands.blockmorph.you": "Вы были упешно превращены в %s.",
   "gui.blockomorph.mb": "Мультиблок",
+  "gui.blockomorph.mb.deprecated1": "Режим мультиблока устарел, он будет интегрирован и",
+  "gui.blockomorph.mb.deprecated2": "всегда включён в следующем обновлении на всех версиях!",
   "gui.blockomorph.listMode": "Режим доступа",
   "gui.blockomorph.playerDieAfterDestroy": "Игрок гибнет после добычи",
   "commands.blockmorph.config": "Значение параметра %s было изменено на %s.",

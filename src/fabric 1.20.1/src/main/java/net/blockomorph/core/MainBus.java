@@ -1,70 +1,82 @@
 package net.blockomorph.core;
 
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.Registry;
-
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-
-import net.blockomorph.utils.*;
-import net.blockomorph.utils.config.*;
-import net.blockomorph.screens.PlayerCrackOverlay;
+import net.blockomorph.BlockomorphServer;
+import net.blockomorph.command.BlockmorphCommand;
+import net.blockomorph.command.BlockmorphconfigCommand;
+import net.blockomorph.command.EnumArgument;
 import net.blockomorph.network.*;
-import net.blockomorph.command.*;
-import net.blockomorph.BlockomorphMod;
+import net.blockomorph.screens.PlayerCrackOverlay;
+import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.config.Config;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 
 public class MainBus {
-	public static final ResourceLocation MORPH_PACKET = new ResourceLocation(BlockomorphMod.MOD_ID, "server_bound_block_morph_packet");
-	public static final ResourceLocation INTERACT_PACKET = new ResourceLocation(BlockomorphMod.MOD_ID, "server_bound_interact_block_packet");
-	public static final ResourceLocation CLIENT_CONFIG = new ResourceLocation(BlockomorphMod.MOD_ID, "client_bound_config_update_packet");
-	public static final ResourceLocation SERVER_CONFIG = new ResourceLocation(BlockomorphMod.MOD_ID, "server_bound_config_update_packet");
 
+	@Environment(value = EnvType.CLIENT)
 	public static void registerClient() {
-		ClientPlayNetworking.registerGlobalReceiver(CLIENT_CONFIG, ClientBoundConfigUpdatePacket::apply);
-		HudRenderCallback.EVENT.register((matrices, tickDelta) -> {
-			PlayerCrackOverlay.render(matrices, tickDelta);
+		ClientPlayNetworking.registerGlobalReceiver(MainPacket.ID, (client, handler, buf, responseSender) -> {
+			try {
+				Runnable run = MainPacket.preApply(buf, null, true);
+				run.run();
+			} catch (Exception e) {
+				handler.getConnection().disconnect(Component.literal(e.getMessage()));
+			}
 		});
-		KeyBindingHelper.registerKeyBinding(KeyMappings.MORPH);
-		KeyBindingHelper.registerKeyBinding(KeyMappings.CONFIG);
-		KeyBindingHelper.registerKeyBinding(KeyMappings.MORPH_CONFIG);
+		HudRenderCallback.EVENT.register(PlayerCrackOverlay::render);
+		KeyMappings.registerKeyMappings(KeyBindingHelper::registerKeyBinding);
 		ClientTickEvents.END_CLIENT_TICK.register((mc) -> {
 			MorphUtils.onClientTick();
 		});
 		WorldRenderEvents.BEFORE_ENTITIES.register((context) -> {
 			MorphUtils.onPick();
 		});
+		registerMain();
 	}
 
 	public static void registerServer() {
-		ServerPlayNetworking.registerGlobalReceiver(MORPH_PACKET, ServerBoundBlockMorphPacket::apply);
-		ServerPlayNetworking.registerGlobalReceiver(INTERACT_PACKET, ServerBoundInteractBlockPacket::apply);
-		ServerPlayNetworking.registerGlobalReceiver(SERVER_CONFIG, ServerBoundConfigUpdatePacket::apply);
-		ServerLifecycleEvents.SERVER_STARTING.register(Config::setServer);
-		ArgumentTypeRegistry.registerArgumentType(new ResourceLocation(BlockomorphMod.MOD_ID, "enum_argument"), EnumArgument.class, new EnumArgument.ContextInfo());
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			ServerPlayer p = handler.player;
+			MorphUtils.sendPlayer(new ClientBoundConfigUpdatePacket(Config.getInstance()), p);
+		});
+		ServerPlayerEvents.COPY_FROM.register(MorphUtils::onPlayerClone);
+		registerMain();
+	}
+
+	private static void registerMain() {
+		ArgumentTypeRegistry.registerArgumentType(new ResourceLocation(BlockomorphServer.MOD_ID, "enum_argument"), EnumArgument.class, new EnumArgument.ContextInfo());
 		CommandRegistrationCallback.EVENT.register((dispatcher, commandBuildContext, environment) -> {
 			BlockmorphCommand.register(dispatcher, commandBuildContext, environment);
 			BlockmorphconfigCommand.register(dispatcher, commandBuildContext, environment);
 		});
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			ServerPlayer p = handler.player;
-			ServerPlayNetworking.send(p, CLIENT_CONFIG, new ClientBoundConfigUpdatePacket(Config.getInstance()));
+		ServerPlayNetworking.registerGlobalReceiver(MainPacket.ID, (server, player, handler, buf, responseSender) -> {
+			try {
+				Runnable run = MainPacket.preApply(buf, player, false);
+				run.run();
+			} catch (Exception e) {
+				handler.disconnect(Component.literal(e.getMessage()));
+			}
 		});
-		ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
-			MorphUtils.onPlayerClone(oldPlayer, newPlayer, alive);
-		});
+		ServerLifecycleEvents.SERVER_STARTING.register(Config::setServer);
+		MorphUtils.registerPacket(ClientBoundConfigUpdatePacket.ID, ClientBoundConfigUpdatePacket::new, true);
+		MorphUtils.registerPacket(ServerBoundUseBlockPacket.ID, ServerBoundUseBlockPacket::new, false);
+		MorphUtils.registerPacket(ServerBoundBlockMorphPacket.ID, ServerBoundBlockMorphPacket::new, false);
+		MorphUtils.registerPacket(ServerBoundInteractBlockPacket.ID, ServerBoundInteractBlockPacket::new, false);
+		MorphUtils.registerPacket(ServerBoundConfigUpdatePacket.ID, ServerBoundConfigUpdatePacket::new, false);
 	}
 
 }

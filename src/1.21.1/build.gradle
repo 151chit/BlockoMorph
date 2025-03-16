@@ -3,8 +3,8 @@ plugins {
     id 'net.neoforged.moddev' version '1.0.20'
 }
 
-version = '1.0'
-base.archivesName = "modid"
+version = '3.0.9'
+base.archivesName = "blockomorph-1.21.1-neoforge"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
@@ -35,3 +35,4 @@ neoForge {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
+

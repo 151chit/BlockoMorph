@@ -2,22 +2,26 @@
   "required": true,
   "package": "net.blockomorph.mixins",
   "compatibilityLevel": "JAVA_17",
-  "refmap": "mixins.blockomorph.refmap.json",
   "mixins": [
+    "BlockEntityMixin",
     "BlockInputMixin",
-    "PlayerMixin",
+    "CombinerMenuMixin",
+    "DebugMixin",
     "EntityGetterMixin",
-    "ServerMoveMixin",
-    "EntityMixin"
+    "EntityMixin",
+    "MenuMixin",
+    "PlayerMixin",
+    "ServerPacketListenerMixin",
+    "ServerPlayerMixin"
   ],
   "client": [
-  	"PlayerRendererMixin",
-  	"EntityRendererMixin",
-    "LevelRenderMixin",
     "ClientPacketListenerMixin",
-    "GameRendererMixin",
+    "EntityRendererMixin",
     "GameModeManagerMixin",
-    "NickMixinMixin"
+    "GameRendererMixin",
+    "LevelRenderMixin",
+    "PlayerRendererMixin",
+    "blockUseFeatureFix.SignFixMixin"
   ],
   "minVersion": "0.8"
 }
