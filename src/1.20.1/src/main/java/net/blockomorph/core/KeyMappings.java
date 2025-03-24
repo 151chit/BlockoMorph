@@ -41,21 +41,6 @@ public class KeyMappings {
 		}
 	});
 
-	public static final KeyMapping db = new HandlerKeymapping("key.blockomorph.config_menu2", GLFW.GLFW_KEY_I, () -> {
-		MorphUtils.sendServer(new DebugPacket(BlockHitResult.miss(Vec3.ZERO, Direction.DOWN, BlockPos.ZERO)));
-	});
-
-	public static final KeyMapping db2 = new HandlerKeymapping("key.blockomorph.config_menu22", GLFW.GLFW_KEY_J, () -> {
-		if (Minecraft.getInstance().hitResult instanceof BlockHitResult bl) {
-			MorphUtils.sendServer(new DebugPacket(bl));
-			DebugPacket.handleAlternative(bl, mc.player);
-		}
-	});
-
-	public static final KeyMapping db3 = new HandlerKeymapping("key.blockomorph.config_menu223", GLFW.GLFW_KEY_V, () -> {
-		MorphUtils.sendServer(new DebugPacket2());
-	});
-
 	@SubscribeEvent
 	public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
 		for (KeyMapping key : KEYS) {
