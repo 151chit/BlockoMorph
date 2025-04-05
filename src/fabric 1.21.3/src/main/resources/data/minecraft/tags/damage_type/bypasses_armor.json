@@ -1,7 +1,0 @@
-{
-  "replace": false,
-  "values": [
-    "blockomorph:player_destroyed_null",
-    "blockomorph:player_destroyed"
-  ]
-}
