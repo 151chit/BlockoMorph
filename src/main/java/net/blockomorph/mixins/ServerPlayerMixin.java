@@ -10,12 +10,13 @@ import org.spongepowered.asm.mixin.Mixin;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerLevel;
 
 @Mixin(ServerPlayer.class)
 public class ServerPlayerMixin {
    @Inject(method = "hurtServer", at = @At("HEAD"), cancellable = true)
-   public void hurt(ServerLevel lv, DamageSource damage, float count, CallbackInfoReturnable<Boolean> cir) {
-   	  if (MorphUtils.onPlayerAttacked(damage, (Entity)(Object)this)) cir.setReturnValue(false);
+   public void hurtServer(ServerLevel lv, DamageSource damage, float count, CallbackInfoReturnable<Boolean> cir) {
+   	  if (MorphUtils.onPlayerAttacked((LivingEntity)(Object)this, damage, count)) cir.setReturnValue(false);
    }
 }

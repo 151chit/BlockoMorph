@@ -1,13 +1,6 @@
 
 package net.blockomorph.command;
 
-import org.checkerframework.checker.units.qual.s;
-
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-
 import net.blockomorph.utils.*;
 import net.blockomorph.utils.config.*;
 
@@ -16,25 +9,27 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.Direction;
 import net.minecraft.commands.arguments.blocks.BlockStateArgument;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.commands.CommandBuildContext;
 
 import java.util.Collection;
 import java.util.Collections;
+
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
 
-@EventBusSubscriber
 public class BlockmorphCommand {
-	@SubscribeEvent
-	public static void registerCommand(RegisterCommandsEvent event) {
-        event.getDispatcher().register(
-				Commands.literal("blockmorph").requires(s -> s.hasPermission(2)).then(Commands.argument("block", BlockStateArgument.block(event.getBuildContext())).then(Commands.argument("targets", EntityArgument.players()).executes(arguments -> {
+
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection environment) {
+		dispatcher.register(
+				Commands.literal("blockmorph").requires(s -> s.hasPermission(2)).then(Commands.argument("block", BlockStateArgument.block(commandBuildContext)).then(Commands.argument("targets", EntityArgument.players()).executes(arguments -> {
 					return morphBlock(arguments.getSource(), 
 					BlockStateArgument.getBlock(arguments, "block").getState(), 
 					EntityArgument.getPlayers(arguments, "targets"), 
@@ -54,12 +49,10 @@ public class BlockmorphCommand {
 					false, false, false);
 				}))
 		);
-
 	}
 
 	private static int morphBlock(CommandSourceStack stack, BlockState blockstate, Collection<ServerPlayer> players, CompoundTag tag, boolean many, boolean mb, boolean mbUse) {
-		Block state = blockstate.getBlock();
-        if (Config.getInstance() == null) {
+		if (Config.getInstance() == null) {
 			stack.sendFailure(
 				Component.literal("Config not loaded, something works like that... :/")
 			);
@@ -77,6 +70,7 @@ public class BlockmorphCommand {
 			);
 			return 0;
 		}
+		Block state = blockstate.getBlock();
 		for (Entity entityiterator : players) {
 			if (entityiterator instanceof PlayerAccessor pl) {
 				if (mbUse) {

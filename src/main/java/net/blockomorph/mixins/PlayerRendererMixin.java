@@ -2,7 +2,6 @@ package net.blockomorph.mixins;
 
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.TntRenderState;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -31,31 +30,34 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.level.GameType;
+import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 
 import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
+
+import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.util.ARGB;
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
-import javax.annotation.Nullable;
+import net.minecraft.client.renderer.ShapeRenderer;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.client.renderer.LightTexture;
-import java.util.Map;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import oshi.jna.platform.mac.SystemB;
 
+//@Debug(export = true)
 @Mixin(LivingEntityRenderer.class)
 public abstract class PlayerRendererMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>> 
 extends EntityRenderer<T, S> {
    private final BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
    private final BlockEntityRenderDispatcher blockEntityRenderDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
+   private final ItemInHandRenderer itemRenderer = Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer();
    private final EntityRenderDispatcher entityDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
    private final BlockPos AIR = new BlockPos(0, 512, 0); 
 
@@ -78,7 +80,7 @@ extends EntityRenderer<T, S> {
    	  if (playerRenderState instanceof PlayerRenderState r)
    	      this.getPl(r).loadPlayer((AbstractClientPlayer)abstractClientPlayer);
    }
-   
+
    @Inject(
       method = {"render"},
       at = {@At("HEAD")},

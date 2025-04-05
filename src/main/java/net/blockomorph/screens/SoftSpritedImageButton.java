@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.RenderType;
 
 public class SoftSpritedImageButton extends ImageButton {
-    public SoftSpritedImageButton(int i, int j, int k, int l, WidgetSprites widgetSprites, Button.OnPress onPress) {
+    public SoftSpritedImageButton(int i, int j, int k, int l, WidgetSprites widgetSprites, OnPress onPress) {
     	super(i, j, k, l, widgetSprites, onPress);
     }
     

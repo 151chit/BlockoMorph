@@ -13,8 +13,7 @@ import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class TntSpawnLevel extends MultiBlockLevel {
 	private PrimedTnt tnt;
@@ -43,6 +42,11 @@ public class TntSpawnLevel extends MultiBlockLevel {
 		this.realLevel.playSound(pl, bp, se, ss, sp1, sp2);
 	}
 
+	@Override
+	public boolean hasNeighborSignal(BlockPos blockPos) {
+		return true;
+	}
+
 	public BlockState getBlockState(BlockPos p) {
 		return this.need;
 	}
@@ -52,7 +56,7 @@ public class TntSpawnLevel extends MultiBlockLevel {
 	}
 
 	public void playSeededSound(
-		@Nullable Player a1, 
+		@Nullable Player a1,
 		double a2, 
 		double a3, 
 		double a4, 

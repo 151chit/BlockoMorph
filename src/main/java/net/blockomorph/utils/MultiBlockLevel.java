@@ -52,8 +52,6 @@ import net.minecraft.world.level.material.Fluid;
 import java.util.HashMap;
 import java.util.function.Predicate;
 
-import net.neoforged.neoforge.entity.PartEntity;
-
 public class MultiBlockLevel 
 extends Level {
     private final HashMap<BlockPos, BlockState> blocks = new HashMap<>();
@@ -92,19 +90,6 @@ extends Level {
     public Level getRealLevel() {
         return this.realLevel;
     }
-
-    @Override
-    public void setDayTimePerTick(float t) {}
-
-    public float getDayTimePerTick() {
-    	return realLevel.getDayTimePerTick();
-    }
-
-    public float getDayTimeFraction() {
-    	return realLevel.getDayTimeFraction();
-    }
-
-    public void setDayTimeFraction(float t) {}
 
     public void sendBlockUpdated(BlockPos var1, BlockState var2, BlockState var3, int var4) {}
 

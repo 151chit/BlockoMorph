@@ -6,15 +6,12 @@ import net.blockomorph.screens.MorphScreen;
 import net.blockomorph.utils.config.Config;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
+
 public class KeyMappings {
     private static final Minecraft mc = Minecraft.getInstance();
 	private static final ArrayList<KeyMapping> KEYS = new ArrayList<>();
@@ -33,10 +30,9 @@ public class KeyMappings {
 		}
 	});
 
-	@SubscribeEvent
-	public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
+	static void registerKeyMappings(Consumer<KeyMapping> register) {
 		for (KeyMapping key : KEYS) {
-			event.register(key);
+			register.accept(key);
 		}
 	}
 
