@@ -59,4 +59,6 @@ public class MainPacket implements CustomPacketPayload {
     public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
+
+    //res instanceof InteractionResult.Success s && s.swingSource() == InteractionResult.SwingSource.SERVER
 }

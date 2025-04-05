@@ -96,6 +96,7 @@ public class Config {
    	  	INSTANCE.write();
    	  	return INSTANCE;
    	  }
+   	  Gson gson = new GsonBuilder().setPrettyPrinting().create();
       try (BufferedReader reader = new BufferedReader(new FileReader(configDir))) {
             JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
             for (ConfigInstance<?> option : INSTANCE.options) {

@@ -122,6 +122,14 @@ public class MorphScreen extends Screen {
         }
 	}
 
+	public List<Block> getRegistredBlocks() {
+		List<Block> blocks = new ArrayList<>();
+		for (var entry : BuiltInRegistries.BLOCK.entrySet()) {
+             blocks.add(entry.getValue());
+        }
+        return blocks;
+	}
+
 	private void loadCreativeBlocks(Minecraft mc) {
 		LocalPlayer pl = mc.player;
 		if (CreativeModeTabs.tryRebuildTabContents(
@@ -136,14 +144,6 @@ public class MorphScreen extends Screen {
                 sessionSearchTrees.updateCreativeTags(list);
 			}
 		}
-	}
-
-	public List<Block> getRegistredBlocks() {
-		List<Block> blocks = new ArrayList<>();
-		for (var entry : BuiltInRegistries.BLOCK.entrySet()) {
-             blocks.add(entry.getValue());
-        }
-        return blocks;
 	}
 
 	public boolean isConfig() {
@@ -706,7 +706,7 @@ public class MorphScreen extends Screen {
 		if (this.isConfig()) this.addRenderableWidget(Button.builder(Component.literal("<--"), b -> this.minecraft.setScreen(new ConfigScreen()) ).pos(this.leftPos + 10, this.topPos + this.imageHeight + 1).size(20, 20).build());
 		if (pageCount > 1) {
             this.addRenderableWidget(Button.builder(Component.literal("<"), b -> this.setPage(false)).pos(leftPos - 22,  topPos - 22).size(20, 20).build());
-            this.addRenderableWidget(Button.builder(Component.literal(">"), b -> this.setPage(true)).pos(leftPos + imageWidth - 0, topPos - 22).size(20, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal(">"), b -> this.setPage(true)).pos(leftPos + imageWidth, topPos - 22).size(20, 20).build());
         }
 	}
 }

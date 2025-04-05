@@ -1,6 +1,5 @@
 package net.blockomorph.mixins;
 
-import net.blockomorph.Blockomorph;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -19,6 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.blockomorph.utils.*;
 import net.blockomorph.screens.BlockMorphConfigScreen;
+
+import net.blockomorph.Blockomorph;
 
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.nbt.CompoundTag;
@@ -49,14 +50,15 @@ import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 import net.minecraft.world.level.block.AnvilBlock;
-import net.minecraft.util.Mth;
 import java.util.function.Predicate;
+
+import net.minecraft.util.Mth;
 import java.util.HashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import java.util.Map;
 import net.minecraft.world.phys.shapes.Shapes;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 
 @Mixin(Player.class)
@@ -76,7 +78,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 
    @Inject(method = "defineSynchedData", at = @At("TAIL"), cancellable = true)
    protected void defineSynchedData(SynchedEntityData.Builder builder, CallbackInfo ci) {
-      CompoundTag morphblocktag = new CompoundTag();
+   	  CompoundTag morphblocktag = new CompoundTag();
       morphblocktag.put("BlockState", NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
       morphblocktag.putBoolean("MultiBlock", false);
       builder.define(DATA_BlockMorph, morphblocktag);
@@ -133,6 +135,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
                 if (!this.level().isClientSide) this.applyBlockMorph(Blocks.AIR.defaultBlockState(), new CompoundTag());
             }
         }
+        //if (this.level().getBlockState(this.blockPosition()).getBlock() instanceof BaseFireBlock && !this.level().isClientSide) this.setTnt();
         if (this.getRemainingFireTicks() > 0 && !this.level().isClientSide) {
             this.setTnt();
         }
@@ -180,6 +183,12 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    	      	  blockEntityTag = new CompoundTag();
    	      }
           if (tag != null) {
+          	  if (false)
+              for (String key : tag.getAllKeys()) {
+                if (blockEntityTag.contains(key)) {
+                    blockEntityTag.put(key, tag.get(key));
+                }
+              } 
               blockEntityTag.merge(tag);
           }
    	    } catch (Exception e) {
@@ -201,8 +210,8 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    }
 
    public BlockState getBlockState() {
-        BlockState blockstate = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), this.entityData.get(DATA_BlockMorph).getCompound("BlockState"));
-        return blockstate;
+   	  BlockState blockstate = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), this.entityData.get(DATA_BlockMorph).getCompound("BlockState"));
+   	  return blockstate;
    }
 
    public InteractionResult clickPlayer(Player clicker, BlockHitResult hiter, InteractionHand hand) {
@@ -457,26 +466,26 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 
    @Override
    public void onSyncedDataUpdated(EntityDataAccessor<?> p_20059_) {
-   	  super.onSyncedDataUpdated(p_20059_);
-      if (DATA_BlockMorph.equals(p_20059_)) {
-      	 this.updateBlocks();
-      	 this.minPos = this.findMinPos();
-      	 this.maxPos = this.findMaxPos();
-         this.refreshDimensions();
-         if (this.level().isClientSide()) this.clientUpdate();
-      } else if (this.level().isClientSide() && BRAKE_PROGRESS.equals(p_20059_)) {
-          int i = this.entityData.get(BRAKE_PROGRESS).getInt("fuse");
-          if (i < 0) {
-              this.tnt = null;
-          } else {
-              if (this.tnt == null) {
-                  this.setTnt();
-              }
-              if (this.tnt != null) {
-                  this.tnt.setFuse(i);
-              }
-          }
-      }
+       super.onSyncedDataUpdated(p_20059_);
+       if (DATA_BlockMorph.equals(p_20059_)) {
+           this.updateBlocks();
+           this.minPos = this.findMinPos();
+           this.maxPos = this.findMaxPos();
+           this.refreshDimensions();
+           if (this.level().isClientSide()) this.clientUpdate();
+       } else if (this.level().isClientSide() && BRAKE_PROGRESS.equals(p_20059_)) {
+           int i = this.entityData.get(BRAKE_PROGRESS).getInt("fuse");
+           if (i < 0) {
+               this.tnt = null;
+           } else {
+               if (this.tnt == null) {
+                   this.setTnt();
+               }
+               if (this.tnt != null) {
+                   this.tnt.setFuse(i);
+               }
+           }
+       }
    }
 
    @OnlyIn(Dist.CLIENT)

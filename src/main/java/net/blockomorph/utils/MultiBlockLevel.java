@@ -56,11 +56,11 @@ import net.neoforged.neoforge.entity.PartEntity;
 
 public class MultiBlockLevel 
 extends Level {
-    private final HashMap<BlockPos, BlockState> blocks = new HashMap();
+    private final HashMap<BlockPos, BlockState> blocks = new HashMap<>();
     protected final Level realLevel;
     
-    public MultiBlockLevel(Level lv, boolean cl) {
-        super((WritableLevelData)lv.getLevelData(), lv.dimension(), lv.registryAccess(), lv.dimensionTypeRegistration(), cl, lv.isDebug(), 0, 5);
+    public MultiBlockLevel(Level lv, boolean client) {
+        super((WritableLevelData)lv.getLevelData(), lv.dimension(), lv.registryAccess(), lv.dimensionTypeRegistration(), client, lv.isDebug(), 0, 5);
         this.realLevel = lv;
     }
 
@@ -141,10 +141,6 @@ extends Level {
     @Nullable
     public Entity getEntity(int var1) {
     	return realLevel.getEntity(var1);
-    }
-
-    public Collection<PartEntity<?>> dragonParts() {
-    	return realLevel.dragonParts();//realLevel.dra
     }
 
     public PotionBrewing potionBrewing() {

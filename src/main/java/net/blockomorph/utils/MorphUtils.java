@@ -73,11 +73,11 @@ import net.neoforged.fml.loading.FMLPaths;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.AbstractMap;
 import java.util.Comparator;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
 
 
@@ -153,7 +153,7 @@ public class MorphUtils {
 
    @SubscribeEvent
    public static void onJoin(PlayerEvent.PlayerLoggedInEvent event) {
-        sendPlayer(new ClientBoundConfigUpdatePacket(Config.getInstance()), (ServerPlayer)event.getEntity());
+       sendPlayer(new ClientBoundConfigUpdatePacket(Config.getInstance()), (ServerPlayer)event.getEntity());
    }
 
    public static boolean onPlayerAttack(Player player, Entity mob, BlockPos part) {
@@ -460,29 +460,28 @@ public class MorphUtils {
    }
 
    public static void pickBlockPlayer(Player pl, ItemStack itemstack) {
-   	        if (true) return;
    	        MultiPlayerGameMode gm = Minecraft.getInstance().gameMode;
    	        Inventory inventory = pl.getInventory();
    	        boolean flag = pl.getAbilities().instabuild;
 
             int i = inventory.findSlotMatchingItem(itemstack);
             if (flag) {
-               //inventory.setPickedItem(itemstack);
+               inventory.setPickedItem(itemstack);
                gm.handleCreativeModeItemAdd(pl.getItemInHand(InteractionHand.MAIN_HAND), 36 + inventory.selected);
             } else if (i != -1) {
                if (Inventory.isHotbarSlot(i)) {
                   inventory.selected = i;
                } else {
-                  //gm.handlePickItem(i);
+                  gm.handlePickItem(i);
                }
             }
    }
 
    public static void destroy(PlayerAccessor mob_pl, @Nullable Entity attacker) {
     	LivingEntity mob = (Player)mob_pl;
-        HashMap<BlockPos, BlockState> blocks = new HashMap(mob_pl.getBlocks());
+    	HashMap<BlockPos, BlockState> blocks = new HashMap(mob_pl.getBlocks());
     	blocks.put(new BlockPos(0, 0, 0), mob_pl.getBlockState());
-        boolean hasTnt = mob_pl.getTnt() != null;
+       boolean hasTnt = mob_pl.getTnt() != null;
         
         Holder<DamageType> damage = mob.level().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).
         getOrThrow(attacker == null ? PLAYER_DESTROYED_NULL : PLAYER_DESTROYED);
@@ -548,7 +547,6 @@ public class MorphUtils {
            (e >= ab.minY - tolerance && e <= ab.maxY + tolerance) &&
            (f >= ab.minZ - tolerance && f <= ab.maxZ + tolerance);
    }
-
 
    static void particle(ServerLevel world, double x, double y, double z, BlockState blockState, VoxelShape shape) {
     if (!blockState.isAir() && blockState.shouldSpawnTerrainParticles()) {

@@ -1,9 +1,9 @@
 {
   "commands.blockmorph.blacklist": "Вы не можете превратиться в этот блок так как он в чёрном списке.",
   "commands.blockmorph.enumArg": "Выбран неверный тип %s из списка %s.",
-  "key.blockomorph.morph_config_menu": "Меню настройки вашего блока",
-  "death.attack.player_destroyed.item": "%1$s был разрушен %2$s используя %3$s",
   "death.attack.player_destroyed": "%1$s сломался пока убегал от %2$s",
+  "death.attack.player_destroyed.item": "%1$s был разрушен %2$s используя %3$s",
+  "key.blockomorph.morph_config_menu": "Меню настройки вашего блока",
   "key.blockomorph.config_menu": "Параметры конфигурации",
   "commands.blockmorph.config.emptyList": "Список был очищен.",
   "gui.blockomorph.allowedBlocks": "Разрешённые блоки",

@@ -1,8 +1,6 @@
 package net.blockomorph.screens;
 
 import net.minecraft.client.gui.components.EditBox;
-
-import java.util.HashMap;
 import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;

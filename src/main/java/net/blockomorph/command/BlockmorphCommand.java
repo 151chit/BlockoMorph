@@ -89,16 +89,16 @@ public class BlockmorphCommand {
 		if (many) {
 			if (players.size() == 1) {
 				stack.sendSuccess(() -> {
-                    return Component.translatable("commands.blockmorph.single", players.iterator().next().getDisplayName(), state.getName());
+                return Component.translatable("commands.blockmorph.single", players.iterator().next().getDisplayName(), state.getName());
                 }, true);
 			} else {
 				stack.sendSuccess(() -> {
-                    return Component.translatable("commands.blockmorph.many", players.size(), state.getName());
+                return Component.translatable("commands.blockmorph.many", players.size(), state.getName());
                 }, true);
 			}
 		} else {
 			stack.sendSuccess(() -> {
-                return Component.translatable("commands.blockmorph.you", state.getName());
+            return Component.translatable("commands.blockmorph.you", state.getName());
             }, true);
 		}
 		return players.size();
