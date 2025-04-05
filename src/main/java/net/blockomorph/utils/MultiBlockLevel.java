@@ -52,9 +52,11 @@ import net.minecraft.world.level.material.Fluid;
 import java.util.HashMap;
 import java.util.function.Predicate;
 
+import net.neoforged.neoforge.entity.PartEntity;
+
 public class MultiBlockLevel 
 extends Level {
-    private final HashMap<BlockPos, BlockState> blocks = new HashMap<>();
+    private final HashMap<BlockPos, BlockState> blocks = new HashMap();
     protected final Level realLevel;
     
     public MultiBlockLevel(Level lv, boolean cl) {
@@ -90,6 +92,19 @@ extends Level {
     public Level getRealLevel() {
         return this.realLevel;
     }
+
+    @Override
+    public void setDayTimePerTick(float t) {}
+
+    public float getDayTimePerTick() {
+    	return realLevel.getDayTimePerTick();
+    }
+
+    public float getDayTimeFraction() {
+    	return realLevel.getDayTimeFraction();
+    }
+
+    public void setDayTimeFraction(float t) {}
 
     public void sendBlockUpdated(BlockPos var1, BlockState var2, BlockState var3, int var4) {}
 
@@ -128,8 +143,8 @@ extends Level {
     	return realLevel.getEntity(var1);
     }
 
-    public Collection<EnderDragonPart> dragonParts() {
-    	return realLevel.dragonParts();
+    public Collection<PartEntity<?>> dragonParts() {
+    	return realLevel.dragonParts();//realLevel.dra
     }
 
     public PotionBrewing potionBrewing() {

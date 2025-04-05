@@ -9,8 +9,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 
 import net.blockomorph.utils.*;
-import net.blockomorph.core.*;
 import net.blockomorph.screens.BlockMorphConfigScreen;
+
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -37,44 +38,31 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.level.GameType;
-import net.minecraft.client.renderer.ItemInHandRenderer;
-import net.minecraft.core.Direction;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 
 import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
-import net.minecraft.util.Mth;
-
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
-import org.spongepowered.asm.mixin.Debug;
-import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.model.EntityModel;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.util.ARGB;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.ShapeRenderer;
-import java.util.Map.Entry;
-import java.util.Map;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.nbt.CompoundTag;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.util.ARGB;
+import net.minecraft.client.renderer.entity.state.PlayerRenderState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import javax.annotation.Nullable;
+import java.util.Map;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.nbt.CompoundTag;
 
-//@Debug(export = true)
 @Mixin(LivingEntityRenderer.class)
 public abstract class PlayerRendererMixin<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>> 
 extends EntityRenderer<T, S> {
    private final BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
    private final BlockEntityRenderDispatcher blockEntityRenderDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
-   private final ItemInHandRenderer itemRenderer = Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer();
-    private final EntityRenderDispatcher entityDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
+   private final EntityRenderDispatcher entityDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
    private final BlockPos AIR = new BlockPos(0, 512, 0); 
 
    private final Minecraft mc = Minecraft.getInstance();
@@ -96,7 +84,7 @@ extends EntityRenderer<T, S> {
    	  if (playerRenderState instanceof PlayerRenderState r)
    	      this.getPl(r).loadPlayer((AbstractClientPlayer)abstractClientPlayer);
    }
-
+   
    @Inject(
       method = {"render"},
       at = {@At("HEAD")},
@@ -165,7 +153,7 @@ extends EntityRenderer<T, S> {
 
    private void renderBlock(AbstractClientPlayer player, BlockState blockstate, PoseStack posestack, MultiBufferSource buffer, BlockPos offset) {
    	    Level level = player.level();
-   	    BlockPos pos = offset;
+   	    BlockPos pos = offset;// NEED REPAIR TO FIX LIGHT!!!!!!
    	    posestack.pushPose();
         var model = this.dispatcher.getBlockModel(blockstate);
         var renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockstate);
@@ -181,7 +169,7 @@ extends EntityRenderer<T, S> {
       		posestack.pushPose();
             posestack.translate(pos.getX(), pos.getY(), pos.getZ());
             BlockPos offset = player.blockPosition().offset(pos);
-            this.renderBlockEntity(entry.getValue(), player, partialticks, posestack, buffer, this.getRenderLight((T)player, offset), pl, offset);
+            this.renderBlockEntity(entry.getValue(), player, partialticks, posestack, buffer, this.getRenderLight((T)player, offset), pl, offset); //getRenderLight USE TO FIX LIGHT
       		posestack.popPose();
    	    }
    }

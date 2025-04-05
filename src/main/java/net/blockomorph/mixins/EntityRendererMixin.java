@@ -13,9 +13,8 @@ import net.minecraft.client.renderer.MultiBufferSource;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+
 import org.joml.Quaternionf;
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 
 @Mixin(EntityRenderDispatcher.class)
@@ -43,5 +42,4 @@ public abstract class EntityRendererMixin {
    	  	if (pl.isActive()) ci.cancel();
    	  }
    }
-
 }

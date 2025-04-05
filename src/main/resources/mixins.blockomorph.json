@@ -16,8 +16,6 @@
     "EntityRendererMixin",
     "GameModeManagerMixin",
     "GameRendererMixin",
-    "HudMixin",
-    "MinecraftMixin",
     "PlayerRendererMixin",
     "RenderStateMixin"
   ],

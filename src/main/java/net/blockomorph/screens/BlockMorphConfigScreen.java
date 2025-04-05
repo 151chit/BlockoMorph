@@ -1,8 +1,8 @@
 package net.blockomorph.screens;
 
 import net.blockomorph.utils.*;
-import net.blockomorph.network.*;
 import net.blockomorph.utils.config.*;
+import net.blockomorph.network.*;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
@@ -40,6 +40,9 @@ import com.mojang.math.Axis;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.network.PacketDistributor;
+
 import org.joml.Matrix4f;
 
 import java.util.Optional;
@@ -47,13 +50,12 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.WidgetSprites;
+import net.minecraft.client.gui.components.ImageButton;
 
 public class BlockMorphConfigScreen extends Screen {
    private static final ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/morph_config_gui.png");
+   private static final ResourceLocation PROP = ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/properties.png");
    private static final WidgetSprites SAVE_BUT = new WidgetSprites(
    	ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/save_but_def.png"),
    	ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/save_but_dis.png"),
@@ -63,7 +65,6 @@ public class BlockMorphConfigScreen extends Screen {
    	ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/edit_buk_def.png"),
    	ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/edit_buk_hov.png")
    );
-   private static final ResourceLocation PROP = ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/properties.png");
    private final BlockRenderDispatcher dispatcher = Minecraft.getInstance().getBlockRenderer();
    private final BlockEntityRenderDispatcher blockEntityRenderDispatcher = Minecraft.getInstance().getBlockEntityRenderDispatcher();
    private final SoundManager sound = Minecraft.getInstance().getSoundManager();
@@ -99,9 +100,10 @@ public class BlockMorphConfigScreen extends Screen {
 
    @Override
    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-   	    super.render(guiGraphics, mouseX, mouseY, partialTicks);
-   	    this.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
+		super.render(guiGraphics, mouseX, mouseY, partialTicks);
+		this.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
 		this.renderLb(guiGraphics);
+		tagsBox.render(guiGraphics, mouseX, mouseY, partialTicks);
 		guiGraphics.drawSpecial(this::extractBuffer);
 		this.renderBlockAsIcon(guiGraphics, partialTicks);
 	    String name = playerState.getBlock().getName().getString();
@@ -283,12 +285,15 @@ public class BlockMorphConfigScreen extends Screen {
    	    		}
    	    	} else break;
    	    }
-   	    if (number) this.listPropNumber = -1;
+   	    if (number) {
+   	    	this.listPropNumber = -1;
+   	    }
    	    return null;
    }
 
-   public boolean mouseScrolled(double x, double y, double unkown, double type) {
-        if (this.isListFocused(x, y)) {
+   public boolean mouseScrolled(double x, double y, double unkown, double type) { //new
+   	    Collection<Property<?>> properties = this.playerState.getProperties();
+   	    if (this.isListFocused(x, y)) {
    	       Collection<Enum<?>> values = listProp.getPossibleValues();
    	       if (values.size() < 7) return true;
    	       if (type < 0 && this.enumListOffset + 7 < values.size()) {
@@ -299,7 +304,6 @@ public class BlockMorphConfigScreen extends Screen {
            return true;
    	    }
    	    if (x < this.leftPos + 93 || x > this.leftPos + 159 || y < this.topPos + 24 || y > this.topPos + 118) return false;
-   	    Collection<Property<?>> properties = this.playerState.getProperties();
    	    if (!(this.getProp(x, y, false) instanceof IntegerProperty prop)) {
    	       if (type < 0 && this.propOff + 5 < properties.size()) {
               this.propOff++;
@@ -333,7 +337,7 @@ public class BlockMorphConfigScreen extends Screen {
         return super.charTyped(c, t);
    }
 
-   public boolean mouseClicked(double x, double y, int type) {
+   public boolean mouseClicked(double x, double y, int type) { //new
    	    if (type == 0) {
    	    	if (x > this.leftPos + 41 && x < this.leftPos + 4 + 80 && y > this.topPos - 19 && y < this.topPos - 19 + 22) {
    	    		this.minecraft.setScreen(new MorphScreen(Config.Mode.NONE, true));
@@ -360,10 +364,14 @@ public class BlockMorphConfigScreen extends Screen {
                     this.listProp = enumprop;
                     sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
    	    	    }
-   	    	}
-            this.enumListOffset = 0; //new
+   	    	} 
+   	    	this.enumListOffset = 0; //new
    	    }
    	    return super.mouseClicked(x, y, type);
+   }
+
+   private void send(BlockState blockState, CompoundTag tag) {
+   	    MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(blockState, tag));
    }
 
    private int getLongWord(Collection<Enum<?>> values) {
@@ -390,7 +398,7 @@ public class BlockMorphConfigScreen extends Screen {
    	    return false;
    }
 
-   private boolean enumClick(double mouseX, double mouseY) {
+   private boolean enumClick(double mouseX, double mouseY) { //new
    	    if (this.listProp != null && this.listPropNumber > -1 && this.listPropNumber < 5) {
    	        Collection<Enum<?>> values = listProp.getPossibleValues();
    	        List<Enum<?>> vals = new ArrayList<>(values);
@@ -406,7 +414,7 @@ public class BlockMorphConfigScreen extends Screen {
 
                 if (isMouseOver(mouseX, mouseY, textX, textY - 2, maxWidth, 12)) {
                 	BlockState state = this.setEnum(this.listProp, string);
-                    this.send(state, this.playerTag);
+                    MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(state, this.playerTag));
                     sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                     return true;
                 }
@@ -424,10 +432,6 @@ public class BlockMorphConfigScreen extends Screen {
       } else {
          throw new IllegalArgumentException("Irregular value " + s + " for argument " + prop.getName());
       }
-   }
-
-   private void send(BlockState blockState, CompoundTag tag) {
-   	    MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(blockState, tag));
    }
 
    private void validSave(String s) {
@@ -467,8 +471,8 @@ public class BlockMorphConfigScreen extends Screen {
 		super.init();
         this.leftPos = (this.width - this.imageWidth) / 2;
         this.topPos = (this.height - this.imageHeight) / 2;
-        tagsBox = new ListenerEditBox(this.font, this.leftPos + 10, this.topPos + 145, 158, 17, null, this::updateNbt);
-        savebox = new ListenerEditBox(this.font, this.leftPos + 15, this.topPos + 102, 31, 17, null, this::validSave);
+        tagsBox = new ListenerEditBox(this.font, this.leftPos + 10, this.topPos + 145, 158, 17, Component.literal("tagbox"), this::updateNbt);
+        savebox = new ListenerEditBox(this.font, this.leftPos + 15, this.topPos + 102, 31, 17, Component.literal("savebox"), this::validSave);
         savebox.setBordered(false);
         savebox.setTextColor(-1);
         savebox.setTextColorUneditable(-1);
@@ -526,17 +530,16 @@ public class BlockMorphConfigScreen extends Screen {
         poseStack.pushPose();
         poseStack.translate(this.leftPos + 71, this.topPos + 63.8, 20); 
         poseStack.mulPose((new Matrix4f()).scaling(1.0F, -1.0F, 1.0F));
-        float size = 36f;
-        poseStack.scale(size, size, size); 
+        poseStack.scale(36.0F, 36.0F, 36.0F); 
         poseStack.mulPose(Axis.XP.rotationDegrees(30.0F));
         poseStack.mulPose(Axis.YP.rotationDegrees(225.0F)); 
         BlockPos pos = AIR;
-        BlockState blockstate = this.playerState;
-        RandomSource random = RandomSource.create(blockstate.getSeed(pos));
-        var model = this.dispatcher.getBlockModel(blockstate);
-        var renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockstate);
-        this.dispatcher.getModelRenderer().tesselateBlock(world, model, blockstate, pos, poseStack, bufferSource.getBuffer(renderType), false, RandomSource.create(), blockstate.getSeed(pos), OverlayTexture.NO_OVERLAY);
-        this.renderBlockEntity(blockstate, ticks, poseStack, bufferSource);
+        BlockState blockState = this.playerState;
+        RandomSource random = RandomSource.create(blockState.getSeed(pos));
+        var model = this.dispatcher.getBlockModel(blockState);
+        for (var renderType : model.getRenderTypes(blockState, random, ModelData.EMPTY))
+            this.dispatcher.getModelRenderer().tesselateBlock(world, model, blockState, pos, poseStack, bufferSource.getBuffer(renderType), false, RandomSource.create(), blockState.getSeed(pos), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType);
+        this.renderBlockEntity(blockState, ticks, poseStack, bufferSource);
         poseStack.popPose();
    }
 
@@ -546,7 +549,7 @@ public class BlockMorphConfigScreen extends Screen {
             if (blockEntity != null) {
               try {
       	        blockEntity.setLevel(world);
-      	        blockEntity.loadWithComponents(playerTag, entity.level().registryAccess());
+      	        blockEntity.loadWithComponents(playerTag, world.registryAccess());
                 BlockEntityRenderer renderer = blockEntityRenderDispatcher.getRenderer(blockEntity);
                 if (renderer != null) {
            	        posestack.pushPose();

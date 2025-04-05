@@ -137,8 +137,7 @@ public class BlockBracker {
 		MorphUtils.destroy(player, attacker);
 	}
 
-
-	private String getKey() {
+    private String getKey() {
     	return this.offset.getX() +
     		" " +
     		this.offset.getY() +

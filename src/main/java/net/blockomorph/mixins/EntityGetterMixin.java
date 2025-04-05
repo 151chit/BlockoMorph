@@ -20,8 +20,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.function.Predicate;
-
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 @Mixin(Level.class)
 public abstract class EntityGetterMixin implements LevelAccessor, CollisionGetter {
@@ -45,7 +44,6 @@ public abstract class EntityGetterMixin implements LevelAccessor, CollisionGette
                if (entity instanceof PlayerAccessor pl) {
                	  VoxelShape shape = pl.getShape();
         
-                  //shape = shape.move(entity.getX() - 0.5, entity.getY(), entity.getZ() - 0.5);
                   shape = MorphUtils.centerVoxelShape(shape, pl);
 
                   if (pl.isFullActive())

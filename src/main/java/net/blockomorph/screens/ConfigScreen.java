@@ -17,8 +17,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
 import java.util.List;
 import java.util.Arrays;
-
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.minecraft.client.renderer.RenderType;
 
 public class ConfigScreen extends Screen {

@@ -1,13 +1,15 @@
 package net.blockomorph.screens;
 
 import net.minecraft.client.gui.components.EditBox;
+
+import java.util.HashMap;
 import java.util.function.Consumer;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.GuiGraphics;
 
 public class ListenerEditBox extends EditBox {
-    private final Consumer<String> run;
+    private Consumer<String> run;
     protected boolean edit = true;
     
 	public ListenerEditBox(Font font, int x, int y, int weight, int height, Component name, Consumer<String> run) {

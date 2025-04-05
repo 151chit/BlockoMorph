@@ -1,9 +1,9 @@
 {
   "commands.blockmorph.blacklist": "You do not have permission to turn into this block because it is blacklisted.",
   "commands.blockmorph.enumArg": "Selected wront value %s from list %s.",
-  "key.blockomorph.morph_config_menu": "Block Morph Config GUI",
-  "death.attack.player_destroyed.item": "%1$s was destroyed by %2$s using %3$s",
   "death.attack.player_destroyed": "%1$s broken was running away from %2$s",
+  "death.attack.player_destroyed.item": "%1$s was destroyed by %2$s using %3$s",
+  "key.blockomorph.morph_config_menu": "Block Morph Config GUI",
   "key.blockomorph.config_menu": "Config options",
   "commands.blockmorph.config.emptyList": "The list has been cleared.",
   "gui.blockomorph.allowedBlocks": "Whitelist blocks",

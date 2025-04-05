@@ -14,13 +14,15 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import com.mojang.brigadier.tree.CommandNode;
-import net.minecraft.commands.CommandBuildContext;
-import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.server.MinecraftServer;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 
+@EventBusSubscriber
 public class BlockmorphconfigCommand {
-
-	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection environment) {
+	@SubscribeEvent
+	public static void registerCommand(RegisterCommandsEvent event) {
 	  Config.load();
 	  LiteralArgumentBuilder<CommandSourceStack> builder = Commands.literal("blockmorphconfig").requires((p) -> {
          return p.hasPermission(2) && (boolean)Config.getInstance().getValue("canOperatorModifyConfig");
@@ -28,9 +30,9 @@ public class BlockmorphconfigCommand {
       
       for (ConfigInstance<?> op : Config.getInstance().options) {
       	 if (!op.getName().equals("canOperatorModifyConfig"))
-            builder = builder.then(op.work(Commands.literal(op.getName()), commandBuildContext));
+            builder = builder.then(op.work(Commands.literal(op.getName()), event.getBuildContext()));
       }
       
-      dispatcher.register(builder);
+      event.getDispatcher().register(builder);
 	}
 }

@@ -10,6 +10,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class MovementCalculator {
     private final Player player;
+    private final PlayerAccessor pl;
     private final Level level;
     private final Direction lookDirection;
     private final boolean error;
@@ -19,6 +20,7 @@ public class MovementCalculator {
         this.level = player.level();
         this.lookDirection = player.getDirection();
         this.error = this.lookDirection == Direction.DOWN || this.lookDirection == Direction.UP;
+        this.pl = playerAccessor;
     }
 
     public void calculateEnterCorrection(Vec3 originalMovement) {

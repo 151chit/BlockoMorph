@@ -1,51 +1,41 @@
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
-    id 'maven-publish'
+    id 'eclipse'
+    id 'net.neoforged.moddev' version '2.0.58-beta'
 }
 
 version = '5.0.3'
-group = 'net.blockomorph'
-archivesBaseName = "blockomorph-1.21.4-fabric"
-testmodid = 'blockomorph'
+base.archivesName = "blockomorph-1.21.4-neoforge"
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
-loom {}
+neoForge {
+    version = "21.4.92-beta"
 
-dependencies {
-    minecraft "com.mojang:minecraft:1.21.4"
-    mappings loom.officialMojangMappings()
-    
-    modImplementation "net.fabricmc:fabric-loader:0.16.9"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:0.112.2+1.21.4"
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        testproject {
+            sourceSet sourceSets.main
+        }
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.encoding = 'UTF-8'
-}
-
-processResources {
-    inputs.property "version", project.version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
-}
-
-remapJar {
-    destinationDirectory = file("D:\\SERVER\\mods\\mod\\blockomorph\\jar\\outPut")
-}
-
-java {
-    withSourcesJar()
-
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
 jar {
-    from "LICENSE"
-}
-
-repositories {
+    destinationDirectory = file("D:\\SERVER\\mods\\mod\\blockomorph\\jar\\outPut")
 }

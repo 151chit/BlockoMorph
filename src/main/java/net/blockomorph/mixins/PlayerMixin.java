@@ -1,6 +1,6 @@
 package net.blockomorph.mixins;
 
-import net.blockomorph.BlockomorphServer;
+import net.blockomorph.Blockomorph;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -40,30 +40,24 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.client.Minecraft;
-import net.fabricmc.api.Environment;
-import net.fabricmc.api.EnvType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-import net.minecraft.tags.FluidTags;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.core.Holder;
-import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.effect.MobEffect;
-
-import java.util.function.Predicate;
 import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.util.Mth;
+import java.util.function.Predicate;
 import java.util.HashMap;
-import net.minecraft.world.phys.shapes.Shapes;
-import java.util.Map;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import java.util.Map;
+import net.minecraft.world.phys.shapes.Shapes;
 import java.util.concurrent.CopyOnWriteArrayList;
+
 
 @Mixin(Player.class)
 public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor {
@@ -80,8 +74,8 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
       super(type, world);
    }
 
-   @Inject(method = "defineSynchedData", at = @At("TAIL"))
-   protected void defineData(SynchedEntityData.Builder builder, CallbackInfo ci) {
+   @Inject(method = "defineSynchedData", at = @At("TAIL"), cancellable = true)
+   protected void defineSynchedData(SynchedEntityData.Builder builder, CallbackInfo ci) {
       CompoundTag morphblocktag = new CompoundTag();
       morphblocktag.put("BlockState", NbtUtils.writeBlockState(Blocks.AIR.defaultBlockState()));
       morphblocktag.putBoolean("MultiBlock", false);
@@ -139,7 +133,6 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
                 if (!this.level().isClientSide) this.applyBlockMorph(Blocks.AIR.defaultBlockState(), new CompoundTag());
             }
         }
-        //if (this.level().getBlockState(this.blockPosition()).getBlock() instanceof BaseFireBlock && !this.level().isClientSide) this.setTnt();
         if (this.getRemainingFireTicks() > 0 && !this.level().isClientSide) {
             this.setTnt();
         }
@@ -150,48 +143,6 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
         progress = progress.copy();
         progress.putInt("fuse", i);
         this.entityData.set(BRAKE_PROGRESS, progress);
-   }
-
-   public boolean isOnFire() {
-   	   if (this.isActive()) return false;
-   	   return super.isOnFire();
-   }
-   
-   public boolean hasEffect(Holder<MobEffect> holder) {
-   	    if (this.isActive() && holder.equals(MobEffects.WATER_BREATHING)) return true;
-        return super.hasEffect(holder);
-   }
-
-   public int getAirSupply() {
-   	   if (this.isActive()) {
-   	   	  if (this.isEyeInFluid(FluidTags.WATER)) {
-   	   	  	return 0;
-   	   	  }
-   	   }
-   	   return super.getAirSupply();
-   }
-
-   public float getHealth() {
-   	   if (super.getHealth() == 0) return 0;
-   	   if (this.isActive()) return 20;
-       return super.getHealth();
-   }
-
-   public void setAirSupply(int i) {
-   	   if (this.isActive()) i = 0;
-       super.setAirSupply(i);
-   }
-
-   public double getAttributeValue(Holder<Attribute> attribute) {
-   	   if (this.isActive()) {
-   	   	   if (attribute.equals(Attributes.MAX_HEALTH)) return 20;
-   	   }
-       return super.getAttributeValue(attribute);
-   }
-
-   @Inject(method = "getAbsorptionAmount", at = @At("HEAD"), cancellable = true)
-   public void getAbsorptionAmount(CallbackInfoReturnable<Float> cir) {
-       if (this.isActive()) cir.setReturnValue(0f);
    }
 
    @Inject(method = "causeFallDamage", at = @At("HEAD"), cancellable = true)
@@ -218,7 +169,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 
    public void applyBlockMorph(BlockState state, CompoundTag tag, boolean mb) {
    	  CompoundTag morphblocktag = this.entityData.get(DATA_BlockMorph);
-   	  morphblocktag = morphblocktag.copy();
+          morphblocktag = morphblocktag.copy(); //FIXME:
    	  if (state.getBlock() instanceof EntityBlock bl) {
    	    CompoundTag blockEntityTag;
    	    try {
@@ -229,16 +180,10 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    	      	  blockEntityTag = new CompoundTag();
    	      }
           if (tag != null) {
-          	  if (false)
-              for (String key : tag.getAllKeys()) {
-                if (blockEntityTag.contains(key)) {
-                    blockEntityTag.put(key, tag.get(key));
-                }
-              } 
               blockEntityTag.merge(tag);
           }
    	    } catch (Exception e) {
-   	    	BlockomorphServer.LOGGER.warn("When receiving original tags from the block entity of the player " + this + " an error occurred: " + e.getMessage());
+   	    	Blockomorph.LOGGER.warn("When receiving original tags from the block entity of the player " + this + " an error occurred: " + e.getMessage());
    	    	blockEntityTag = new CompoundTag();
    	    	blockEntityTag.merge(tag);
    	    }
@@ -248,11 +193,16 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    	  }
    	  morphblocktag.put("BlockState", NbtUtils.writeBlockState(state));
    	  morphblocktag.putBoolean("MultiBlock", mb);
+   	  this.entityData.set(DATA_BlockMorph, morphblocktag, true);
       this.setFuse(-1);
       this.tnt = null;
-   	  this.entityData.set(DATA_BlockMorph, morphblocktag, true);
    	  this.refreshDimensions();
    	  
+   }
+
+   public BlockState getBlockState() {
+        BlockState blockstate = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), this.entityData.get(DATA_BlockMorph).getCompound("BlockState"));
+        return blockstate;
    }
 
    public InteractionResult clickPlayer(Player clicker, BlockHitResult hiter, InteractionHand hand) {
@@ -285,7 +235,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
             TntSpawnLevel lv = new TntSpawnLevel(this.level(), false, state);
             PrimedTnt TNT;
             try {
-                state.handleNeighborChanged(lv, this.blockPosition(), Blocks.REDSTONE_BLOCK, null, false);
+                tnt.onCaughtFire(state, lv, this.blockPosition(), null, (Player) (Object) this);
             } catch (Exception e) {
                 TNT = lv.extractTnt();
                 if (TNT == null) {
@@ -296,8 +246,8 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
             TNT = lv.extractTnt();
             if (TNT == null) {
                 BlockPos ps = this.blockPosition();
-                PrimedTnt primedtnt = new PrimedTnt(this.level(), (double)ps.getX() + 0.5D, ps.getY(), (double)ps.getZ() + 0.5D, null);
-                this.level().playSound(null, primedtnt.getX(), primedtnt.getY(), primedtnt.getZ(), SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F, 1.0F);
+                PrimedTnt primedtnt = new PrimedTnt(this.level(), (double)ps.getX() + 0.5D, (double)ps.getY(), (double)ps.getZ() + 0.5D, null);
+                this.level().playSound((Player)null, primedtnt.getX(), primedtnt.getY(), primedtnt.getZ(), SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F, 1.0F);
                 this.level().gameEvent(null, GameEvent.PRIME_FUSE, ps);
                 this.tnt = primedtnt;
             } else
@@ -306,76 +256,21 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
             this.tnt.setNoGravity(true);
             if (this.level().isClientSide()) {
                 double d0 = this.level().random.nextDouble() * (double)((float)Math.PI * 2F);
-                this.setDeltaMovement(new Vec3(-Math.sin(d0) * 0.02D, 0.2F, -Math.cos(d0) * 0.02D));
+                this.setDeltaMovement(new Vec3(-Math.sin(d0) * 0.02D, (double)0.2F, -Math.cos(d0) * 0.02D));
             }
         }
    }
 
    public PrimedTnt getTnt() {
         return this.tnt;
-    }
+   }
 
    public boolean isFullActive() {
         return this.isActive() && this.tnt == null;
-    }
-
-   public BlockState getBlockState() {
-   	    BlockState blockstate = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), this.entityData.get(DATA_BlockMorph).getCompound("BlockState"));
-   	    return blockstate;
    }
 
    public CompoundTag getTag() {
-   	    return this.entityData.get(DATA_BlockMorph).getCompound("Tags");
-   }
-
-   public HashMap<BlockPos, BlockState> getBlocks() {
-   	    return this.blocks;
-   }
-
-   public boolean isMultiBlock() {
-   	    return this.entityData.get(DATA_BlockMorph).getBoolean("MultiBlock");
-   }
-
-   public BlockPos minPos() {
-   	    return this.minPos;
-   }
-
-   private void updateBlocks() {
-   	    this.blocks.clear();
-		MultiBlockLevel lv = new MultiBlockLevel(this.level(), false);
-		this.getBlockState().getBlock().setPlacedBy(lv, new BlockPos(0, 0, 0), this.getBlockState(), (LivingEntity)(Object)this, ItemStack.EMPTY);
-		if (this.isMultiBlock()) this.blocks = lv.getBlocks();
-        CompoundTag tg = new CompoundTag();
-        tg.putInt("fuse", -1);
-		this.entityData.set(BRAKE_PROGRESS, tg);
-		this.brackers.clear();
-		this.brackers.add(new BlockBracker(
-			this,
-			new BlockPos(0, 0, 0),
-			this.getBlockState(),
-			this.entityData,
-			BRAKE_PROGRESS
-		));
-		for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
-			this.brackers.add(new BlockBracker(
-			    this,
-			    entry.getKey(),
-			    entry.getValue(),
-			    this.entityData,
-			    BRAKE_PROGRESS
-		    ));
-		}
-   }
-
-   public int getBiggestProgress() {
-   	    int i = -1;
-   	    try {
-   	        for (BlockBracker br : this.brackers) {
-   	        	int j = br.getProgress();
-   	   	        if (j > i) i = j;
-   	        }
-   	    } catch (Exception e) {}
-   	    return i;
+   	  return this.entityData.get(DATA_BlockMorph).getCompound("Tags");
    }
 
    public boolean isActive() {
@@ -390,46 +285,40 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
    	    return this.readyForDestroy;
    }
 
-   public void removePlayer(BlockPos pos, Player pl) {
-        for (BlockBracker br : this.brackers) {
-        	if (br.getPos().equals(pos)) {
-        		br.removePlayer(pl);
-        		return;
-        	}
-        }
-   }
-
    @Override
-   public boolean canBeSeenByAnyone() {
+    public boolean canBeSeenByAnyone() {
     	return !this.isActive();
-   }
+    }
 
    @Inject(method = "getDeathSound", at = @At("HEAD"), cancellable = true)
    protected void getDeathSound(CallbackInfoReturnable<SoundEvent> cir) {
-        if (this.isActive()) cir.setReturnValue(null);
+      if (this.isActive()) cir.setReturnValue(null);
    }
 
    @Inject(method = "getHurtSound", at = @At("HEAD"), cancellable = true)
    protected void getHurtSound(DamageSource damage, CallbackInfoReturnable<SoundEvent> cir) {
-        if (this.isActive()) cir.setReturnValue(null);
+      if (this.isActive()) cir.setReturnValue(null);
    }
 
    @Inject(method = "getFallSounds", at = @At("HEAD"), cancellable = true)
    protected void getFallSounds(CallbackInfoReturnable<LivingEntity.Fallsounds> cir) {
-        if (this.isActive()) cir.setReturnValue(new LivingEntity.Fallsounds(SoundEvents.EMPTY, SoundEvents.EMPTY));
-   }
-
-   public void addPlayer(BlockPos pos, Player pl) {
-    	for (BlockBracker br : this.brackers) {
-        	if (br.getPos().equals(pos)) {
-        		br.addPlayer(pl);
-        		return;
-        	}
-        }
+      if (this.isActive()) cir.setReturnValue(new LivingEntity.Fallsounds(SoundEvents.EMPTY, SoundEvents.EMPTY));
    }
 
    public CompoundTag getProgress() {
     	return this.entityData.get(BRAKE_PROGRESS);
+   }
+
+   public HashMap<BlockPos, BlockState> getBlocks() {
+   	    return this.blocks;
+   }
+
+   public boolean isMultiBlock() {
+   	    return this.entityData.get(DATA_BlockMorph).getBoolean("MultiBlock");
+   }
+
+   public BlockPos minPos() {
+   	    return this.minPos;
    }
 
    @Inject(method = "getDefaultDimensions", at = @At("HEAD"), cancellable = true)
@@ -437,7 +326,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
       if (this.isActive()) {
       	BlockPos minPos = this.minPos;
         BlockPos maxPos = this.maxPos;
-        EntityDimensions dim = EntityDimensions.fixed(1f, 1f).withEyeHeight((maxPos.getY() - 1) + 0.83300006f);
+        EntityDimensions dim = EntityDimensions.fixed(0f, 0f).withEyeHeight((maxPos.getY() - 1) + 0.83300006f);
       	((DimAccessor)(Object)dim).setListener((vec3) -> {
       		AABB ab = new AABB(
                 vec3.x + minPos.getX(), 
@@ -489,7 +378,6 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
       return new BlockPos(minX, minY, minZ);
    }
 
-
    private BlockPos findMaxPos() {
    	  if (this.blocks.isEmpty()) return new BlockPos(1, 1, 1);
       int maxX = Integer.MIN_VALUE;
@@ -511,6 +399,61 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
       return new BlockPos(maxX, maxY, maxZ).offset(1, 1, 1);
    }
 
+   private void updateBlocks() {
+   	    this.blocks.clear();
+		MultiBlockLevel lv = new MultiBlockLevel(this.level(), false);
+		this.getBlockState().getBlock().setPlacedBy(lv, new BlockPos(0, 0, 0), this.getBlockState(), (LivingEntity)(Object)this, ItemStack.EMPTY);
+		if (this.isMultiBlock()) this.blocks = lv.getBlocks();
+        CompoundTag tg = new CompoundTag();
+        tg.putInt("fuse", -1);
+		this.entityData.set(BRAKE_PROGRESS, tg);
+		this.brackers.clear();
+		this.brackers.add(new BlockBracker(
+			this,
+			new BlockPos(0, 0, 0),
+			this.getBlockState(),
+			this.entityData,
+			BRAKE_PROGRESS
+		));
+		for (Map.Entry<BlockPos, BlockState> entry : this.blocks.entrySet()) {
+			this.brackers.add(new BlockBracker(
+			    this,
+			    entry.getKey(),
+			    entry.getValue(),
+			    this.entityData,
+			    BRAKE_PROGRESS
+		    ));
+		}
+   }
+
+   public int getBiggestProgress() {
+   	    int i = -1;
+   	    try {
+   	        for (BlockBracker br : this.brackers) {
+   	        	int j = br.getProgress();
+   	   	        if (j > i) i = j;
+   	        }
+   	    } catch (Exception e) {}
+   	    return i;
+   }
+
+   public void removePlayer(BlockPos pos, Player pl) {
+        for (BlockBracker br : this.brackers) {
+        	if (br.getPos().equals(pos)) {
+        		br.removePlayer(pl);
+        		return;
+        	}
+        }
+   }
+
+   public void addPlayer(BlockPos pos, Player pl) {
+    	for (BlockBracker br : this.brackers) {
+        	if (br.getPos().equals(pos)) {
+        		br.addPlayer(pl);
+        		return;
+        	}
+        }
+   }
 
    @Override
    public void onSyncedDataUpdated(EntityDataAccessor<?> p_20059_) {
@@ -536,7 +479,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
       }
    }
 
-   @Environment(EnvType.CLIENT)
+   @OnlyIn(Dist.CLIENT)
    public void clientUpdate() {
    	  if (Minecraft.getInstance().screen instanceof BlockMorphConfigScreen sc) sc.morphUpdate(this.getBlockState());
    }

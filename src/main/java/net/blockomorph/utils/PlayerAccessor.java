@@ -19,6 +19,7 @@ public interface PlayerAccessor {
     BlockState getBlockState();
     CompoundTag getTag();
     boolean isActive();
+    boolean isFullActive();
     CompoundTag getProgress();
     void addPlayer(BlockPos pos, Player player);
     void removePlayer(BlockPos pos, Player pl);
@@ -30,8 +31,6 @@ public interface PlayerAccessor {
     int getBiggestProgress();
     boolean isMultiBlock();
     BlockPos minPos();
-    boolean isFullActive();
     PrimedTnt getTnt();
     void setTnt();
 }
-
