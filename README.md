@@ -1,3 +1,4 @@
+**At the moment the mod code is in the branches for the required version of Minecraft, the master is empty.**
 # Block'oMorph
 **Block'oMorph** - is a mod for minecraft that allows you to turn into blocks like in the mini game block hunt, with it you can turn into blocks of varying complexity, from the simplest stone to a sign with text or a portal to the end.
 
