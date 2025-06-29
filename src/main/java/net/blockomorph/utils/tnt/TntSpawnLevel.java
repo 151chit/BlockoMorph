@@ -63,27 +63,14 @@ public class TntSpawnLevel extends MultiBlockLevel {
 		return false;
 	}
 
-	public Explosion explode(
-		@Nullable Entity a1, 
-		@Nullable DamageSource a2,
-		@Nullable ExplosionDamageCalculator a3, 
-		double a4, double a5, double a6, float a7, boolean a8, 
-		ExplosionInteraction a9,
-		boolean a10
-	) {
-		return null;
-	}
-
     @Override
-	public Explosion explode(
+	public void explode(
 		@Nullable Entity a1, 
 		@Nullable DamageSource a2, 
 		@Nullable ExplosionDamageCalculator a3, 
 		double a4, double a5, double a6, float a7, boolean a8, 
 		ExplosionInteraction a9
-	) {
-		return null;
-	}
+	) {}
 
 	public PrimedTnt extractTnt() {
 		return this.tnt;

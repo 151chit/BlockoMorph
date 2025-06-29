@@ -2,6 +2,7 @@
 package net.blockomorph.command;
 
 import net.blockomorph.utils.*;
+import net.blockomorph.utils.accessors.BlockAccessor;
 import net.blockomorph.utils.config.*;
 
 import net.minecraft.world.level.Level;
@@ -30,71 +31,63 @@ public class BlockmorphCommand {
 	public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext commandBuildContext, Commands.CommandSelection environment) {
 		dispatcher.register(
 				Commands.literal("blockmorph").requires(s -> s.hasPermission(2)).then(Commands.argument("block", BlockStateArgument.block(commandBuildContext)).then(Commands.argument("targets", EntityArgument.players()).executes(arguments -> {
-					return morphBlock(arguments.getSource(), 
-					BlockStateArgument.getBlock(arguments, "block").getState(), 
-					EntityArgument.getPlayers(arguments, "targets"), 
-					((BlockAccessor)BlockStateArgument.getBlock(arguments, "block") ).getTag(),
-					true, false, false);
-				}).then(Commands.argument("multiblock", BoolArgumentType.bool()).executes(arguments -> {
-					return morphBlock(arguments.getSource(), 
-					BlockStateArgument.getBlock(arguments, "block").getState(), 
-					EntityArgument.getPlayers(arguments, "targets"), 
-					((BlockAccessor)BlockStateArgument.getBlock(arguments, "block") ).getTag(),
-					true, BoolArgumentType.getBool(arguments, "multiblock"), true);
-				}))).executes(arguments -> {
-					return morphBlock(arguments.getSource(), 
-					BlockStateArgument.getBlock(arguments, "block").getState(), 
-					Collections.singleton(arguments.getSource().getPlayerOrException()), 
-					((BlockAccessor)BlockStateArgument.getBlock(arguments, "block") ).getTag(),
-					false, false, false);
+					return morphMany(arguments.getSource(),
+							BlockStateArgument.getBlock(arguments, "block").getState(),
+							EntityArgument.getPlayers(arguments, "targets"),
+							BlockAccessor.of(BlockStateArgument.getBlock(arguments, "block") ).getTag());
+				})).executes(arguments -> {
+					return morphSingle(arguments.getSource(),
+							BlockStateArgument.getBlock(arguments, "block").getState(),
+							arguments.getSource().getPlayerOrException(),
+							BlockAccessor.of(BlockStateArgument.getBlock(arguments, "block")).getTag());
 				}))
 		);
 	}
 
-	private static int morphBlock(CommandSourceStack stack, BlockState blockstate, Collection<ServerPlayer> players, CompoundTag tag, boolean many, boolean mb, boolean mbUse) {
+	private static int morphMany(CommandSourceStack stack, BlockState blockstate, Collection<ServerPlayer> players, CompoundTag tag) {
+		if (checkConfig(stack))
+			return 0;
+		MorphUtils.BannedBlock global = MorphUtils.isBannedBlock(blockstate, null);
+		if (global != null) {
+			stack.sendFailure(
+					global.text()
+			);
+			return 0;
+		}
+		int success = 0;
+		for (ServerPlayer entity : players) {
+			if (entity instanceof PlayerAccessor pl) {
+				MorphUtils.BannedBlock reason = pl.applyBlockMorph(blockstate, tag);
+				if (reason == null)
+					success++;
+			}
+		}
+		final int result = success;
+		stack.sendSuccess(() -> Component.translatable("commands.blockmorph.many", result, blockstate.getBlock().getName()), true);
+		return players.size();
+	}
+
+	private static int morphSingle(CommandSourceStack stack, BlockState blockstate, ServerPlayer player, CompoundTag tag) {
+		if (checkConfig(stack))
+			return 0;
+		MorphUtils.BannedBlock reason = PlayerAccessor.of(player).applyBlockMorph(blockstate, tag);
+		if (reason != null) {
+			stack.sendFailure(
+					reason.text()
+			);
+			return 0;
+		}
+		stack.sendSuccess(() -> Component.translatable("commands.blockmorph.you", blockstate.getBlock().getName()), true);
+		return 1;
+	}
+
+	private static boolean checkConfig(CommandSourceStack stack) {
 		if (Config.getInstance() == null) {
 			stack.sendFailure(
-				Component.literal("Config not loaded, something works like that... :/")
+					Component.literal("Config not loaded, something works like that... :/")
 			);
-			return 0;
-		} else if (!(boolean)Config.getInstance().getValue("advancedMode") && mb) {
-			stack.sendFailure(
-				Component.translatable("commands.blockmorph.mbUse")
-			);
-			return 0;
+			return true;
 		}
-		MorphUtils.BannedBlock mess = MorphUtils.isBannedBlock(blockstate, null);
-		if (mess != null) {
-			stack.sendFailure(
-					mess.text()
-			);
-			return 0;
-		}
-		Block state = blockstate.getBlock();
-		for (Entity entityiterator : players) {
-			if (entityiterator instanceof PlayerAccessor pl) {
-				if (mbUse) {
-					pl.applyBlockMorph(blockstate, tag, mb);
-				} else {
-					pl.applyBlockMorph(blockstate, tag);
-				}
-			}
-		}
-		if (many) {
-			if (players.size() == 1) {
-				stack.sendSuccess(() -> {
-                return Component.translatable("commands.blockmorph.single", players.iterator().next().getDisplayName(), state.getName());
-                }, true);
-			} else {
-				stack.sendSuccess(() -> {
-                return Component.translatable("commands.blockmorph.many", players.size(), state.getName());
-                }, true);
-			}
-		} else {
-			stack.sendSuccess(() -> {
-            return Component.translatable("commands.blockmorph.you", state.getName());
-            }, true);
-		}
-		return players.size();
+		return false;
 	}
 }

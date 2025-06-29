@@ -26,5 +26,9 @@
   "commands.blockmorph.whitelist": "You do not have permission to turn into this block because it is not in the white list.",
   "commands.blockmorph.single": "Player %s has been morphed to block %s.",
   "commands.blockmorph.solid": "You do not have permission to turn into this block because not solid block not allowed.",
-  "gui.blockomorph.advTooltip": "Allows: turning into a multiblock"
+  "gui.blockomorph.advTooltip": "Allows: turning into a multiblock",
+  "commands.blockomorph.blockSame": "You are already this block.",
+  "gui.blockomorph.useMode": "Block usage mode",
+  "gui.blockomorph.placeMode": "Player block placement mode",
+  "commands.blockmorph.liquid": "Morphing in liquids in development!"
 }

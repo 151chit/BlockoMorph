@@ -14,6 +14,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
@@ -42,7 +43,7 @@ public class TntHandler {
 	}
 
 	public void onDimensionChange() {
-		Entity tnt1 = tnt.getType().create(this.player.level());
+		Entity tnt1 = tnt.getType().create(this.player.level(), EntitySpawnReason.DIMENSION_TRAVEL);
 		if (tnt1 instanceof PrimedTnt tnt2 && !this.player.level().isClientSide) {
 			tnt2.restoreFrom(this.tnt);
 			this.tnt = tnt2;
@@ -98,7 +99,7 @@ public class TntHandler {
 					TntSpawnLevel lv = new TntSpawnLevel(this.player.level(), state);
 					PrimedTnt TNT;
 					try {
-						tntBlock.defaultBlockState().handleNeighborChanged(lv, block.getPos(), Blocks.REDSTONE_BLOCK, BlockPos.ZERO, false);
+						tntBlock.defaultBlockState().handleNeighborChanged(lv, block.getPos(), Blocks.REDSTONE_BLOCK, null, false);
 					} catch (Exception e) {
 						TNT = lv.extractTnt();
 						if (TNT == null) {
@@ -153,7 +154,7 @@ public class TntHandler {
 				}
 
 				clicker.awardStat(Stats.ITEM_USED.get(item));
-				return InteractionResult.sidedSuccess(clicker.level().isClientSide);
+				return InteractionResult.SUCCESS;
 			}
 		}
 		return null;

@@ -23,7 +23,7 @@ public class DummyLevelChunk extends EmptyLevelChunk  {
     private final Level level;
 
     public DummyLevelChunk(Level lv, ChunkPos boundedSection) {
-        super(lv, boundedSection, lv.registryAccess().registryOrThrow(Registries.BIOME).getHolderOrThrow(Biomes.PLAINS));
+        super(lv, boundedSection, lv.registryAccess().lookupOrThrow(Registries.BIOME).getOrThrow(Biomes.PLAINS));
         this.level = lv;
     }
 

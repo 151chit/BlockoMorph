@@ -16,17 +16,18 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
-import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.BlockDestructionProgress;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
@@ -49,7 +50,7 @@ public class MorphedPlayerRenderer {
 	private final BlockEntityRenderDispatcher blockEntityRenderDispatcher = mc.getBlockEntityRenderDispatcher();
 	private final RandomSource RANDOM = RandomSource.create();
 
-	public boolean render(boolean translucent, AbstractClientPlayer player, float anim, float partialticks, PoseStack posestack, MultiBufferSource buffer, int light, Consumer<Float> shadow) {
+	public boolean render(boolean translucent, AbstractClientPlayer player, float partialticks, PoseStack posestack, MultiBufferSource buffer, int light, Consumer<Float> shadow) {
 		if (player instanceof PlayerAccessor pl) {
 			if (pl.isFullActive()) {
 				shadow.accept(0.0f);
@@ -62,18 +63,19 @@ public class MorphedPlayerRenderer {
 				posestack.popPose();
 				return true;
 			} else if (pl.getTnt() != null && !translucent) {
-				this.renderTnt(player, anim, partialticks, posestack, buffer, light, pl);
+				this.renderTnt(player, partialticks, posestack, buffer, light, pl);
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private void renderTnt(AbstractClientPlayer player, float anim, float partialticks, PoseStack posestack, MultiBufferSource buffer, int light, PlayerAccessor pl) {
+	private void renderTnt(AbstractClientPlayer player, float partialticks, PoseStack posestack, MultiBufferSource buffer, int light, PlayerAccessor pl) {
 		PrimedTnt tnt = pl.getTnt();
-		EntityRenderer<? super PrimedTnt> rend = entityDispatcher.getRenderer(pl.getTnt());
+		EntityRenderer<Entity, EntityRenderState> rend = (EntityRenderer<Entity, EntityRenderState>) entityDispatcher.getRenderer(pl.getTnt());
+		EntityRenderState state = rend.createRenderState(tnt, partialticks);
 		try {
-			rend.render(tnt, anim, partialticks, posestack, buffer, light);
+			rend.render(state, posestack, buffer, light);
 		} catch (Exception e) {
 			if (player == Minecraft.getInstance().player && Minecraft.getInstance().screen instanceof BlockMorphConfigScreen sc)
 				sc.tagException = e.getMessage();
