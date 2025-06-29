@@ -9,7 +9,7 @@ base.archivesName = "blockomorph-1.21.3-neoforge"
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
-    version = "21.3.57"
+    version = "21.3.58"
 
     runs {
         client {
