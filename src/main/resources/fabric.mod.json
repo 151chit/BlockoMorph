@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "blockomorph",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "name": "Block'oMorph",
   "description": "This mod allows players morph into blocks with all the main features of the block.",
   "authors": [
@@ -23,7 +23,7 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=0.16.9",
+    "fabricloader": ">=0.16.10",
     "fabric-api": "*",
     "minecraft": "1.21.3",
     "java": ">=21"

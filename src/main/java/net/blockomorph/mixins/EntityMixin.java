@@ -1,6 +1,5 @@
 package net.blockomorph.mixins;
 
-import net.blockomorph.utils.TntSpawnLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;

@@ -1,5 +1,6 @@
-package net.blockomorph.utils;
+package net.blockomorph.utils.tnt;
 
+import net.blockomorph.utils.MultiBlockLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.sounds.SoundEvent;
@@ -20,18 +21,18 @@ public class TntSpawnLevel extends MultiBlockLevel {
 	private final BlockState need;
 
 	public TntSpawnLevel(Level orig, BlockState need) {
-		super(orig, orig.isClientSide);
-		this.need = need;
-	}
-
-	public TntSpawnLevel(Level orig, boolean c, BlockState need) {
-		super(orig, c);
+		super(orig, false);
 		this.need = need;
 	}
 
 	@Override
 	public boolean setBlock(BlockPos blockPos, BlockState blockState, int i, int j) {
 		return false;
+	}
+
+	@Override
+	public boolean hasNeighborSignal(BlockPos blockPos) {
+		return true;
 	}
 
 	public boolean removeBlock(BlockPos p, boolean y) {
@@ -42,11 +43,6 @@ public class TntSpawnLevel extends MultiBlockLevel {
 		this.realLevel.playSound(pl, bp, se, ss, sp1, sp2);
 	}
 
-	@Override
-	public boolean hasNeighborSignal(BlockPos blockPos) {
-		return true;
-	}
-
 	public BlockState getBlockState(BlockPos p) {
 		return this.need;
 	}
@@ -55,17 +51,7 @@ public class TntSpawnLevel extends MultiBlockLevel {
 		return realLevel.getFluidState(p);
 	}
 
-	public void playSeededSound(
-		@Nullable Player a1,
-		double a2, 
-		double a3, 
-		double a4, 
-		Holder<SoundEvent> a5, 
-		SoundSource a6, 
-		float a7, 
-		float a8, 
-		long a9
-	) {
+	public void playSeededSound(@Nullable Player a1, double a2, double a3, double a4, Holder<SoundEvent> a5, SoundSource a6, float a7, float a8, long a9) {
 		realLevel.playSeededSound(a1, a2, a3, a4, a5, a6, a7, a8, a9);
 	}
 
@@ -79,7 +65,7 @@ public class TntSpawnLevel extends MultiBlockLevel {
 
 	public Explosion explode(
 		@Nullable Entity a1, 
-		@Nullable DamageSource a2, 
+		@Nullable DamageSource a2,
 		@Nullable ExplosionDamageCalculator a3, 
 		double a4, double a5, double a6, float a7, boolean a8, 
 		ExplosionInteraction a9,
@@ -89,13 +75,15 @@ public class TntSpawnLevel extends MultiBlockLevel {
 	}
 
     @Override
-	public void explode(
+	public Explosion explode(
 		@Nullable Entity a1, 
 		@Nullable DamageSource a2, 
 		@Nullable ExplosionDamageCalculator a3, 
 		double a4, double a5, double a6, float a7, boolean a8, 
 		ExplosionInteraction a9
-	) {}
+	) {
+		return null;
+	}
 
 	public PrimedTnt extractTnt() {
 		return this.tnt;
