@@ -343,11 +343,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		boolean flag = state.equals(old);
 		if ((tag == null || tag.isEmpty()) && flag)
 			return MorphUtils.BannedBlock.SAME;
-		if (this.level() instanceof ServerLevel lv) {
-			for (ServerPlayer pl : lv.getChunkSource().chunkMap.getPlayers(this.player().chunkPosition(), false)) {
-				MorphUtils.sendPlayer(new ClientBoundApplyBlockMorphPacket(state, this), pl);
-			}
-		}
+		MorphUtils.sendPlayer(new ClientBoundApplyBlockMorphPacket(state, this), (ServerPlayer) this.player());
 		this.onLoadingBlocks = true;
 		for (InPlayerBlockPos pos : this.blocksData.keySet()) {
 			if (!pos.equals(InPlayerBlockPos.ZERO)) {
