@@ -52,7 +52,7 @@ public class ClientBoundApplyBlockMorphPacket implements BlockMorphPacket {
 			pl.setBlockState(InPlayerBlockPos.ZERO, this.state, false);
 			BlockPos pos = InPlayerBlockPos.ZERO.boundedBlockPos(pl.player());
 			if (pos != null) {
-				state.getBlock().setPlacedBy(Minecraft.getInstance().level, pos, state, pl.player(), new ItemStack(this.state.getBlock().asItem(), 1));
+				state.getBlock().setPlacedBy(pl.player().level(), pos, state, pl.player(), new ItemStack(this.state.getBlock().asItem(), 1));
 			}
 			pl.setOnLoadingBlocks(false);
 		}
