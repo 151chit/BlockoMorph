@@ -1,6 +1,7 @@
 package net.blockomorph.mixins.main;
 
 import net.blockomorph.BlockomorphServer;
+import net.blockomorph.network.ClientBoundApplyBlockMorphPacket;
 import net.blockomorph.network.ClientBoundMorphUpdatePacket;
 import net.blockomorph.network.ClientBoundServerBlockEntityTagPacket;
 import net.blockomorph.screens.BlockMorphConfigScreen;
@@ -343,7 +344,9 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		if ((tag == null || tag.isEmpty()) && flag)
 			return MorphUtils.BannedBlock.SAME;
 		if (this.level() instanceof ServerLevel lv) {
-			lv.getChunkSource().getChunkNow()
+			for (ServerPlayer pl : lv.getChunkSource().chunkMap.getPlayers(this.player().chunkPosition(), false)) {
+				MorphUtils.sendPlayer(new ClientBoundApplyBlockMorphPacket(state, this), pl);
+			}
 		}
 		this.onLoadingBlocks = true;
 		for (InPlayerBlockPos pos : this.blocksData.keySet()) {
