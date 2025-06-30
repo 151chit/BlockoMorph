@@ -54,6 +54,7 @@
   ],
   "client": [
     "compat.create.Flywheel_BM_BackendMixin",
+    "debug.d",
     "main.client.ClientChunkCacheMixin",
     "main.client.ClientLevelMixin",
     "main.client.ClientPacketListenerMixin",
