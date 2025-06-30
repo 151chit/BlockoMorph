@@ -77,7 +77,7 @@ public abstract class LevelRenderMixin implements LevelRendererAccessor {
 	@Unique
 	private final ArrayList<AbstractClientPlayer> playersToRender = new ArrayList<>();
 
-	@Inject(method = "method_62214", at = @At(shift = At.Shift.AFTER, value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderBlockEntities(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/Camera;F)V"))
+	@Inject(method = "method_62214", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;checkPoseStack(Lcom/mojang/blaze3d/vertex/PoseStack;)V", ordinal = 1))
 	public void renderMorphedPlayersTranslucent(FogParameters fogParameters, DeltaTracker deltaTracker, Camera camera, ProfilerFiller profilerFiller, Matrix4f matrix4f, Matrix4f matrix4f2, ResourceHandle<RenderTarget> resourceHandle, ResourceHandle<RenderTarget> resourceHandle2, ResourceHandle<RenderTarget> resourceHandle3, ResourceHandle<RenderTarget> resourceHandle4, boolean bl, Frustum frustum, ResourceHandle<RenderTarget> resourceHandle5, CallbackInfo ci, @Local PoseStack stack) {
 		if (this.level != null) {
 			for (AbstractClientPlayer player : this.playersToRender) {
