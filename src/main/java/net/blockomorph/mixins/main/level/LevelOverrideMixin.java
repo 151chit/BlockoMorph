@@ -89,9 +89,9 @@ public abstract class LevelOverrideMixin extends Level {
 	}
 
 	@Override
-	public boolean noCollision(@Nullable Entity entity, AABB aabb) { //TODO
+	public boolean noCollision(@Nullable Entity entity, AABB aabb, boolean withFluids) { //TODO
 		aabb = InPlayerBlockPos.checkOnReal(aabb);
-		for(VoxelShape voxelshape : this.getBlockCollisions(entity, aabb)) {
+		for(VoxelShape voxelshape : withFluids ? this.getBlockAndLiquidCollisions(entity, aabb) : this.getBlockCollisions(entity, aabb)) {
 			if (!voxelshape.isEmpty()) {
 				return false;
 			}

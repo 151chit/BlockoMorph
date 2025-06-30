@@ -32,6 +32,7 @@
     "main.coords.HitResultMixin",
     "main.coords.Vec3iMixin",
     "main.coords.Vec3Mixin",
+    "main.level.BlockGetterMixin",
     "main.level.ClipContextMixin",
     "main.level.EntitySectionMixin",
     "main.level.LevelChunkMixin",

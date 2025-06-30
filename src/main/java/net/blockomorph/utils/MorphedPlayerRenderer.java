@@ -48,6 +48,7 @@ public class MorphedPlayerRenderer {
 	private final BlockRenderDispatcher blockRenderDispatcher = mc.getBlockRenderer();
 	private final EntityRenderDispatcher entityDispatcher = mc.getEntityRenderDispatcher();
 	private final BlockEntityRenderDispatcher blockEntityRenderDispatcher = mc.getBlockEntityRenderDispatcher();
+	private final MultiBufferSource crumblBuffer = mc.renderBuffers().crumblingBufferSource();
 	private final RandomSource RANDOM = RandomSource.create();
 
 	public boolean render(boolean translucent, AbstractClientPlayer player, float partialticks, PoseStack posestack, MultiBufferSource buffer, int light, Consumer<Float> shadow) {
@@ -149,7 +150,7 @@ public class MorphedPlayerRenderer {
 					int k = getBrakeProgress(blockEntity.getBlockPos());
 					if (k > -1 && k < 10) {
 						PoseStack.Pose posestack$pose = posestack.last();
-						VertexConsumer vertexconsumer = new SheetedDecalTextureGenerator(buffer.getBuffer(ModelBakery.DESTROY_TYPES.get(k)), posestack$pose, 1.0F);
+						VertexConsumer vertexconsumer = new SheetedDecalTextureGenerator(crumblBuffer.getBuffer(ModelBakery.DESTROY_TYPES.get(k)), posestack$pose, 1.0F);
 						src = (p_234298_) -> {
 							VertexConsumer vertexconsumer2 = buffer.getBuffer(p_234298_);
 							return p_234298_.affectsCrumbling() ? VertexMultiConsumer.create(vertexconsumer, vertexconsumer2) : vertexconsumer2;
@@ -163,6 +164,7 @@ public class MorphedPlayerRenderer {
 			} catch (Exception e) {
 				if (player == Minecraft.getInstance().player && Minecraft.getInstance().screen instanceof BlockMorphConfigScreen sc)
 					sc.tagException = e.getMessage() == null ? e.getClass().toString() : e.getMessage();
+				throw new RuntimeException(e);
 			} finally {
 				posestack.popPose();
 			}
@@ -206,7 +208,7 @@ public class MorphedPlayerRenderer {
 		posestack.pushPose();
 		PoseStack.Pose posestack$pose1 = posestack.last();
 		if (k > -1 && k < 10) {
-			VertexConsumer vertexconsumer1 = new SheetedDecalTextureGenerator(buffer.getBuffer(ModelBakery.DESTROY_TYPES.get(k)), posestack$pose1, 1.0F);
+			VertexConsumer vertexconsumer1 = new SheetedDecalTextureGenerator(crumblBuffer.getBuffer(ModelBakery.DESTROY_TYPES.get(k)), posestack$pose1, 1.0F);
 			BlockPos offset = this.getPosForOffset(block);
 			this.blockRenderDispatcher.getModelRenderer().tesselateBlock(player.level(), this.blockRenderDispatcher.getBlockModel(blockstate), blockstate, offset, posestack, vertexconsumer1, false, RANDOM, blockstate.getSeed(offset), OverlayTexture.NO_OVERLAY);
 		}
