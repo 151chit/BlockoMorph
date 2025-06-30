@@ -14,6 +14,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.BlockHitResult;
+import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@Debug(export = true)
 @Mixin(MultiPlayerGameMode.class)
 public abstract class MultiPlayerGameModeMixin {
 	@Shadow protected abstract void startPrediction(ClientLevel p_233730_, PredictiveAction p_233731_);
@@ -69,7 +71,7 @@ public abstract class MultiPlayerGameModeMixin {
 
 
 
-	@Inject(method = "performUseItemOn", at = @At(shift = At.Shift.BEFORE, value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;isEmpty()Z"), cancellable = true)
+	@Inject(method = "performUseItemOn", at = @At(ordinal = 2, shift = At.Shift.BEFORE, value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;isEmpty()Z"), cancellable = true)
 	public void checkAccessOnPlace(LocalPlayer localPlayer, InteractionHand interactionHand, BlockHitResult blockHitResult, CallbackInfoReturnable<InteractionResult> cir) {
 		MorphUtils.onRightClick(localPlayer, interactionHand, blockHitResult, cir);
 	}

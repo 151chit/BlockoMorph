@@ -3,12 +3,10 @@ package net.blockomorph.mixins.main.level;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
-import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Debug(export = true)
 @Mixin(BlockGetter.class)
 public interface BlockGetterMixin {
 

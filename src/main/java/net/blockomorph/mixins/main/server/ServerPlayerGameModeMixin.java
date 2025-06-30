@@ -3,7 +3,6 @@ package net.blockomorph.mixins.main.server;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.world.InteractionHand;
@@ -13,7 +12,6 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
-import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -61,7 +59,7 @@ public class ServerPlayerGameModeMixin {
 	}
 
 
-	@Inject(method = "useItemOn", at = @At(shift = At.Shift.BEFORE, value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;isEmpty()Z"), cancellable = true)
+	@Inject(method = "useItemOn", at = @At(ordinal = 2, shift = At.Shift.BEFORE, value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;isEmpty()Z"), cancellable = true)
 	public void checkAccess(ServerPlayer serverPlayer, Level level, ItemStack itemStack, InteractionHand interactionHand, BlockHitResult blockHitResult, CallbackInfoReturnable<InteractionResult> cir) {
 		MorphUtils.onRightClick(serverPlayer, interactionHand, blockHitResult, cir);
 	}

@@ -1,7 +1,6 @@
 package net.blockomorph.mixins.main.client.graphic;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.resource.ResourceHandle;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -35,16 +34,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.ArrayList;
 import java.util.SortedSet;
 
-@Debug(export = true)
 @Mixin(LevelRenderer.class)
 public abstract class LevelRenderMixin implements LevelRendererAccessor {
 	@Shadow @Final private Long2ObjectMap<SortedSet<BlockDestructionProgress>> destructionProgress;
-	@Shadow protected abstract void checkPoseStack(PoseStack p_109589_);
 	@Shadow @Final private RenderBuffers renderBuffers;
 	@Shadow @Nullable
 	private ClientLevel level;

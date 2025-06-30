@@ -11,10 +11,7 @@ import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.hit.MorphedPlayerHitResult;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -25,6 +22,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.BlockDestructionProgress;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -164,7 +162,6 @@ public class MorphedPlayerRenderer {
 			} catch (Exception e) {
 				if (player == Minecraft.getInstance().player && Minecraft.getInstance().screen instanceof BlockMorphConfigScreen sc)
 					sc.tagException = e.getMessage() == null ? e.getClass().toString() : e.getMessage();
-				throw new RuntimeException(e);
 			} finally {
 				posestack.popPose();
 			}
@@ -225,7 +222,8 @@ public class MorphedPlayerRenderer {
 				posestack.popPose();
 				return;
 			}
-			this.renderVoxelShape(posestack, buffer.getBuffer(RenderType.LINES), shape);
+			int i = mc.options.highContrastBlockOutline().get() ? -11010079 : ARGB.color(102, -16777216);
+			ShapeRenderer.renderShape(posestack, buffer.getBuffer(RenderType.lines()), shape, 0, 0, 0, i);
 			posestack.popPose();
 		}
 	}
@@ -240,17 +238,5 @@ public class MorphedPlayerRenderer {
 			return hit;
 		}
 		return null;
-	}
-
-	private void renderVoxelShape(PoseStack poseStack, VertexConsumer vertexConsumer, VoxelShape voxelShape) {
-		PoseStack.Pose pose = poseStack.last();
-		voxelShape.forAllEdges((k, l, m, n, o, p) -> {
-			float q = (float)(n - k);
-			float r = (float)(o - l);
-			float s = (float)(p - m);
-			float t = Mth.sqrt(q * q + r * r + s * s);
-			vertexConsumer.addVertex(pose, (float)(k), (float)(l), (float)(m)).setColor(0f, 0f, 0f, 0.4f).setNormal(pose, q /= t, r /= t, s /= t);
-			vertexConsumer.addVertex(pose, (float)(n), (float)(o), (float)(p)).setColor(0f, 0f, 0f, 0.4f).setNormal(pose, q, r, s);
-		});
 	}
 }
