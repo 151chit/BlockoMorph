@@ -52,6 +52,7 @@ public interface PlayerAccessor {
     void prepareSync(InPlayerBlockPos pos, BlockEventData data);
     void sendNearby(Packet<?> packet);
     boolean isOnLoadingBlocks();
+    void setOnLoadingBlocks(boolean yes);
     void breakingModeStart(boolean yes);
     boolean isBreaking();
     List<InPlayerBlockPos> getUpdates();

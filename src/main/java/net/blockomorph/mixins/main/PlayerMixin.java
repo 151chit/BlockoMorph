@@ -207,6 +207,9 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 	public boolean isOnLoadingBlocks() {
 		return this.onLoadingBlocks;
 	}
+	public void setOnLoadingBlocks(boolean yes) {
+		this.onLoadingBlocks = yes;
+	}
 
 	private void oldDataHandle(CompoundTag tag) {
 		if (!this.level().isClientSide) {
@@ -339,6 +342,9 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		boolean flag = state.equals(old);
 		if ((tag == null || tag.isEmpty()) && flag)
 			return MorphUtils.BannedBlock.SAME;
+		if (this.level() instanceof ServerLevel lv) {
+			lv.getChunkSource().getChunkNow()
+		}
 		this.onLoadingBlocks = true;
 		for (InPlayerBlockPos pos : this.blocksData.keySet()) {
 			if (!pos.equals(InPlayerBlockPos.ZERO)) {
