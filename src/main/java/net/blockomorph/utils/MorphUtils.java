@@ -241,7 +241,7 @@ public class MorphUtils {
 						tnt.setFuse(tnt.getFuse() / 2);
 					}
 				}
-				if (!(damage.is(PLAYER_DESTROYED) || damage.is(PLAYER_DESTROYED_NULL))) return true;
+				return !(damage.is(PLAYER_DESTROYED) || damage.is(PLAYER_DESTROYED_NULL));
 			}
 		}
 		return false;
