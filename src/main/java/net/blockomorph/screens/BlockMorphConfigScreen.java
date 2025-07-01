@@ -1,9 +1,12 @@
 package net.blockomorph.screens;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.blockomorph.utils.*;
+import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.blockomorph.utils.config.*;
 import net.blockomorph.network.*;
 
+import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
@@ -40,6 +43,7 @@ import com.mojang.math.Axis;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 
+import net.neoforged.neoforge.client.RenderTypeHelper;
 import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -130,7 +134,7 @@ public class BlockMorphConfigScreen extends Screen {
    }
 
    public void morphUpdate(BlockState state) {
-   	    CompoundTag tag = ((PlayerAccessor)this.entity).getTag();
+   	    CompoundTag tag = ((PlayerAccessor)this.entity).getTag(InPlayerBlockPos.ZERO);
    	    if (state.getBlock() instanceof EntityBlock) {
 			tagsBox.setFocused(true);
 			tagsBox.setEditable(true);
@@ -145,7 +149,6 @@ public class BlockMorphConfigScreen extends Screen {
 		}
 		this.playerState = state;
 		this.playerTag = tag;
-		this.mb = ((PlayerAccessor)this.entity).isMultiBlock();
 		this.validSave(savebox.getValue());
    }
 
@@ -346,10 +349,10 @@ public class BlockMorphConfigScreen extends Screen {
    	    	boolean flag = this.enumClick(x, y);
    	    	Property prop = this.getProp(x, y, true);
    	    	this.listProp = null;
-   	    	if (!flag && prop == null) {
+   	    	if (false && !flag && prop == null) {
    	    		if (x > this.leftPos + 93 && x < this.leftPos + 93 + 67 && y > this.topPos + 120 && y < this.topPos + 130) {
    	    			if (Config.getInstance() != null && (boolean)Config.getInstance().getValue("advancedMode")) {
-   	    				MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(this.playerState, this.playerTag, !this.mb));
+   	    				MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(this.playerState, this.playerTag));
    	    			    sound.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
    	    			}
    	    		}
@@ -483,12 +486,11 @@ public class BlockMorphConfigScreen extends Screen {
 		tagsBox.setTextColorUneditable(-1);
 		this.addRenderableWidget(tagsBox);
 		this.addRenderableWidget(this.savebox);
-		this.playerState = ((PlayerAccessor)this.entity).getBlockState();
-		this.mb = ((PlayerAccessor)this.entity).isMultiBlock();
+		this.playerState = ((PlayerAccessor)this.entity).getBlockState(InPlayerBlockPos.ZERO);
 		BlockState blockState = this.playerState;
 		if (blockState.getBlock() instanceof EntityBlock) {
 			this.setInitialFocus(tagsBox);
-			CompoundTag tag = ((PlayerAccessor)this.entity).getTag();
+			CompoundTag tag = ((PlayerAccessor)this.entity).getTag(InPlayerBlockPos.ZERO);
 			tagsBox.setValue(tag.toString());
 			this.playerTag = tag;
 		} else {
@@ -537,8 +539,11 @@ public class BlockMorphConfigScreen extends Screen {
         BlockState blockState = this.playerState;
         RandomSource random = RandomSource.create(blockState.getSeed(pos));
         var model = this.dispatcher.getBlockModel(blockState);
-        for (var renderType : model.getRenderTypes(blockState, random, ModelData.EMPTY))
-            this.dispatcher.getModelRenderer().tesselateBlock(world, model, blockState, pos, poseStack, bufferSource.getBuffer(renderType), false, RandomSource.create(), blockState.getSeed(pos), OverlayTexture.NO_OVERLAY, ModelData.EMPTY, renderType);
+	   var modeldata = model.getModelData(world, pos, blockState, ModelData.EMPTY);
+	   for (var renderType : model.getRenderTypes(blockState, random, modeldata)) {
+		   VertexConsumer vertex = bufferSource.getBuffer(RenderTypeHelper.getMovingBlockRenderType(renderType));
+		   this.dispatcher.getModelRenderer().tesselateBlock(world, model, blockState, pos, poseStack, vertex, false, RandomSource.create(), blockState.getSeed(pos), OverlayTexture.NO_OVERLAY, modeldata, renderType);
+	   }
         this.renderBlockEntity(blockState, ticks, poseStack, bufferSource);
         poseStack.popPose();
    }
@@ -553,7 +558,10 @@ public class BlockMorphConfigScreen extends Screen {
                 BlockEntityRenderer renderer = blockEntityRenderDispatcher.getRenderer(blockEntity);
                 if (renderer != null) {
            	        posestack.pushPose();
+					ClientLevelAccessor acc = ClientLevelAccessor.of(world);
+					acc.setBlockEntityRenderingMode(true);
                     renderer.render(blockEntity, partialticks, posestack, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
+					acc.setBlockEntityRenderingMode(false);
                     posestack.popPose();
                 }
               } catch (Exception e) {

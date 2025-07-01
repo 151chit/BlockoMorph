@@ -1,10 +1,13 @@
 package net.blockomorph.screens;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.blockomorph.Blockomorph;
 import net.blockomorph.utils.*;
+import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.blockomorph.utils.config.*;
 import net.blockomorph.network.*;
 
+import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.chat.Component;
@@ -35,6 +38,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
 
+import net.neoforged.neoforge.client.RenderTypeHelper;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import org.joml.Matrix4f;
 
 import com.mojang.math.Axis;
@@ -332,8 +337,11 @@ public class MorphScreen extends Screen {
         RandomSource random = RandomSource.create(blockState.getSeed(pos));
         if (blockState.getRenderShape() != RenderShape.INVISIBLE) {
            var model = this.dispatcher.getBlockModel(blockState);
-           var renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockState);
-           this.dispatcher.getModelRenderer().tesselateBlock(world, model, blockState, pos, poseStack, bufferSource.getBuffer(renderType), false, RandomSource.create(), blockState.getSeed(pos), OverlayTexture.NO_OVERLAY);
+			var modeldata = model.getModelData(world, pos, blockState, ModelData.EMPTY);
+			for (var renderType : model.getRenderTypes(blockState, random, modeldata)) {
+				VertexConsumer vertex = bufferSource.getBuffer(RenderTypeHelper.getMovingBlockRenderType(renderType));
+				this.dispatcher.getModelRenderer().tesselateBlock(world, model, blockState, pos, poseStack, vertex, false, RandomSource.create(), blockState.getSeed(pos), OverlayTexture.NO_OVERLAY, modeldata, renderType);
+			}
         } else if (blockState.getBlock().asItem() != null && !(blockState.getBlock() instanceof EntityBlock)) {
               //in development
         }
@@ -347,9 +355,9 @@ public class MorphScreen extends Screen {
         		guiGraphics.blit(RenderType::guiTextured, ResourceLocation.tryParse("blockomorph:textures/screens/sel_lock.png"), this.leftPos + 10 + xO*36, this.topPos + 15 + yO*36, 0, 0, 36, 36, 36, 36);
         		return;
         	}
-        	BlockState plSt = ((PlayerAccessor)entity).getBlockState();
+        	BlockState plSt = ((PlayerAccessor)entity).getBlockState(InPlayerBlockPos.ZERO);
             if (selectedTab == loved_blocks) {
-            	if (plSt.equals(blockState) && tag.equals(((PlayerAccessor)entity).getTag()))
+            	if (plSt.equals(blockState) && tag.equals(((PlayerAccessor)entity).getTag(InPlayerBlockPos.ZERO)))
             	guiGraphics.blit(RenderType::guiTextured, ResourceLocation.tryParse("blockomorph:textures/screens/selected.png"), this.leftPos + 10 + xO*36, this.topPos + 15 + yO*36, 0, 0, 36, 36, 36, 36);
             } else if (plSt.getBlock() == blockState.getBlock()) {
             	guiGraphics.blit(RenderType::guiTextured, ResourceLocation.tryParse("blockomorph:textures/screens/selected.png"), this.leftPos + 10 + xO*36, this.topPos + 15 + yO*36, 0, 0, 36, 36, 36, 36);
@@ -427,7 +435,10 @@ public class MorphScreen extends Screen {
                 if (renderer != null) {
            	        posestack.pushPose();
            	        try {
+						ClientLevelAccessor acc = ClientLevelAccessor.of(world);
+						acc.setBlockEntityRenderingMode(true);
                         renderer.render(blockEntity, partialticks, posestack, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
+						acc.setBlockEntityRenderingMode(false);
            	        } catch (Exception e) {
            	        	
                     }
@@ -612,7 +623,7 @@ public class MorphScreen extends Screen {
 
 	private boolean needFlameBut() {
 		PlayerAccessor pl = (PlayerAccessor)this.entity;
-		return !this.isConfig() && (pl.getBlockState().getBlock() instanceof TntBlock);
+		return !this.isConfig() && (pl.getBlockState(InPlayerBlockPos.ZERO).getBlock() instanceof TntBlock);
 	}
 
 	private boolean activeFlameBut() {

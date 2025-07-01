@@ -26,5 +26,9 @@
   "commands.blockmorph.whitelist": "Вы не можете превратиться в этот блок так как его нет в белом списке.",
   "commands.blockmorph.single": "Игрок %s был успешно превращен в %s.",
   "commands.blockmorph.solid": "Вы не можете превратиться в этот блок так как неполные блоки запрещены.",
-  "gui.blockomorph.advTooltip": "Расширенный режим - Разрешает: превращение в мультиблок"
+  "gui.blockomorph.advTooltip": "Расширенный режим - Разрешает: превращение в мультиблок",
+  "commands.blockomorph.blockSame": "Вы уже превращены в этот блок.",
+  "gui.blockomorph.useMode": "ПКМ по игроку",
+  "gui.blockomorph.placeMode": "Размещение на игроках",
+  "commands.blockmorph.liquid": "Превращение в жидкости в разработке!"
 }

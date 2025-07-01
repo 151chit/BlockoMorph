@@ -4,7 +4,7 @@ license="MIT License"
 
 [[mods]]
 modId="blockomorph"
-version="4.0.3"
+version="4.0.4"
 displayName="Block'oMorph"
 logoFile="logo.png"
 authors="151gamemode1chit"
@@ -13,7 +13,7 @@ description="This mod allows players morph into blocks with all the main feature
 [[dependencies.blockomorph]]
 modId="neoforge"
 type="required"
-versionRange="[21.3.57,)"
+versionRange="[21.3.58,)"
 ordering="AFTER"
 side="BOTH"
 
