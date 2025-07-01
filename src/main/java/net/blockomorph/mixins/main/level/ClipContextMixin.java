@@ -31,6 +31,6 @@ public class ClipContextMixin implements ClipContextAccessor {
     }
 
     public ClipContext normalize() {
-        return new ClipContext(InPlayerBlockPos.checkOnReal(this.from), InPlayerBlockPos.checkOnReal(this.to), this.block, this.fluid, ((EntityCollisionContext) this.collisionContext).getEntity());
+        return new ClipContext(InPlayerBlockPos.checkOnReal(this.from), InPlayerBlockPos.checkOnReal(this.to), this.block, this.fluid, this.collisionContext);
     }
 }

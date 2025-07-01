@@ -170,7 +170,7 @@ public class BlockMorphConfigScreen extends Screen {
    }
 
    private void renderMbButton(GuiGraphics guiGraphics, float partialTicks, int gx, int gy) {
-   	    if (Config.getInstance() != null && (boolean)Config.getInstance().getValue("advancedMode")) {
+   	    if (false && Config.getInstance() != null && (boolean)Config.getInstance().getValue("advancedMode")) {
    	    	guiGraphics.blit(RenderType::guiTextured, ResourceLocation.fromNamespaceAndPath("blockomorph", "textures/screens/mb_but.png"), this.leftPos + 93, this.topPos + 120, 0, this.mb ? 10:0, 67, 10, 67, 20);
    	    	guiGraphics.drawCenteredString(this.font, Component.translatable("gui.blockomorph.mb"), this.leftPos + 93 + 33, this.topPos + 121, -1);
    	    }
