@@ -7,6 +7,7 @@ import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.network.*;
 import net.blockomorph.utils.config.*;
 
+import net.blockomorph.utils.coords.BlockPosBounds;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -53,7 +54,10 @@ public class MainBus {
 			BlockmorphCommand.register(dispatcher, commandBuildContext, environment);
 			BlockmorphconfigCommand.register(dispatcher, commandBuildContext, environment);
 		});
-		ServerLifecycleEvents.SERVER_STARTING.register(Config::setServer);
+		ServerLifecycleEvents.SERVER_STARTING.register((sv) -> {
+			Config.setServer(sv);
+			BlockPosBounds.load();
+		});
 		PayloadTypeRegistryImpl.PLAY_C2S.register(MainPacket.ID, MainPacket.STREAM_CODEC);
 		PayloadTypeRegistryImpl.PLAY_S2C.register(MainPacket.ID, MainPacket.STREAM_CODEC);
 		ServerPlayNetworking.registerGlobalReceiver(MainPacket.ID, (packet, context) -> {
