@@ -38,7 +38,6 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.SortedSet;
 
-@Debug(export = true)
 @Mixin(LevelRenderer.class)
 public abstract class LevelRenderMixin implements LevelRendererAccessor {
 	@Shadow @Final private Long2ObjectMap<SortedSet<BlockDestructionProgress>> destructionProgress;
