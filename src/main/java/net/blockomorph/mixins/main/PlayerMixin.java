@@ -314,8 +314,10 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 			this.runUpdates();
 			this.runUpdatesBlockEvents();
 		}
-        for (BlockInPlayer2 block : this.blocksData.values()) {
-			block.tick();
+		if (this.isFullActive()) {
+			for (BlockInPlayer2 block : this.blocksData.values()) {
+				block.tick();
+			}
 		}
 		TNT_HANDLER.tick();
 	}
