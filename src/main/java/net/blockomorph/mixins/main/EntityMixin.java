@@ -1,5 +1,7 @@
 package net.blockomorph.mixins.main;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.blockomorph.utils.ChairController;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.MorphUtils;
@@ -107,6 +109,12 @@ public abstract class EntityMixin implements EntityAccessor {
 				});
 			}
 		}
+	}
+
+	@WrapOperation(method = "startRiding(Lnet/minecraft/world/entity/Entity;Z)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/EntityType;canSerialize()Z"))
+	public boolean brakePlayerRidingLock(EntityType<?> instance, Operation<Boolean> original) {
+		if (instance == EntityType.PLAYER) return true;
+		return original.call(instance);
 	}
 
 	@Inject(method = "setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)
