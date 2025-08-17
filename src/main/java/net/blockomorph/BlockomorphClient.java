@@ -6,6 +6,7 @@ import net.fabricmc.api.ClientModInitializer;
 
 import net.blockomorph.core.MainBus;
 
+@Deprecated(since = "4.0.4")
 @Environment(EnvType.CLIENT)
 public class BlockomorphClient implements ClientModInitializer {
 	@Override
