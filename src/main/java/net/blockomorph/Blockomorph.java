@@ -10,7 +10,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.bus.api.IEventBus;
 
-@Mod(Blockomorph.MODID)
+@Mod(Blockomorph.MODID) @Deprecated(since = "4.0.4")
 public class Blockomorph {
 	public static final Logger LOGGER = LogManager.getLogger(Blockomorph.class);
 	public static final String MODID = "blockomorph";
