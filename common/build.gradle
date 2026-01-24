@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+    id 'fabric-loom'
+}
+
+repositories {
+    maven { url = "https://maven.minecraftforge.net" }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:" + minecraft_version
+    mappings loom.officialMojangMappings()
+    compileOnly "org.spongepowered:mixin:0.8.7"
+    compileOnly "org.ow2.asm:asm-commons:9.7"
+    compileOnly "io.github.llamalad7:mixinextras-common:0.3.5"
+}
+
+version = mod_version
+group = 'net.blockomorph'
+
+loom {
+    accessWidenerPath = file('src/main/resources/blockomorph.accesswidener')
+}
+
+
+configurations {
+    commonJava {
+        canBeResolved = false
+        canBeConsumed = true
+    }
+}
+
+artifacts {
+    commonJava jar
+}
