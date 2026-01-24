@@ -24,6 +24,6 @@ public interface RegisterPlatformUtils {
 	void registerCommand(TriConsumer<CommandDispatcher<CommandSourceStack>, CommandBuildContext, Commands.CommandSelection> command);
 	void addServerStartCallback(Consumer<MinecraftServer> serverCallback);
 	<T extends CustomPacketPayload> void registerMainPacket(CustomPacketPayload.Type<T> type, StreamCodec<RegistryFriendlyByteBuf, T> codec, BiConsumer<T, Context> handler);
-	record Context(boolean client, @Nullable Player player) {}//СЕТЬ И КРАШ ОТ ИСКЛЮЧЕНИЯ
+	record Context(boolean client, @Nullable Player player) {}
 	void registerKeyMappings(KeyMapping keyMapping);
 }
