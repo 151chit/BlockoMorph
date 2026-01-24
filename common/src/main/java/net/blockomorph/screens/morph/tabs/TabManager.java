@@ -25,6 +25,7 @@ import java.util.function.IntSupplier;
 
 public class TabManager {
 	private static final ResourceLocation TABS_SPRITE = GuiUtils.res("textures/screens/block_selector_tabs.png");
+	private static final ResourceLocation ERROR_FRAME = GuiUtils.res("textures/screens/sel_err.png");
 	public static final int BLOCK_FRAME_SIZE = 36;
 	public static final int ROW_WIDTH = 4;
 	public static final int ROW_HEIGHT = 4;
@@ -77,36 +78,58 @@ public class TabManager {
 		}
 	}
 
-	public void renderBlocksInSlots(GuiUtils gui, AbstractMorphScreen.OnRenderingFrame onRendering) {
+	public Throwable renderBlocksInSlots(GuiUtils gui, AbstractMorphScreen.OnRenderingFrame onRendering) {
 		int size = BLOCK_FRAME_SIZE;
+		Throwable mainReason = null;
 		for (int x = 0; x < ROW_WIDTH; x++) {
 			for (int y = 0; y < ROW_HEIGHT; y++) {
-				try {
-					SavedBlock block = this.renderableBlocks.get(y * ROW_HEIGHT + x);
-					if (block != null) {
-						BlockEntity blockEntity = (block.getState().getBlock() instanceof EntityBlock ent ? ent.newBlockEntity(GuiUtils.AIR, block.getState()) : null);
-						if (blockEntity != null && GuiUtils.MC.level != null) {
-							blockEntity.setLevel(GuiUtils.MC.level);
-							blockEntity.setBlockState(block.getState());
-							if (block.getTag() != null) {
-								blockEntity.loadWithComponents(block.getTag(), GuiUtils.MC.level.registryAccess());
-							}
-						}
-						gui.renderBlockInGui(block.getState(), blockEntity, this.leftPos.getAsInt() + 42 + x * size, this.topPos.getAsInt() + 42 + y * size, 20);
-						gui.renderAdditionalOnBlock(block.getState(), this.leftPos.getAsInt() + 20 + x * size, this.topPos.getAsInt() + 25 + y * size, 30);
+				int id = y * ROW_HEIGHT + x;
+				SavedBlock block = this.renderableBlocks.get(id);
+				if (block != null) {
+					Throwable reason = null;
 
-						final int blockX = x;
-						final int blockY = y;
-						gui.renderInDepthIfNeededAfterBlockRendering(() -> {
-							onRendering.render(block, this.leftPos.getAsInt() + 10 + blockX * size, this.topPos.getAsInt() + 15 + blockY * size);
-						});
+					BlockEntity blockEntity = null;
+					try {
+						blockEntity = this.initFakeBE(block);
+					} catch (Throwable e) { reason = e; }
+
+					Throwable blockErr = gui.renderBlockInGui(block.getState(), blockEntity, this.leftPos.getAsInt() + 42 + x * size, this.topPos.getAsInt() + 42 + y * size, 20);
+					if (blockErr != null) reason = blockErr;
+					Throwable itemErr = gui.renderAdditionalOnBlock(block.getState(), this.leftPos.getAsInt() + 20 + x * size, this.topPos.getAsInt() + 25 + y * size, 30);
+					if (itemErr != null) reason = itemErr;
+
+					final int blockX = this.leftPos.getAsInt() + 10 + x * size;
+					final int blockY = this.topPos.getAsInt() + 15 + y * size;
+					if (reason != null) {
+						this.renderException(gui, blockX, blockY);
+						if (this.findBlockIndex(gui.getMouseX(), gui.getMouseY()) == id) mainReason = reason;
 					}
-				} catch (Exception EX) {
-					//TODO!!!!!!!!!
+					gui.renderInDepthIfNeededAfterBlockRendering(() -> {
+						onRendering.render(block, blockX, blockY);
+					});
 				}
 			}
 		}
 		this.scrollerManager.renderScroller(gui);
+		return mainReason;
+	}
+
+	private BlockEntity initFakeBE(SavedBlock block) {
+		BlockEntity blockEntity = (block.getState().getBlock() instanceof EntityBlock ent ? ent.newBlockEntity(GuiUtils.AIR, block.getState()) : null);
+		if (blockEntity != null && GuiUtils.MC.level != null) {
+			blockEntity.setLevel(GuiUtils.MC.level);
+			blockEntity.setBlockState(block.getState());
+			if (block.getTag() != null) {
+				blockEntity.loadWithComponents(block.getTag(), GuiUtils.MC.level.registryAccess());
+			}
+		}
+		return blockEntity;
+	}
+
+	private void renderException(GuiUtils gui, int x, int y) {
+		gui.renderInDepthIfNeededAfterBlockRendering(() -> {
+			gui.blitMonoImage(ERROR_FRAME, x, y, BLOCK_FRAME_SIZE, BLOCK_FRAME_SIZE);
+		});
 	}
 
 	@Nullable

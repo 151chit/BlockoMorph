@@ -44,10 +44,17 @@ public abstract class AbstractMorphScreen extends AbstractScreen implements Conf
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float tick) {
 		super.render(guiGraphics, mouseX, mouseY, tick);
 		this.tabManager.renderTabs(this.gui);
-		this.tabManager.renderBlocksInSlots(this.gui, this::renderFrame);
-		this.renderTooltipForBlock();
+		Throwable err = this.tabManager.renderBlocksInSlots(this.gui, this::renderFrame);
+		if (err != null) {
+			this.renderTooltipErrorWhileBlockDraw(err);
+		} else this.renderTooltipForBlock();
 		CreativeModeBlockTab tab = this.tabManager.getTabAtPosition(gui.getMouseX(), gui.getMouseY());
 		if (tab != null) gui.renderTooltip(tab.getDisplayName(), gui.getMouseX(), gui.getMouseY());
+	}
+
+	private void renderTooltipErrorWhileBlockDraw(Throwable err) {
+		String reason = err.getMessage();
+		gui.renderTooltip(Component.literal(reason != null ? reason : err.getClass().getName()), gui.getMouseX(), gui.getMouseY());
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
+import it.unimi.dsi.fastutil.Pair;
 import net.blockomorph.screens.overlay.BlockHeartOverlay;
 import net.blockomorph.screens.overlay.Overlay;
 import net.blockomorph.screens.overlay.PlayerCrackOverlay;
@@ -236,7 +237,7 @@ public class GuiUtils { //Cross-platform wrapper
 	}
 
 	//HINT:   XY - down corner of block
-	public void renderBlockInGui(BlockState blockState, @Nullable BlockEntity blockEntity, float x, float y, float scale) {
+	public Throwable renderBlockInGui(BlockState blockState, @Nullable BlockEntity blockEntity, float x, float y, float scale) {
 		PoseStack stack = GUI.pose();
 
 		stack.pushPose();
@@ -247,11 +248,21 @@ public class GuiUtils { //Cross-platform wrapper
 		stack.mulPose(Axis.XP.rotationDegrees(30.0F));
 		stack.mulPose(Axis.YP.rotationDegrees(-135F));
 
-		ClientPlatformUtils.INSTANCE.renderBlockInGui(GUI.bufferSource(), stack, blockState, blockEntity != null ? blockEntity.getBlockPos() : AIR);
+		Throwable reason = null;
+		try {
+			ClientPlatformUtils.INSTANCE.renderBlockInGui(GUI.bufferSource(), stack, blockState, blockEntity != null ? blockEntity.getBlockPos() : AIR);
+		} catch (Throwable e) {
+			reason = e;
+		}
 		RenderSystem.setShaderLights(DIFFUSE_LIGHT_START, DIFFUSE_LIGHT_END);
-		this.renderBlockEntity(stack, blockEntity);
+		try {
+			this.renderBlockEntity(stack, blockEntity);
+		} catch (Throwable e) {
+			reason = e;
+		}
 
 		stack.popPose();
+		return reason;
 	}
 
 	private Boolean skipCheckOrContainsRenderer(BlockState state) {
@@ -266,25 +277,30 @@ public class GuiUtils { //Cross-platform wrapper
 		return null;
 	}
 
-	public void renderAdditionalOnBlock(BlockState blockState, float x, float y, float scale) {
-		Boolean result = this.skipCheckOrContainsRenderer(blockState);
-		if (blockState.getRenderShape() == RenderShape.INVISIBLE && (result == null || !result)) {
-			Item item = null;
-			if (blockState.getBlock() instanceof LiquidBlock) {
-				item = blockState.getFluidState().getType().getBucket();
-			} else if (blockState.getBlock().asItem() != Items.AIR) {
-				item = blockState.getBlock().asItem();
-			}
-			if (item != null) {
-				ItemStack itemStack = new ItemStack(item);
-				Map<String, String> map = new HashMap<>();
-				for (Property<?> property : blockState.getProperties()) {
-					map.put(property.getName(), blockState.getValue(property).toString());
+	public Throwable renderAdditionalOnBlock(BlockState blockState, float x, float y, float scale) {
+		try {
+			Boolean result = this.skipCheckOrContainsRenderer(blockState);
+			if (blockState.getRenderShape() == RenderShape.INVISIBLE && (result == null || !result)) {
+				Item item = null;
+				if (blockState.getBlock() instanceof LiquidBlock) {
+					item = blockState.getFluidState().getType().getBucket();
+				} else if (blockState.getBlock().asItem() != Items.AIR) {
+					item = blockState.getBlock().asItem();
 				}
-				itemStack.set(DataComponents.BLOCK_STATE, new BlockItemStateProperties(map));
-				this.renderItem(itemStack, x, y, scale, 100);
+				if (item != null) {
+					ItemStack itemStack = new ItemStack(item);
+					Map<String, String> map = new HashMap<>();
+					for (Property<?> property : blockState.getProperties()) {
+						map.put(property.getName(), blockState.getValue(property).toString());
+					}
+					itemStack.set(DataComponents.BLOCK_STATE, new BlockItemStateProperties(map));
+					this.renderItem(itemStack, x, y, scale, 100);
+				}
 			}
+		} catch (Throwable e) {
+			return e;
 		}
+		return null;
 	}
 
 	private <T extends BlockEntity> void renderBlockEntity(PoseStack stack, T blockEntity) {
