@@ -4,13 +4,10 @@ import net.blockomorph.core.ClientRegister;
 import net.blockomorph.platformUtilsImpl.FabricRegisterUtils;
 import net.blockomorph.utils.platform.RegisterPlatformUtils;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-@Environment(EnvType.CLIENT)
 public class BlockomorphClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {

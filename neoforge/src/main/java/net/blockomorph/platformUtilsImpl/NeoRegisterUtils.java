@@ -14,8 +14,10 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.BlockItem;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -28,32 +30,19 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-@EventBusSubscriber
 public class NeoRegisterUtils implements RegisterPlatformUtils {
 	private static final List<TriConsumer<CommandDispatcher<CommandSourceStack>, CommandBuildContext, Commands.CommandSelection>> COMMANDS = new ArrayList<>();
 	private static final List<Consumer<MinecraftServer>> SERVER_CALLBACKS = new ArrayList<>();
 	public static final List<PacketForRegister<?>> PACKETS = new ArrayList<>();
-	private static final List<KeyMapping> KEYS = new ArrayList<>();
 
 	@Override
 	public void registerCommand(TriConsumer<CommandDispatcher<CommandSourceStack>, CommandBuildContext, Commands.CommandSelection> command) {
 		COMMANDS.add(command);
 	}
 
-	@SubscribeEvent
-	public static void registerCommand(RegisterCommandsEvent event) {
-		COMMANDS.forEach(command ->
-				command.accept(event.getDispatcher(), event.getBuildContext(), event.getCommandSelection()));
-	}
-
 	@Override
 	public void addServerStartCallback(Consumer<MinecraftServer> serverCallback) {
 		SERVER_CALLBACKS.add(serverCallback);
-	}
-
-	@SubscribeEvent
-	public static void serverRun(ServerStartingEvent event) {
-		SERVER_CALLBACKS.forEach(c -> c.accept(event.getServer()));
 	}
 
 	@Override
@@ -65,21 +54,40 @@ public class NeoRegisterUtils implements RegisterPlatformUtils {
 
 	@Override
 	public void registerKeyMappings(KeyMapping keyMapping) {
-		KEYS.add(keyMapping);
+		if (FMLLoader.getDist() == Dist.CLIENT) {
+			ClientListeners.KEYS.add(keyMapping);
+		} else throw new RuntimeException("Call keymap register on server!");
 	}
 
-	@SubscribeEvent
-	public static void registerKeys(RegisterKeyMappingsEvent event) {
-		KEYS.forEach(event::register);
+	@EventBusSubscriber
+	public static class ServerListeners {
+		@SubscribeEvent
+		public static void registerCommand(RegisterCommandsEvent event) {
+			COMMANDS.forEach(command ->
+					command.accept(event.getDispatcher(), event.getBuildContext(), event.getCommandSelection()));
+		}
+
+		@SubscribeEvent
+		public static void serverRun(ServerStartingEvent event) {
+			SERVER_CALLBACKS.forEach(c -> c.accept(event.getServer()));
+		}
 	}
 
+	@EventBusSubscriber(value = Dist.CLIENT)
+	public static class ClientListeners {
+		private static final List<KeyMapping> KEYS = new ArrayList<>();
+		@SubscribeEvent
+		public static void registerKeys(RegisterKeyMappingsEvent event) {
+			KEYS.forEach(event::register);
+		}
 
-	@SubscribeEvent
-	public static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
-		if (event.getEntity().getItemInHand(event.getHand()).getItem() instanceof BlockItem) {
-			ConfigEnums.PlaceMode mode = Config.get().placeMode.getValue();
-			if (mode == ConfigEnums.PlaceMode.DISABLED && InPlayerBlockPos.isMorphedPlayerX(event.getHitVec().getBlockPos().getX())) {
-				event.setUseItem(TriState.FALSE);
+		@SubscribeEvent
+		public static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
+			if (event.getEntity().getItemInHand(event.getHand()).getItem() instanceof BlockItem) {
+				ConfigEnums.PlaceMode mode = Config.get().placeMode.getValue();
+				if (mode == ConfigEnums.PlaceMode.DISABLED && InPlayerBlockPos.isMorphedPlayerX(event.getHitVec().getBlockPos().getX())) {
+					event.setUseItem(TriState.FALSE);
+				}
 			}
 		}
 	}
