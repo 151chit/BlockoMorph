@@ -1,0 +1,47 @@
+plugins {
+    id 'fabric-loom'
+    id 'maven-publish'
+}
+
+loom {
+    runs {
+        client {
+            client()
+            programArgs.addAll('--username', 'Opa')
+        }
+        twoClient {
+            client()
+            programArgs.addAll('--username', 'Dev')
+        }
+        server {
+            server()
+        }
+        configureEach {
+            setIdeConfigGenerated(false)
+            vmArgs.add("-Xmx" + min_memoryGb + "G")
+            vmArgs.add("-Xms" + max_memoryGb + "G")
+        }
+    }
+}
+
+base.archivesName = "blockomorph-" + minecraft_version + "-fabric-" + mod_version
+
+dependencies {
+    implementation project(':common')
+
+    minecraft "com.mojang:minecraft:" + minecraft_version
+    mappings loom.officialMojangMappings()
+
+    modImplementation "net.fabricmc:fabric-loader:" + fabric_loader
+    modImplementation "net.fabricmc.fabric-api:fabric-api:" + fabric_api+ "+" + minecraft_version
+
+    modImplementation project.fileTree(dir: 'run/mods', include: ['*.jar'])
+}
+
+sourceSets.main.java.srcDirs += project(":common").sourceSets.main.java.srcDirs
+sourceSets.main.resources.srcDirs += project(":common").sourceSets.main.resources.srcDirs
+
+remapJar {
+    String outputPath = System.getenv().BLOCKOMORPH_OUTPUT
+    if (outputPath != null) destinationDirectory = file(outputPath)
+}
