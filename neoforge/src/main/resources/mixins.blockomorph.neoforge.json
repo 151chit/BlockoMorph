@@ -12,7 +12,8 @@
   "client": [
     "AttackSupportMixin",
     "BlockModelRendererMixin",
-    "ModelDataManagerMixin"
+    "ModelDataManagerMixin",
+    "MultiPlayerGameModeMixin"
   ],
   "injectors": {
     "defaultRequire": 1
