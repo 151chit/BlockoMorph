@@ -13,7 +13,8 @@
     "AttackSupportMixin",
     "BlockModelRendererMixin",
     "ModelDataManagerMixin",
-    "TranslucentSupportMixin"
+    "TranslucentSupportMixin",
+    "MultiPlayerGameModeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

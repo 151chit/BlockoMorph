@@ -7,14 +7,20 @@ import net.blockomorph.network.ClientBoundMorphUpdatePacket;
 import net.blockomorph.utils.BlockInPlayer2;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.config.Config;
+import net.blockomorph.utils.config.ConfigEnums;
+import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.tnt.TntSpawnLevel;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.TntBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -22,6 +28,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -119,5 +126,14 @@ public interface CommonPlatformUtils {
 			}
 			handler.accept(fluidType, fluidHeight);
 		});
+	}
+
+	static void onRightClick(Player serverPlayer, InteractionHand interactionHand, BlockHitResult blockHitResult, CallbackInfoReturnable<InteractionResult> cir) {
+		if (serverPlayer.getItemInHand(interactionHand).getItem() instanceof BlockItem) {
+			ConfigEnums.PlaceMode mode = Config.get().placeMode.getValue();
+			if (mode == ConfigEnums.PlaceMode.DISABLED && InPlayerBlockPos.isMorphedPlayerX(blockHitResult.getBlockPos().getX())) {
+				cir.setReturnValue(InteractionResult.PASS);
+			}
+		}
 	}
 }
