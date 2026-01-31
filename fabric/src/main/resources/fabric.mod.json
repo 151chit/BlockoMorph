@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "blockomorph",
+  "version": "${mod_version}",
+  "name": "Block'oMorph",
+  "description": "This mod allows players morph into blocks with all the main features of the block.",
+  "authors": [
+    "151gamemode1chit"
+  ],
+  "license": "MIT License",
+  "icon": "logo.png",
+  "accessWidener": "blockomorph.accesswidener",
+  "environment": "*",
+  "contact": {
+    "homepage": "https://modrinth.com/mod/block-o-morph",
+    "sources": "https://github.com/151chit/BlockoMorph"
+  },
+  "entrypoints": {
+    "main": [
+      "net.blockomorph.BlockomorphCommon"
+    ],
+    "client": [
+      "net.blockomorph.BlockomorphClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${fabric_loader}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}",
+    "java": ">=21"
+  },
+  "mixins": [
+    "mixins.blockomorph.json",
+    "mixins.blockomorph.fabric.json"
+  ]
+}
