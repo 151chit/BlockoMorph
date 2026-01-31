@@ -68,6 +68,7 @@ public class NeoClientUtils implements ClientPlatformUtils {
 		BlockState blockstate = block.getBlockState();
 		var model = MC.get().getBlockRenderer().getBlockModel(blockstate);
 		BlockPos offset = block.getPos();
+		randomSource.setSeed(blockstate.getSeed(offset));
 		List<BlockModelPart> modelParts = model.collectParts(level, offset, blockstate, randomSource).stream().filter((blockModelPart -> {
 			return (blockModelPart.getRenderType(blockstate) == RenderType.translucent()) == translucent;
 		})).toList();//modeldata include if need from blockandtintgetter.getModelData(pos) with mixin redirect
@@ -76,7 +77,6 @@ public class NeoClientUtils implements ClientPlatformUtils {
 		};
 		boolean redirectToFabric = model instanceof FabricModelOnForge acc && acc.isNotVanilla$blockomorph();
 		ModelBlockRenderer renderer = MC.get().getBlockRenderer().getModelRenderer();
-		randomSource.setSeed(blockstate.getSeed(offset));
 		if (redirectToFabric) {
 			renderer.tesselateBlock(level, modelParts, blockstate, offset, posestack, bufferLookup.apply(ItemBlockRenderTypes.getMovingBlockRenderType(blockstate)), true, OverlayTexture.NO_OVERLAY);
 		} else {
@@ -90,13 +90,13 @@ public class NeoClientUtils implements ClientPlatformUtils {
 		Level level = MC.get().level;
 		if (blockState.getRenderShape() == RenderShape.MODEL && level != null) {
 			BlockRenderDispatcher blockRenderer = MC.get().getBlockRenderer();
-			List<BlockModelPart> list = blockRenderer.getBlockModel(blockState).collectParts(level, zeroOrFake, blockState, random);
+			List<BlockModelPart> modelParts = blockRenderer.getBlockModel(blockState).collectParts(level, zeroOrFake, blockState, random);
 			Function<RenderType, VertexConsumer> bufferLookup = (renderType) -> {
 				return bufferSource.getBuffer(RenderTypeHelper.getMovingBlockRenderType(renderType));
 			};
 			ClientLevelAccessor acc = ClientLevelAccessor.of(level);
 			acc.setSpecialRenderingMode(true);
-			blockRenderer.getModelRenderer().tesselateBlock(level, list, blockState, zeroOrFake, stack, bufferLookup, false, OverlayTexture.NO_OVERLAY);
+			blockRenderer.getModelRenderer().tesselateBlock(level, modelParts, blockState, zeroOrFake, stack, bufferLookup, false, OverlayTexture.NO_OVERLAY);
 			acc.setSpecialRenderingMode(false);
 		}
 	}
@@ -107,7 +107,8 @@ public class NeoClientUtils implements ClientPlatformUtils {
 		BlockPos pos = block.getPos();
 		var model = MC.get().getBlockRenderer().getBlockModel(blockstate);
 		cachedBreakingList.clear();
-		model.collectParts(pl.player().level(), pos, blockstate, RandomSource.create(blockstate.getSeed(pos)), cachedBreakingList);
+		randomSource.setSeed(blockstate.getSeed(pos));
+		model.collectParts(pl.player().level(), pos, blockstate, randomSource, cachedBreakingList);
 		MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(pl.player().level(), cachedBreakingList, blockstate, pos, posestack, (r) -> buffer, false, OverlayTexture.NO_OVERLAY);
 	}
 

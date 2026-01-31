@@ -19,6 +19,7 @@ import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -38,6 +39,7 @@ import java.util.function.Supplier;
 
 public class FabricClientUtils implements ClientPlatformUtils {
 	private static final Supplier<Minecraft> MC = () -> GuiUtils.MC;
+	private static final List<BlockModelPart> cachedBreakingList = new ArrayList<>();
 
 	@Override
 	public void collectItemsFromAllTabs(CreativeModeTab tab, ResourceKey<CreativeModeTab> key, CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output, CreativeModeTab.DisplayItemsGenerator orig) {
@@ -95,19 +97,21 @@ public class FabricClientUtils implements ClientPlatformUtils {
 		BlockPos pos = block.getPos();
 		RenderType renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockState);
 		if (translucent != (renderType == RenderType.translucentMovingBlock())) return;
+		randomSource.setSeed(blockState.getSeed(pos));
+		List<BlockModelPart> modelParts = model.collectParts(randomSource);
 		VertexConsumer vertex = buffer.getBuffer(renderType);
-		MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(pl.player().level(), model, blockState, pos, posestack, vertex, true, randomSource, blockState.getSeed(pos), OverlayTexture.NO_OVERLAY);
+		MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(pl.player().level(), modelParts, blockState, pos, posestack, vertex, true, OverlayTexture.NO_OVERLAY);
 	}
 
 	@Override
 	public void renderBlockInGui(MultiBufferSource bufferSource, PoseStack stack, BlockState blockState, BlockPos zeroOrFake) {
 		RandomSource random = RandomSource.create(blockState.getSeed(zeroOrFake));
 		if (blockState.getRenderShape() == RenderShape.MODEL) {
+			List<BlockModelPart> modelParts = MC.get().getBlockRenderer().getBlockModel(blockState).collectParts(random);
+			var renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockState);
 			ClientLevelAccessor acc = ClientLevelAccessor.of(MC.get().level);
 			acc.setSpecialRenderingMode(true);
-			var model = MC.get().getBlockRenderer().getBlockModel(blockState);
-			var renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockState);
-			MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(MC.get().level, model, blockState, zeroOrFake, stack, bufferSource.getBuffer(renderType), false, random, blockState.getSeed(zeroOrFake), OverlayTexture.NO_OVERLAY);
+			MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(MC.get().level, modelParts, blockState, zeroOrFake, stack, bufferSource.getBuffer(renderType), false, OverlayTexture.NO_OVERLAY);
 			acc.setSpecialRenderingMode(false);
 		}
 	}
@@ -116,7 +120,11 @@ public class FabricClientUtils implements ClientPlatformUtils {
 	public void renderBrake(PoseStack posestack, VertexConsumer buffer, PlayerAccessor pl, BlockInPlayer2 block, RandomSource randomSource) {
 		BlockState blockstate = block.getBlockState();
 		BlockPos pos = block.getPos();
-		MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(pl.player().level(), MC.get().getBlockRenderer().getBlockModel(blockstate), blockstate, pos, posestack, buffer, false, randomSource, blockstate.getSeed(pos), OverlayTexture.NO_OVERLAY);
+		var model = MC.get().getBlockRenderer().getBlockModel(blockstate);
+		cachedBreakingList.clear();
+		randomSource.setSeed(blockstate.getSeed(pos));
+		model.collectParts(randomSource, cachedBreakingList);
+		MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(pl.player().level(), cachedBreakingList, blockstate, pos, posestack, buffer, false, OverlayTexture.NO_OVERLAY);
 	}
 
 	@Override

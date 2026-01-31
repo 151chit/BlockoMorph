@@ -1,7 +1,6 @@
 package net.blockomorph.mixins.main;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JavaOps;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import net.blockomorph.network.ClientBoundApplyBlockMorphPacket;
@@ -457,7 +456,8 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 	private void runUpdatesBlockEvents() {
 		if (this.blockEvents.isEmpty())
 			return;
-		this.blockEvents.forEach(blockData -> {
+		while (!this.blockEvents.isEmpty()) {
+			InPlayerBlockEventData blockData = this.blockEvents.removeFirst();
 			BlockInPlayer2 block = this.blocksData.get(blockData.inPlayerPosOfBlock());
 			BlockEventData data = blockData.data();
 			if (block != null && block.getBlockState().is(data.block())) {
@@ -465,8 +465,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 				if (result)
 					this.sendNearby(new ClientboundBlockEventPacket(data.pos(), data.block(), data.paramA(), data.paramB()));
 			}
-		});
-		this.blockEvents.clear();
+		}
 	}
 
 	@Inject(method = "tick", at = @At("TAIL"))
