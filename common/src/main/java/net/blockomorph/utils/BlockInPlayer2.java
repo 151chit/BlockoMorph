@@ -229,8 +229,4 @@ public class BlockInPlayer2 {
 			this.player.level().addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, this.blockState), real.x, real.y, real.z, 0.0D, 0.0D, 0.0D);
 		}
 	}
-
-	private boolean needRemoveBlockEntity(BlockState old, BlockState newState) {
-		return old.hasBlockEntity() && (!old.is(newState.getBlock()) || !newState.hasBlockEntity());
-	}
 }
