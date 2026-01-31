@@ -12,6 +12,9 @@
   "client": [
     "AttackSupportMixin",
     "BlockModelRendererMixin",
-    "ModelDataManagerMixin",
-  ]
+    "ModelDataManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }
