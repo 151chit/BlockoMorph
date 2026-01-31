@@ -1,5 +1,7 @@
 package net.blockomorph.mixins.main;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.blockomorph.utils.ChairController;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
@@ -10,6 +12,7 @@ import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
@@ -104,6 +107,12 @@ public abstract class EntityMixin implements EntityAccessor, ForceLevelChanger {
 				});
 			}
 		}
+	}
+
+	@WrapOperation(method = "startRiding(Lnet/minecraft/world/entity/Entity;Z)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/EntityType;canSerialize()Z"))
+	public boolean brakePlayerRidingLock(EntityType<?> instance, Operation<Boolean> original) {
+		if (instance == EntityType.PLAYER) return true;
+		return original.call(instance);
 	}
 
 	@Inject(method = "setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"), cancellable = true)

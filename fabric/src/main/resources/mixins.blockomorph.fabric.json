@@ -11,5 +11,8 @@
     "AttackSupportMixin",
     "BlockModelRendererMixin",
     "TranslucentSupportMixin"
-  ]
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

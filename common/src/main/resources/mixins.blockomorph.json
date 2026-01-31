@@ -106,5 +106,8 @@
     "main.client.graphic.entity.RenderStateMixin",
     "main.client.graphic.entity.LivingEntityRendererMixin"
   ],
-  "minVersion": "0.8"
+  "minVersion": "0.8",
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

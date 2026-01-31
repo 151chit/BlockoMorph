@@ -14,5 +14,8 @@
     "BlockModelRendererMixin",
     "ModelDataManagerMixin",
     "TranslucentSupportMixin"
-  ]
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }
