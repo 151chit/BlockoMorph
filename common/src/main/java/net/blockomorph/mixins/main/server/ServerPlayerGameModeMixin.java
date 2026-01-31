@@ -23,6 +23,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ServerPlayerGameMode.class)
 public class ServerPlayerGameModeMixin {
+
+	@Inject(method = "destroyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;playerWillDestroy(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/level/block/state/BlockState;"))
+	public void crackBlockStart(BlockPos blockPos, CallbackInfoReturnable<Boolean> cir) {
+		InPlayerBlockPos.check(blockPos, (pl, realPos) -> {
+			pl.breakingModeStart(true);
+		}, null, false);
+	}
+
 	@Inject(method = "useItemOn", at = @At(value = "NEW", target = "(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/item/context/UseOnContext;"), cancellable = true)
 	public void runTnt(ServerPlayer pl, Level lv, ItemStack stack, InteractionHand hand, BlockHitResult res, CallbackInfoReturnable<InteractionResult> cir) {
 		InPlayerBlockPos.check(res.getBlockPos(), (player, realPos) -> {

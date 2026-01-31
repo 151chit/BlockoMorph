@@ -18,15 +18,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ServerPlayerGameModeMixin {
 	@Shadow @Final protected ServerPlayer player;
 
-	@Inject(method = "removeBlock", at = @At(value = "HEAD"), remap = false)
-	public void crackBlockStart(BlockPos pos, BlockState state, boolean canHarvest, CallbackInfoReturnable<Boolean> cir) {
-		InPlayerBlockPos.check(pos, (pl, realPos) -> {
-			pl.breakingModeStart(true);
-		}, null, false);
-	}
-
-	@Inject(method = "removeBlock", at = @At(value = "TAIL"), remap = false)
-	public void crackBlockEnd(BlockPos pos, BlockState state, boolean canHarvest, CallbackInfoReturnable<Boolean> cir) {
+	@Inject(method = "destroyBlock", at = @At(shift = At.Shift.AFTER, value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayerGameMode;removeBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Z)Z"), remap = false)
+	public void crackBlockEnd(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
 		InPlayerBlockPos.check(pos, (pl, realPos) -> {
 			boolean flag = pl.isBreaking();
 			pl.breakingModeStart(false);
