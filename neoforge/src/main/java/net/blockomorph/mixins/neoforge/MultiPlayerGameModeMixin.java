@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(MultiPlayerGameMode.class)
 public class MultiPlayerGameModeMixin {
 
-	@Inject(method = "performUseItemOn", at = @At(ordinal = 1, value = "INVOKE", target = "Lnet/minecraft/util/TriState;isTrue()Z", remap = false), cancellable = true)
+	@Inject(method = "performUseItemOn", at = @At(ordinal = 1, value = "INVOKE", target = "Lnet/neoforged/neoforge/common/util/TriState;isTrue()Z", remap = false), cancellable = true)
 	public void checkAccessOnPlace(LocalPlayer localPlayer, InteractionHand interactionHand, BlockHitResult blockHitResult, CallbackInfoReturnable<InteractionResult> cir) {
 		CommonPlatformUtils.onRightClick(localPlayer, interactionHand, blockHitResult, cir);
 	}
