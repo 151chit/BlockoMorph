@@ -25,11 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.IntSupplier;
-import java.util.function.Supplier;
 
 public class TabManager {
 	private static final ResourceLocation TABS_SPRITE = GuiUtils.res("textures/screens/block_selector_tabs.png");
-	private static final ResourceLocation ERROR_FRAME = GuiUtils.res("textures/screens/sel_err.png");
 	public static final int BLOCK_FRAME_SIZE = 36;
 	public static final int ROW_WIDTH = 4;
 	public static final int ROW_HEIGHT = 4;
