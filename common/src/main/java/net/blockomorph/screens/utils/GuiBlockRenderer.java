@@ -34,14 +34,12 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 			stack.mulPose(Axis.XP.rotationDegrees(30.0F));
 			stack.mulPose(Axis.YP.rotationDegrees(-45.0F));
 			stack.mulPose(Axis.ZP.rotationDegrees(180.0F));
-			Throwable reason = null;
 
 			BlockEntity blockEntity = guiState.getBlockEntity();
 			try { ClientPlatformUtils.INSTANCE.renderBlockInGui(bufferSource, stack, guiState.getState(), blockEntity != null ? blockEntity.getBlockPos() : AIR);
-			} catch (Throwable e) { reason = e; }
+			} catch (Throwable ignored) {}
 			try { this.renderBlockEntity(guiState.getDeltaTick(), stack, blockEntity);
-			} catch (Throwable e) { reason = e; }
-			if (reason != null) guiState.onError(reason);
+			} catch (Throwable ignored) {}
 		}, DIFFUSE_LIGHT_START, DIFFUSE_LIGHT_END);
 	}
 
@@ -56,7 +54,6 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 			BlockEntityRenderer<T> renderer = MC.getBlockEntityRenderDispatcher().getRenderer(blockEntity);
 			if (renderer != null) {
 				ClientLevelAccessor acc = ClientLevelAccessor.of(MC.level);
-				if (true) throw new RuntimeException("Oops1");
 				try {
 					Camera cam = Minecraft.getInstance().getBlockEntityRenderDispatcher().camera;
 					acc.setSpecialRenderingMode(true);

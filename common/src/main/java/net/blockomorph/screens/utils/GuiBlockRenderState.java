@@ -16,9 +16,8 @@ public class GuiBlockRenderState implements PictureInPictureRenderState {
 	private final float size;
 	private final BlockState state;
 	private final BlockEntity entity;
-	private final Consumer<Throwable> errorRenderer;
 
-	public GuiBlockRenderState(BlockState blockState, @Nullable BlockEntity blockEntity, int x, int y, float scale, float deltaTick, ScreenRectangle scissorsArea, Consumer<Throwable> errorRenderer) {
+	public GuiBlockRenderState(BlockState blockState, @Nullable BlockEntity blockEntity, int x, int y, float scale, float deltaTick, ScreenRectangle scissorsArea) {
 		this.deltaTick = deltaTick;
 		int SCISSORS_SIZE = 100;
 		this.rectangle[0] = x - SCISSORS_SIZE;
@@ -30,7 +29,6 @@ public class GuiBlockRenderState implements PictureInPictureRenderState {
 		this.bounds = PictureInPictureRenderState.getBounds(this.x0(), this.y0(), this.x1(), this.y1(), scissorsArea);
 		this.state = blockState;
 		this.entity = blockEntity;
-		this.errorRenderer = errorRenderer;
 	}
 
 	@Override
@@ -78,10 +76,5 @@ public class GuiBlockRenderState implements PictureInPictureRenderState {
 	@Override
 	public ScreenRectangle bounds() {
 		return this.bounds;
-	}
-
-	public void onError(Throwable err) {
-		if (this.errorRenderer != null)
-			this.errorRenderer.accept(err);
 	}
 }

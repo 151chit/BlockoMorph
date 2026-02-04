@@ -197,9 +197,9 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 	}
 
 	//HINT:   XY - down corner of block
-	public void renderBlockInGui(BlockState blockState, @Nullable BlockEntity blockEntity, float x, float y, float scale, Consumer<Throwable> submitError) {
+	public void renderBlockInGui(BlockState blockState, @Nullable BlockEntity blockEntity, float x, float y, float scale) {
 		ClientPlatformUtils.INSTANCE.submitCustomPipRenderState(GUI,
-				new GuiBlockRenderState(blockState, blockEntity, (int) x, (int) y, scale, this.tick, ClientPlatformUtils.INSTANCE.scissorsPeek(GUI), submitError));
+				new GuiBlockRenderState(blockState, blockEntity, (int) x, (int) y, scale, this.tick, ClientPlatformUtils.INSTANCE.scissorsPeek(GUI)));
 	}
 
 	private Boolean skipCheckOrContainsRenderer(BlockState state) {
