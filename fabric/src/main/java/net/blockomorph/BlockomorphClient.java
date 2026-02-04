@@ -17,13 +17,11 @@ public class BlockomorphClient implements ClientModInitializer {
 
 	private <T extends CustomPacketPayload> void registerPacket(FabricRegisterUtils.PacketForRegister<T> packetForRegister) {
 		ClientPlayNetworking.registerGlobalReceiver(packetForRegister.type(), (packet, context) -> {
-			context.client().execute(() -> {
-				try {
-					packetForRegister.handler().accept(packet, new RegisterPlatformUtils.Context(true, context.player()));
-				} catch (Throwable e) {
-					context.player().connection.getConnection().disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
-				}
-			});
+			try {
+				packetForRegister.handler().accept(packet, new RegisterPlatformUtils.Context(true, context.player()));
+			} catch (Throwable e) {
+				context.player().connection.getConnection().disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
+			}
 		});
 	}
 }

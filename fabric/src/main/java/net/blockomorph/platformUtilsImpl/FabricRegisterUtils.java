@@ -41,13 +41,11 @@ public class FabricRegisterUtils implements RegisterPlatformUtils {
 		PayloadTypeRegistry.playC2S().register(type, codec);
 		PayloadTypeRegistry.playS2C().register(type, codec);
 		ServerPlayNetworking.registerGlobalReceiver(type, (packet, context) -> {
-			context.server().execute(() -> {
-				try {
-					handler.accept(packet, new Context(false, context.player()));
-				} catch (Throwable e) {
-					context.player().connection.disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
-				}
-			});
+			try {
+				handler.accept(packet, new Context(false, context.player()));
+			} catch (Throwable e) {
+				context.player().connection.disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
+			}
 		});
 		PACKETS.add(new PacketForRegister<>(type, codec, handler));
 	}
