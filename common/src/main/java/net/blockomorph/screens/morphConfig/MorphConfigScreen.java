@@ -86,7 +86,7 @@ public class MorphConfigScreen extends AbstractScreen implements ConfigSyncListe
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float tick) {
 		super.render(guiGraphics, mouseX, mouseY, tick);
-		this.gui.renderBlockInGui(this.getState(), this.getBE(), this.leftPos + 71, this.topPos + 64, 36f, null);
+		this.gui.renderBlockInGui(this.getState(), this.getBE(), this.leftPos + 71, this.topPos + 64, 36f);
 		this.gui.renderAdditionalOnBlock(this.getState(), this.leftPos + 37.5f, this.topPos + 40.5f, 55f);
 		this.propertiesRenderer.render(this.gui);
 		if (GuiUtils.isMouseOver(this.leftPos + 15, this.topPos + 18, this.leftPos + 75, this.topPos + 79, mouseX, mouseY)) {

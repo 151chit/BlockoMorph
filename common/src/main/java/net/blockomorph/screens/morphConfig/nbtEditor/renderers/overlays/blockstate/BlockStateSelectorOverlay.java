@@ -40,7 +40,7 @@ public class BlockStateSelectorOverlay extends TagEditingOverlay {
 
 	@Override
 	public void renderInGui(GuiUtils gui) {
-		gui.renderBlockInGui(this.state, this.tempBE, this.leftPos + 63.85f, this.topPos + 64f, 36f, null);
+		gui.renderBlockInGui(this.state, this.tempBE, this.leftPos + 63.85f, this.topPos + 64f, 36f);
 		gui.renderAdditionalOnBlock(this.state, this.leftPos + 30.5f, this.topPos + 40.5f, 55f);
 		this.propsRenderer.render(gui);
 		String[] text = Component.translatable("blockomorph.gui.stateSelectorOverlay.selectBlock").getString().split("\n");
