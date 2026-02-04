@@ -28,13 +28,4 @@ public class BlockMixin {
 			}
 		}, ci::cancel, lv);
 	}
-
-	@ModifyVariable(method = "shouldRenderFace", at = @At(value = "STORE"), ordinal = 1)
-	private static BlockState getRealState(BlockState neighbour, BlockState parent, BlockGetter lv, BlockPos parentPos, Direction dirToFace, BlockPos neighbourPos) {
-		AtomicReference<BlockState> input = new AtomicReference<>(neighbour);
-		InPlayerBlockPos.check(neighbourPos, (pl, realPos) -> {
-			input.set(pl.getBlockState(realPos));
-		}, null, !(lv instanceof Level level) || level.isClientSide);
-		return input.get();
-	}
 }
