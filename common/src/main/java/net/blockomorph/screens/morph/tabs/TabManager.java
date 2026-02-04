@@ -209,7 +209,7 @@ public class TabManager {
 		this.searchBox = new ListenerEditBox(GuiUtils.MC.font, this.leftPos.getAsInt() + 99, this.topPos.getAsInt() - 10, 70, 12, Component.translatable("itemGroup.search"), this::searchBlocks, null);
 		this.searchBox.setMaxLength(32767);
 		this.searchBox.setBordered(false);
-		this.searchBox.setTextColor(16777215);
+		this.searchBox.setTextColor((255 << 24) | 16777215);
 		action.accept(this.searchBox);
 		this.inited = true;
 	}
