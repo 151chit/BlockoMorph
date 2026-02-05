@@ -1,0 +1,55 @@
+plugins {
+    id 'eclipse'
+    id 'net.neoforged.moddev'
+    id 'org.sinytra.adapter.userdev' version '1.2.1-SNAPSHOT'
+}
+
+base.archivesName = "blockomorph-" + minecraft_version + "-neoforge-" + mod_version
+
+neoForge {
+    version = neoforge_loader_version
+
+    runs {
+        client {
+            client()
+            programArguments.addAll('--username', 'Opa')
+        }
+        twoClient {
+            client()
+        }
+        server {
+            server()
+        }
+
+        configureEach {
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+            jvmArguments.add("-Xmx" + min_memoryGb + "G")
+            jvmArguments.add("-Xms" + max_memoryGb + "G")
+            disableIdeRun()
+        }
+    }
+
+    mods {
+        testproject {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    implementation project(':common')
+
+    additionalRuntimeClasspath fileTree(dir: 'run/fabricAdapter', include: ['*.jar'])
+
+    implementation fileTree(dir: 'run/mods', include: ['*.jar'])
+    implementation fileTree(dir: 'run/mods/fabricApi', include: ['*.jar'])
+}
+
+sourceSets.main.java.srcDirs += project(":common").sourceSets.main.java.srcDirs
+sourceSets.main.resources.srcDirs += project(":common").sourceSets.main.resources.srcDirs
+
+jar {
+    String outputPath = System.getenv().BLOCKOMORPH_OUTPUT
+    if (outputPath != null) destinationDirectory = file(outputPath)
+}
