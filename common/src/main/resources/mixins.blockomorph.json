@@ -49,6 +49,7 @@
     "main.level.LevelOverrideMixin",
     "main.level.LevelTicksMixin",
     "main.level.MovementMixin",
+    "main.level.WaypointTransmitterMixin",
     "main.level.WorldBorderMixin",
     "main.server.ChunkMapMixin",
     "main.server.DistanceManagerMixin",
@@ -95,6 +96,7 @@
     "main.client.graphic.LevelRenderMixin",
     "main.client.graphic.LightEngineManagerMixin",
     "main.client.graphic.LightEngineMixin",
+    "main.client.graphic.LightningMixin",
     "main.client.graphic.LiquidRendererMixin",
     "main.client.graphic.ModelRendererMixin",
     "main.client.graphic.SpriteContentsMixin",
@@ -104,8 +106,7 @@
     "main.client.graphic.entity.LivingEntityRendererMixin",
     "main.client.graphic.entity.RenderStateMixin",
     "main.client.graphic.fluidFog.CameraMixin",
-    "main.client.graphic.fluidFog.FogRendererMixin",
-    "main.client.graphic.LightningMixin"
+    "main.client.graphic.fluidFog.FogRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
