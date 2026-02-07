@@ -9,9 +9,10 @@
   ],
   "client": [
     "AttackSupportMixin",
-    "TranslucentSupportMixin",
+    "BlockDestroySupportMixin",
+    "GuiRenderMixin",
     "MultiPlayerGameModeMixin",
-    "GuiRenderMixin"
+    "TranslucentSupportMixin"
   ],
   "injectors": {
     "defaultRequire": 1

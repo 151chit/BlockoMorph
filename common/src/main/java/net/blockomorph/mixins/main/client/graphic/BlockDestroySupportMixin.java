@@ -6,13 +6,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.spongepowered.asm.mixin.Final;
@@ -40,49 +36,6 @@ public abstract class BlockDestroySupportMixin {
 			Vec3 vec = InPlayerBlockPos.checkOnReal(new Vec3(pos.getX(), pos.getY(), pos.getZ()));
 			this.destroyBlock(pos, state, vec);
 			ci.cancel();
-		}
-	}
-
-	@Inject(method = "addBreakingBlockEffect", at = @At(value = "HEAD"), cancellable = true)
-	public void crack(BlockPos pos, Direction dir, CallbackInfo ci) {
-		if (InPlayerBlockPos.isMorphedPlayerX(pos.getX())) {
-			Vec3 vec = InPlayerBlockPos.checkOnReal(new Vec3(pos.getX(), pos.getY(), pos.getZ()));
-			this.crackBlock(pos, dir, vec);
-			ci.cancel();
-		}
-	}
-
-	@Unique
-	public void crackBlock(BlockPos keyPos, Direction dir, Vec3 realPos) {
-		BlockState blockstate = this.self().getBlockState(keyPos);
-		if (blockstate.getRenderShape() != RenderShape.INVISIBLE) {
-			double i = realPos.x;
-			double j = realPos.y;
-			double k = realPos.z;
-			float f = 0.1F;
-			double d = 0.2D;
-			AABB aabb = blockstate.getShape(this.self(), keyPos).bounds();
-			RandomSource randomSource = this.self().random;
-			double d0 = i + randomSource.nextDouble() * (aabb.maxX - aabb.minX - d) + f + aabb.minX;
-			double d1 = j + randomSource.nextDouble() * (aabb.maxY - aabb.minY - d) + f + aabb.minY;
-			double d2 = k + randomSource.nextDouble() * (aabb.maxZ - aabb.minZ - d) + f + aabb.minZ;
-			if (dir == Direction.DOWN) {
-				d1 = j + aabb.minY - f;
-			} else if (dir == Direction.UP) {
-				d1 = j + aabb.maxY + f;
-			} else if (dir == Direction.NORTH) {
-				d2 = k + aabb.minZ - f;
-			} else if (dir == Direction.SOUTH) {
-				d2 = k + aabb.maxZ + f;
-			} else if (dir == Direction.WEST) {
-				d0 = i + aabb.minX - f;
-			} else if (dir == Direction.EAST) {
-				d0 = i + aabb.maxX + f;
-			}
-
-			TerrainParticle particle = new TerrainParticle(this.self(), d0, d1, d2, 0.0D, 0.0D, 0.0D, blockstate, BlockPos.containing(realPos));
-			ClientPlatformUtils.INSTANCE.addAdditionalData(particle, keyPos, blockstate);
-			this.minecraft.particleEngine.add(particle.setPower(0.2F).scale(0.6F));
 		}
 	}
 

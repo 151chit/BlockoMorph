@@ -10,11 +10,12 @@
   ],
   "client": [
     "AttackSupportMixin",
+    "BlockDestroySupportMixin",
     "BlockModelRendererMixin",
+    "GuiRendererMixin",
     "ModelDataManagerMixin",
-    "TranslucentSupportMixin",
     "MultiPlayerGameModeMixin",
-    "GuiRendererMixin"
+    "TranslucentSupportMixin"
   ],
   "injectors": {
     "defaultRequire": 1
