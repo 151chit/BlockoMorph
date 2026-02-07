@@ -5,14 +5,17 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.blockomorph.screens.utils.FogLiquidModifier;
 import net.blockomorph.utils.BlockInPlayer2;
 import net.blockomorph.utils.accessors.SpriteAccessor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.state.pip.PictureInPictureRenderState;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.TerrainParticle;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -40,13 +43,24 @@ public interface ClientPlatformUtils {
 
 	@Nullable TextureAtlasSprite[] getPlatformFluidSprite(Level lv, BlockInPlayer2 block);
 	Integer getPlatformFluidTint(Level lv, BlockInPlayer2 block);
-	void submitBlockInWorld(boolean translucent, BlockAndTintGetter level, BlockState blockstate, BlockPos keyPos, PoseStack posestack, SubmitNodeCollector collector, RandomSource randomSource);
-	default RenderType forceVanillaRenderTypeFix(RenderType renderType, BlockState state) {
-		if (state.is(Blocks.REDSTONE_WIRE) ||
+	default void submitBlockInWorld(boolean translucent, BlockAndTintGetter level, BlockState blockstate, BlockPos keyPos, PoseStack posestack, SubmitNodeCollector collector, RandomSource randomSource) {
+		RenderType renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockstate);
+		if (this.needChangeToCutout(blockstate)) renderType = RenderType.cutout();
+		if (translucent != (renderType == RenderType.translucentMovingBlock())) return;
+
+		collector.submitCustomGeometry(posestack, renderType, ((pose, vertexConsumer) -> {
+			var model = Minecraft.getInstance().getBlockRenderer().getBlockModel(blockstate);
+			randomSource.setSeed(blockstate.getSeed(keyPos));
+			PoseStack poseStack = new PoseStack();
+			poseStack.last().set(pose);
+			Minecraft.getInstance().getBlockRenderer().getModelRenderer().tesselateBlock(level, model.collectParts(randomSource), blockstate, keyPos, poseStack, vertexConsumer, true, OverlayTexture.NO_OVERLAY);
+		}));
+	}
+	default boolean needChangeToCutout(BlockState state) {
+		return (state.is(Blocks.REDSTONE_WIRE) ||
 				state.is(Blocks.GLASS) ||
 				state.is(Blocks.GLASS_PANE)
-		) return RenderType.cutout();
-		return renderType;
+		);
 	}
 	void renderBlockInGui(MultiBufferSource bufferSource, PoseStack stack, BlockState blockState, BlockPos zeroOrFake);
 	boolean hasSearchBarInTab(CreativeModeTab tab);

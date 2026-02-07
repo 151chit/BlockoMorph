@@ -52,7 +52,6 @@ public class MorphedPlayerRenderer {
 
 				posestack.popPose();
 			}
-			this.submitFrame(state.framedBlock, posestack, collector);
 
 			posestack.popPose();
 			return true;
@@ -83,6 +82,7 @@ public class MorphedPlayerRenderer {
 			this.submitMainBlock(true, state.level, block, posestack, collector);
 			posestack.popPose();
 		}
+		this.submitFrame(state.framedBlock, posestack, collector);
 		posestack.popPose();
 	}
 

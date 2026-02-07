@@ -14,9 +14,7 @@ import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.state.pip.PictureInPictureRenderState;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.TerrainParticle;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
@@ -39,6 +37,8 @@ import net.neoforged.neoforge.client.textures.FluidSpriteCache;
 import net.neoforged.neoforge.event.EventHooks;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -67,25 +67,30 @@ public class NeoClientUtils implements ClientPlatformUtils {
 
 	@Override
 	public void submitBlockInWorld(boolean translucent, BlockAndTintGetter level, BlockState blockstate, BlockPos keyPos, PoseStack posestack, SubmitNodeCollector collector, RandomSource randomSource) {
-		collector.submitCustomGeometry(posestack, RenderType.LINES, ((pose, ignored) -> {
-			var model = MC.get().getBlockRenderer().getBlockModel(blockstate);
-			randomSource.setSeed(blockstate.getSeed(keyPos));
-			List<BlockModelPart> modelParts = model.collectParts(level, keyPos, blockstate, randomSource).stream().filter((blockModelPart -> {
-				return (blockModelPart.getRenderType(blockstate) == ChunkSectionLayer.TRANSLUCENT) == translucent;
-			})).toList();//modeldata include if need from blockandtintgetter.getModelData(pos) with mixin redirect
-			Function<ChunkSectionLayer, VertexConsumer> bufferLookup = (renderType) -> {
-				return MC.get().renderBuffers().bufferSource().getBuffer(this.forceVanillaRenderTypeFix(RenderTypeHelper.getMovingBlockRenderType(renderType), blockstate));
-			};
-			PoseStack poseStack = new PoseStack();
-			poseStack.last().set(pose);
-			boolean redirectToFabric = model instanceof FabricModelOnForge acc && acc.isNotVanilla$blockomorph();
-			ModelBlockRenderer renderer = MC.get().getBlockRenderer().getModelRenderer();
-			if (redirectToFabric) {
-				renderer.tesselateBlock(level, modelParts, blockstate, keyPos, poseStack, MC.get().renderBuffers().bufferSource().getBuffer(this.forceVanillaRenderTypeFix(ItemBlockRenderTypes.getMovingBlockRenderType(blockstate), blockstate)), true, OverlayTexture.NO_OVERLAY);
-			} else {
-				renderer.tesselateBlock(level, modelParts, blockstate, keyPos, poseStack, bufferLookup, true, OverlayTexture.NO_OVERLAY);
+		var model = MC.get().getBlockRenderer().getBlockModel(blockstate);
+		if (model instanceof FabricModelOnForge acc && acc.isNotVanilla$blockomorph()) {
+			ClientPlatformUtils.super.submitBlockInWorld(translucent, level, blockstate, keyPos, posestack, collector, randomSource);
+			return;
+		}
+
+		randomSource.setSeed(blockstate.getSeed(keyPos));
+		EnumMap<ChunkSectionLayer, List<BlockModelPart>> partsByShader = new EnumMap<>(ChunkSectionLayer.class);
+		model.collectParts(level, keyPos, blockstate, randomSource).forEach(blockModelPart -> {
+			ChunkSectionLayer layer = blockModelPart.getRenderType(blockstate);
+			if (this.needChangeToCutout(blockstate)) layer = ChunkSectionLayer.CUTOUT;
+			if ((layer == ChunkSectionLayer.TRANSLUCENT) == translucent) {
+				partsByShader.computeIfAbsent(layer, l -> new ArrayList<>()).add(blockModelPart);
 			}
-		}));
+		});//modeldata include if need from blockandtintgetter.getModelData(pos) with mixin redirect
+
+		ModelBlockRenderer renderer = MC.get().getBlockRenderer().getModelRenderer();
+		for (ChunkSectionLayer layer : partsByShader.keySet()) {
+			collector.submitCustomGeometry(posestack, RenderTypeHelper.getMovingBlockRenderType(layer), (pose, vertexconsumer) -> {
+				PoseStack poseStack = new PoseStack();
+				poseStack.last().set(pose);
+				renderer.tesselateBlock(level, partsByShader.get(layer), blockstate, keyPos, poseStack, l -> vertexconsumer, true, OverlayTexture.NO_OVERLAY);
+			});
+		}
 	}
 
 	@Override

@@ -1,10 +1,8 @@
 package net.blockomorph.platformUtilsImpl;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.BlockInPlayer2;
-import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandler;
@@ -21,8 +19,6 @@ import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -31,7 +27,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -92,21 +87,6 @@ public class FabricClientUtils implements ClientPlatformUtils {
 			return info.getFluidColor(lv, block.getPos(), fluidState);
 		}
 		return null;
-	}
-
-	@Override
-	public void submitBlockInWorld(boolean translucent, BlockAndTintGetter level, BlockState blockstate, BlockPos keyPos, PoseStack posestack, SubmitNodeCollector collector, RandomSource randomSource) {
-		RenderType renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockstate);
-		renderType = this.forceVanillaRenderTypeFix(renderType, blockstate);
-		if (translucent != (renderType == RenderType.translucentMovingBlock())) return;
-
-		collector.submitCustomGeometry(posestack, renderType, ((pose, vertexConsumer) -> {
-			var model = MC.get().getBlockRenderer().getBlockModel(blockstate);
-			randomSource.setSeed(blockstate.getSeed(keyPos));
-			PoseStack poseStack = new PoseStack();
-			poseStack.last().set(pose);
-			MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(level, model.collectParts(randomSource), blockstate, keyPos, poseStack, vertexConsumer, true, OverlayTexture.NO_OVERLAY);
-		}));
 	}
 
 	@Override
