@@ -24,9 +24,11 @@ public abstract class EntityInsideSupportMixin {
 
 	@Shadow protected abstract void onInsideBlock(BlockState blockState);
 
+	@Shadow protected abstract boolean isAffectedByBlocks();
+
 	@Inject(at = @At(value = "TAIL"), method = "checkInsideBlocks")
 	private void checkInsideBlocks(CallbackInfo ci) {
-		if (Config.get().entityInside.getValue()) {
+		if (Config.get().entityInside.getValue() && this.isAffectedByBlocks()) {
 			AABB entityBox = this.getBoundingBox().deflate(1.0E-5F);
 			Entity self = (Entity) (Object) this;
 			List<Entity> entities = this.level.getEntities(self, entityBox, EntitySelector.NO_SPECTATORS);
