@@ -128,8 +128,8 @@ public class TabContentManager {
 
 	public record Context(FeatureFlagSet flagSet, HolderLookup.Provider holders) {
 		public boolean equals(Object obj) {
-			if (obj instanceof Context(FeatureFlagSet set, HolderLookup.Provider holders1)) {
-				return set.equals(flagSet) && holders1 == holders;
+			if (obj instanceof Context ctx) {
+				return ctx.flagSet.equals(flagSet) && ctx.holders == holders;
 			}
 			return false;
 		}

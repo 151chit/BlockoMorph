@@ -66,7 +66,7 @@ public abstract class ClientLevelMixin implements ClientLevelAccessor {
 	public void animatePlayers(int x, int y, int z, int radius, RandomSource random, Block MARKER, BlockPos.MutableBlockPos pos, CallbackInfo ci) {
 		List<BlockInPlayer2> list = this.blocksForTick.get(pos);
 		if (list != null && !list.isEmpty()) {
-			BlockInPlayer2 block = list.size() == 1 ? list.getFirst() : list.get(LevelAcc.of(this).random.nextInt(list.size()));
+			BlockInPlayer2 block = list.size() == 1 ? list.get(0) : list.get(LevelAcc.of(this).random.nextInt(list.size()));
 			block.animateTick(random, MARKER, (blockState) -> {
 				ParticleOptions particleOptions = block.getBlockState().getFluidState().getDripParticle();
 				if (particleOptions != null && LevelAcc.of(this).random.nextInt(10) == 0) {

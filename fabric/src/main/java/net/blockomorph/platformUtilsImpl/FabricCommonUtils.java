@@ -72,6 +72,6 @@ public class FabricCommonUtils implements CommonPlatformUtils {
 			sender.accept(register.type(), buf);
 			return;
 		}
-		throw new IllegalArgumentException("Packet not registerd: " + type);
+		throw new IllegalArgumentException("Packet not registered: " + type);
 	}
 }

@@ -23,6 +23,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ServerPlayerGameModeMixin {
 	@Shadow @Final protected ServerPlayer player;
 
+	@Inject(method = "destroyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;playerWillDestroy(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/player/Player;)V"))
+	public void crackBlockStart(BlockPos blockPos, CallbackInfoReturnable<Boolean> cir) {
+		InPlayerBlockPos.check(blockPos, (pl, realPos) -> {
+			pl.breakingModeStart(true);
+		}, null, false);
+	}
+
 	@Inject(method = "destroyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayerGameMode;isCreative()Z"))
 	public void crackBlockEnd(BlockPos blockPos, CallbackInfoReturnable<Boolean> cir) {
 		InPlayerBlockPos.check(blockPos, (pl, realPos) -> {

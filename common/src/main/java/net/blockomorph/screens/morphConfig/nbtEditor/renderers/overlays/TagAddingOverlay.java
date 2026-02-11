@@ -58,7 +58,7 @@ public class TagAddingOverlay<T extends Tag> extends TagEditingOverlay {
 		this.onTagCreated = onTagCreated;
 		this.listDisabled = filtered.size() == 1;
 		this.filter = nameFilter;
-		this.first = filtered.getFirst();
+		this.first = filtered.get(0);
 		this.nameSuggestion = nameSuggestion;
 		this.hint = hint;
 	}

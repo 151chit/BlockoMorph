@@ -7,13 +7,13 @@ plugins {
 
 subprojects {
     apply plugin: 'java'
-    java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+    java.toolchain.languageVersion = JavaLanguageVersion.of(17)
     processResources {
         def rawProps = new Properties()
         rootProject.file("gradle.properties").withInputStream { rawProps.load(it) }
         def configProps = new HashMap<>(rawProps)
         inputs.properties(configProps)
-        filesMatching(["fabric.mod.json", "META-INF/neoforge.mods.toml"]) {
+        filesMatching(["fabric.mod.json", "META-INF/mods.toml"]) {
             expand(configProps)
         }
     }

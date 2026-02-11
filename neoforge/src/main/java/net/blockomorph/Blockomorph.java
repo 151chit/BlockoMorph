@@ -51,6 +51,7 @@ public class Blockomorph {
 				ctx.get().getNetworkManager().disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
 				return null;
 			});
+			ctx.get().setPacketHandled(true);
 		});
 	}
 

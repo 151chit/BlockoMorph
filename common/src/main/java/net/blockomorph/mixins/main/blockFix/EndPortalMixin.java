@@ -33,7 +33,7 @@ public abstract class EndPortalMixin {
 			if (level instanceof ServerLevel lv && entity.canChangeDimensions()) {
 				List<AABB> aabbs = SHAPE.toAabbs();
 				if (!aabbs.isEmpty()) {
-					AABB aabb = aabbs.getFirst();
+					AABB aabb = aabbs.get(0);
 					Vec3 vec = MorphUtils.getRealBlockPos(pl, realPos);
 					if (aabb.move(vec).intersects(entity.getBoundingBox())) {
 						ResourceKey<Level> resourceKey = level.dimension() == Level.END ? Level.OVERWORLD : Level.END;
