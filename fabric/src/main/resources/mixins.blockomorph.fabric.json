@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "package": "net.blockomorph.mixins.fabric",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "FluidEntitySupportMixin",
+    "LevelInjectMixin",
+    "ServerPlayerGameModeMixin"
+  ],
+  "client": [
+    "AttackSupportMixin",
+    "BlockModelRendererMixin",
+    "MultiPlayerGameModeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
