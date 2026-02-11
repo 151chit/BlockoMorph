@@ -1,6 +1,8 @@
 package net.blockomorph.mixins.main;
 
+import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import net.blockomorph.network.ClientBoundApplyBlockMorphPacket;
@@ -236,7 +238,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 					if (savedTicks == null) throw new IllegalArgumentException("Irregular ticks list format!");
 					ticksMap.put(pos, savedTicks.stream().map(savedTickTag -> {
 						if (savedTickTag instanceof CompoundTag tg) {
-							SavedTick<T> savedTick = SavedTick.loadTick(tg, st -> tickCodec.parse(JavaOps.INSTANCE, st).result()).orElse(null);
+							SavedTick<T> savedTick = SavedTick.loadTick(tg, st -> tickCodec.parse(JsonOps.INSTANCE, new JsonPrimitive(st)).result()).orElse(null);
 							if (savedTick == null) return null;
 							BlockPos absolute = zeroAbsolute.offset(savedTick.pos());
 							return new SavedTick<>(savedTick.type(), absolute, savedTick.delay(), savedTick.priority());
@@ -299,7 +301,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 			ticks.put(ticksStorage.name, ticksTag);
 			Codec<T> tickCodec = ticksStorage.codecSupplier.get();
 			for (Map.Entry<ChunkPos, LevelChunkTicks<T>> entry : ticksMap.entrySet()) {
-				ListTag chunkTag = entry.getValue().save(gameTime, t -> tickCodec.encodeStart(JavaOps.INSTANCE, t).getOrThrow().toString());
+				ListTag chunkTag = entry.getValue().save(gameTime, t -> tickCodec.encodeStart(JsonOps.INSTANCE, t).get().toString());
 				ChunkPos forSavePos = new ChunkPos(offset.get(entry.getKey().toLong()));
 				ticksTag.put(forSavePos.x + " " + forSavePos.z, chunkTag);
 				chunkTag.forEach(tag -> {
@@ -669,6 +671,13 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 	public void getDimensions(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
 		if (this.isActive()) {
 			cir.setReturnValue(HITBOX_HANDLER.calculateDimensions());
+		}
+	}
+
+	@Inject(method = "getStandingEyeHeight", at = @At("HEAD"), cancellable = true)
+	private void getStandingEyeHeight(Pose pose, EntityDimensions dimensions, CallbackInfoReturnable<Float> cir) {
+		if (this.isActive()) {
+			cir.setReturnValue(HITBOX_HANDLER.getEyeHeight());
 		}
 	}
 

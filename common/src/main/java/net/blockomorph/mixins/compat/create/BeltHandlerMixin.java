@@ -5,11 +5,13 @@ import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(targets = "com.simibubi.create.content.kinetics.belt.item.BeltConnectorHandler")
+@Pseudo
+@Mixin(targets = "com.simibubi.create.content.kinetics.belt.item.BeltConnectorHandler", remap = false)
 public class BeltHandlerMixin {
 
 	@Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/BlockHitResult;getBlockPos()Lnet/minecraft/core/BlockPos;"), cancellable = true)

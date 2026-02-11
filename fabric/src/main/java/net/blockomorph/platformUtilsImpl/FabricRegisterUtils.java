@@ -18,6 +18,7 @@ import org.apache.logging.log4j.util.TriConsumer;
 
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -37,14 +38,16 @@ public class FabricRegisterUtils implements RegisterPlatformUtils {
 	@Override
 	public <T> void registerMainPacket(Class<T> type, PacketCodingHandler<T> codec, BiConsumer<T, Context> handler) {
 		if (!Modifier.isFinal(type.getModifiers())) throw new IllegalArgumentException("Packet must be final: " + type.getName());
-		PacketForRegister<T> coder = new PacketForRegister<>(new ResourceLocation(MorphUtils.MODID, type.getSimpleName()), codec, handler);
+		PacketForRegister<T> coder = new PacketForRegister<>(new ResourceLocation(MorphUtils.MODID, type.getSimpleName().toLowerCase(Locale.ROOT)), codec, handler);
 		ServerPlayNetworking.registerGlobalReceiver(coder.type(), (server, player, listener, buf, responseSender) -> {
 			T packet = codec.decode(buf);
-			try {
-				server.execute(() -> handler.accept(packet, new Context(false, player)));
-			} catch (Throwable e) {
-				player.connection.disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
-			}
+			server.execute(() -> {
+				try {
+					handler.accept(packet, new Context(false, player));
+				} catch (Throwable e) {
+					player.connection.disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
+				}
+			});
 		});
 		PACKETS.put(type, coder);
 	}

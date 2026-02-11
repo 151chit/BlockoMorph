@@ -17,7 +17,7 @@ public class CommonRegister {
 			Config.setServer(server);
 			BlockPosBounds.load();
 		});
-		RegisterPlatformUtils.INSTANCE.registerMainPacket(MainPacket.ID, MainPacket.STREAM_CODEC, MainPacket::apply);
+		RegisterPlatformUtils.INSTANCE.registerMainPacket(MainPacket.class, MainPacket.STREAM_CODEC, MainPacket::apply);
 		MorphUtils.registerPacket(ClientBoundConfigUpdatePacket.ID, ClientBoundConfigUpdatePacket::new, true);
 		MorphUtils.registerPacket(ClientBoundBlockPosBoundPacket.ID, ClientBoundBlockPosBoundPacket::new, true);
 		MorphUtils.registerPacket(ClientBoundMorphUpdatePacket.ID, ClientBoundMorphUpdatePacket::new, true);

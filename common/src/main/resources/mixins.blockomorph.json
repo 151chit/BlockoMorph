@@ -38,7 +38,6 @@
     "main.client.CreativeModeTabMixin",
     "main.coords.AABBMixin",
     "main.coords.BlockPosEncoderMixin",
-    "main.coords.DimensionMixin",
     "main.coords.HitResultMixin",
     "main.coords.Vec3iMixin",
     "main.coords.Vec3Mixin",

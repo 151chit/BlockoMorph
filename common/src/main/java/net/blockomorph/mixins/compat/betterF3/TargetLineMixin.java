@@ -7,12 +7,14 @@ import net.blockomorph.utils.accessors.compat.DebugLineAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(targets = "me.cominixo.betterf3.modules.TargetModule")
+@Pseudo
+@Mixin(targets = "me.cominixo.betterf3.modules.TargetModule", remap = false)
 public class TargetLineMixin {
 	@Unique private DebugLineAccessor blockLine;
 	@Unique private DebugLineAccessor fluidLine;

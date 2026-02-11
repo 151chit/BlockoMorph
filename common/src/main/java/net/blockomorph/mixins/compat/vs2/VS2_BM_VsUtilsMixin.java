@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Pseudo
-
 @Mixin(targets = "org.valkyrienskies.mod.common.VSGameUtilsKt", remap = false)
 public abstract class VS2_BM_VsUtilsMixin {
 

@@ -192,7 +192,8 @@ public class GuiUtils { //Cross-platform wrapper
 		pose.pushPose();
 
 		pose.translate(x + 8, y + 8, 150 + zDepth);
-		pose.scale(scale, -scale, scale);
+		pose.mulPoseMatrix((new Matrix4f()).scaling(1.0F, -1.0F, 1.0F));
+		pose.scale(scale, scale, scale);
 
 		this.doMainRenderingItem(pose, item);
 

@@ -19,12 +19,14 @@ public class BlockomorphClient implements ClientModInitializer {
 	private <T> void registerPacket(FabricRegisterUtils.PacketForRegister<T> packetForRegister) {
 		ClientPlayNetworking.registerGlobalReceiver(packetForRegister.type(), (client, listener, buf, responseSender) -> {
 			T packet = packetForRegister.codec().decode(buf);
-			try {
-				packetForRegister.handler().accept(packet, new RegisterPlatformUtils.Context(true, client.player));
-			} catch (Throwable e) {
-				Objects.requireNonNull(client.getConnection())
-						.getConnection().disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
-			}
+			client.execute(() -> {
+				try {
+					packetForRegister.handler().accept(packet, new RegisterPlatformUtils.Context(true, client.player));
+				} catch (Throwable e) {
+					Objects.requireNonNull(client.getConnection())
+							.getConnection().disconnect(Component.literal("Broken BlockMorphPacket with ID " + packet + ": " + e.getMessage()));
+				}
+			});
 		});
 	}
 }

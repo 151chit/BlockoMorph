@@ -1,6 +1,5 @@
 package net.blockomorph.utils;
 
-import net.blockomorph.utils.accessors.DimAccessor;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.phys.AABB;
@@ -84,17 +83,19 @@ public class HitBoxCalculator {
 	}
 
 	public EntityDimensions calculateDimensions() {
-		return DimAccessor.dynamic((vec3) -> {
-			AABB ab = new AABB(
-					vec3.x + minPos.getX(),
-					vec3.y + minPos.getY(),
-					vec3.z + minPos.getZ(),
-					vec3.x + maxPos.getX(),
-					vec3.y + maxPos.getY(),
-					vec3.z + maxPos.getZ()
-			);
-			return this.centerAABB(ab, vec3);
-		}, this.getEyeHeight());
+		return new EntityDimensions(0, 0, false) {
+			public AABB makeBoundingBox(double d, double e, double f) {
+				Vec3 vec3 = new Vec3(d, e, f);
+				AABB ab = new AABB(
+						vec3.x + minPos.getX(),
+						vec3.y + minPos.getY(),
+						vec3.z + minPos.getZ(),
+						vec3.x + maxPos.getX(),
+						vec3.y + maxPos.getY(),
+						vec3.z + maxPos.getZ());
+				return centerAABB(ab, vec3);
+			}
+		};
 	}
 
 	public float getEyeHeight() {

@@ -121,22 +121,22 @@ public abstract class LevelInjectsMixin {
 	@Unique
 	private Vec3 explosion;
 
-	@Inject(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;ZLnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/level/Explosion;", at = @At(value = "HEAD"))
-	public void redirect(Entity p_311934_, DamageSource p_312790_, ExplosionDamageCalculator p_311975_, double x, double y, double z, float p_312292_, boolean p_312144_, Level.ExplosionInteraction p_312265_, boolean p_312145_, ParticleOptions p_312842_, ParticleOptions p_312060_, Holder<SoundEvent> p_320283_, CallbackInfoReturnable<Explosion> cir) {
+	@Inject(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;Z)Lnet/minecraft/world/level/Explosion;", at = @At(value = "HEAD"))
+	public void redirect(Entity p_256233_, DamageSource p_255861_, ExplosionDamageCalculator p_255867_, double x, double y, double z, float p_256013_, boolean p_256228_, Level.ExplosionInteraction p_255784_, boolean p_256377_, CallbackInfoReturnable<Explosion> cir) {
 		this.explosion = InPlayerBlockPos.checkOnReal(new Vec3(x, y, z));
 	}
 
-	@ModifyVariable(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;ZLnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/level/Explosion;", at = @At(value = "HEAD"), ordinal = 0)
+	@ModifyVariable(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;Z)Lnet/minecraft/world/level/Explosion;", at = @At(value = "HEAD"), ordinal = 0)
 	public double getX(double value) {
 		return explosion.x;
 	}
 
-	@ModifyVariable(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;ZLnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/level/Explosion;", at = @At(value = "HEAD"), ordinal = 1)
+	@ModifyVariable(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;Z)Lnet/minecraft/world/level/Explosion;", at = @At(value = "HEAD"), ordinal = 1)
 	public double getY(double value) {
 		return explosion.y;
 	}
 
-	@ModifyVariable(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;ZLnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/level/Explosion;", at = @At(value = "HEAD"), ordinal = 2)
+	@ModifyVariable(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;Z)Lnet/minecraft/world/level/Explosion;", at = @At(value = "HEAD"), ordinal = 2)
 	public double getZ(double value) {
 		return explosion.z;
 	}

@@ -32,6 +32,7 @@ public class AbstractScreen extends Screen {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float tick) {
 		this.gui.setGuiGraphics(guiGraphics, this.font, mouseX, mouseY, tick);
+		this.renderBackground(guiGraphics);
 		super.render(guiGraphics, mouseX, mouseY, tick);
 	}
 

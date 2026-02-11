@@ -70,6 +70,7 @@ public class FabricCommonUtils implements CommonPlatformUtils {
 			FriendlyByteBuf buf = PacketByteBufs.create();
 			register.codec().encode(buf, type);
 			sender.accept(register.type(), buf);
+			return;
 		}
 		throw new IllegalArgumentException("Packet not registerd: " + type);
 	}
