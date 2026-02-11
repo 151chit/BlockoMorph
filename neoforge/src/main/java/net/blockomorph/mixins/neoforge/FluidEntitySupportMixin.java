@@ -14,11 +14,11 @@ import java.util.function.Predicate;
 
 @Mixin(Entity.class)
 public abstract class FluidEntitySupportMixin implements IForgeEntity {
-	@Shadow
+	@Shadow(remap = false)
 	protected abstract void setFluidTypeHeight(FluidType type, double height);
-	@Shadow private FluidType forgeFluidTypeOnEyes;
+	@Shadow(remap = false) private FluidType forgeFluidTypeOnEyes;
 
-	@Inject(method = "updateFluidHeightAndDoFluidPushing(Ljava/util/function/Predicate;)V", at = @At(value = "TAIL"))
+	@Inject(method = "updateFluidHeightAndDoFluidPushing(Ljava/util/function/Predicate;)V", at = @At(value = "TAIL"), remap = false)
 	public void handleFluid(Predicate<FluidState> shouldUpdate, CallbackInfo ci) {
 		var map = CommonPlatformUtils.handleFluidDetection((Entity) (Object)this,
 				shouldUpdate::test,

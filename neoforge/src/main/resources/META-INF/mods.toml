@@ -25,3 +25,10 @@ mandatory=true
 versionRange = "[${minecraft_version}]"
 ordering = "AFTER"
 side = "BOTH"
+
+[[dependencies.blockomorph]]
+modId="mixinextras"
+mandatory=true
+versionRange="[0.3.5,)"
+ordering="AFTER"
+side="BOTH"

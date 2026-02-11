@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Mixin(Level.class)
 public class LevelInjectsMixin {
 
-	@ModifyVariable(method = "markAndNotifyBlock", at = @At(value = "STORE"), ordinal = 2)
+	@ModifyVariable(method = "markAndNotifyBlock", at = @At(value = "STORE"), ordinal = 2, remap = false)
 	public BlockState getState(BlockState value, BlockPos pos) {
 		AtomicReference<BlockState> state = new AtomicReference<>(value);
 		InPlayerBlockPos.check(pos, (pl, realPos) -> {
