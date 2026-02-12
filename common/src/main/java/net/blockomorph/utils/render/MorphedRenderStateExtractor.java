@@ -28,7 +28,6 @@ import java.util.Optional;
 import java.util.SortedSet;
 
 public class MorphedRenderStateExtractor {
-	private static final EntityRenderDispatcher entityDispatcher = GuiUtils.MC.getEntityRenderDispatcher();
 
 	public static MorphedPlayerRenderState extractRenderState(PlayerAccessor pl, MorphedPlayerRenderState source, float deltaTick) {
 		source.deltaTick = deltaTick;
@@ -37,7 +36,7 @@ public class MorphedRenderStateExtractor {
 		if (pl.isFullActive()) {
 			source.morphedState = extractBlocks(pl);
 		} else if (pl.getTnt() != null) {
-			TntRenderer renderer = (TntRenderer) entityDispatcher.getRenderer(pl.getTnt());
+			TntRenderer renderer = (TntRenderer) GuiUtils.MC.getEntityRenderDispatcher().getRenderer(pl.getTnt());
 			MorphedPlayerRenderState.TntMorphedState tntMorphedState = new MorphedPlayerRenderState.TntMorphedState();
 			tntMorphedState.tntRenderState = renderer.createRenderState(pl.getTnt(), deltaTick);
 			source.morphedState = tntMorphedState;
