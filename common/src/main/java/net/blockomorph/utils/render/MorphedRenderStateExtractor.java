@@ -11,7 +11,6 @@ import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.hit.MorphedPlayerHitResult;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.TntRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.BlockDestructionProgress;
