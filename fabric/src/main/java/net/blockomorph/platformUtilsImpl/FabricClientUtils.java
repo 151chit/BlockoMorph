@@ -145,6 +145,6 @@ public class FabricClientUtils implements ClientPlatformUtils {
 
 	@Override
 	public boolean isValidDestroyBlock(Level level, BlockPos keyPos, BlockState state, ParticleEngine engine) {
-		return state.shouldSpawnParticlesOnBreak();
+		return state.shouldSpawnTerrainParticles();
 	}
 }
