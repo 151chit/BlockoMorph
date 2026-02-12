@@ -1,10 +1,53 @@
 import com.google.gson.*
 
 plugins {
-    id 'net.neoforged.moddev.legacyforge'
+    id 'net.minecraftforge.gradle'
+    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 base.archivesName = "blockomorph-" + minecraft_version + "-forge-" + mod_version
+
+minecraft {
+    mappings channel: 'official', version: minecraft_version
+
+    runs {
+        client {
+        }
+
+        twoClient {
+            parent runs.client
+            setClient(true)
+            getArgs().addAll('--username', 'Opa')
+        }
+
+        server {
+        }
+
+        configureEach {
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                examplemod {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+
+sourceSets.main.java.srcDirs += project(":common").sourceSets.main.java.srcDirs
+sourceSets.main.resources.srcDirs += project(":common").sourceSets.main.resources.srcDirs
+
+dependencies {
+    implementation project(':common')
+    minecraft "net.minecraftforge:forge:" + minecraft_version + "-" + forge_loader_version
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    compileOnly "io.github.llamalad7:mixinextras-common:0.3.5"
+}
 
 List<String> cfgs = List.of("mixins.blockomorph.json", "mixins.blockomorph.neoforge.json")
 String refMapName = base.archivesName.get() + "-refmap.json"
@@ -13,44 +56,7 @@ mixin {
     cfgs.forEach { cfg -> config(cfg)}
 }
 
-legacyForge {
-    version = minecraft_version + "-" + forge_loader_version
-    runs {
-        client {
-            client()
-        }
-        twoClient {
-            client()
-        }
-        server {
-            server()
-        }
-    }
-
-    mods {
-        examplemod {
-            sourceSet sourceSets.main
-        }
-    }
-}
-
-sourceSets.main.java.srcDirs += project(":common").sourceSets.main.java.srcDirs
-sourceSets.main.resources.srcDirs += project(":common").sourceSets.main.resources.srcDirs
-
-dependencies {
-    implementation project(':common')
-    compileOnly 'org.jetbrains:annotations:24.1.0'
-
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-
-    compileOnly "io.github.llamalad7:mixinextras-common:0.3.5"
-}
-
 jar {
-    finalizedBy('reobfJar')
-    manifest.attributes([
-            "MixinConfigs": cfgs.join(',')
-    ])
     String outputPath = System.getenv().BLOCKOMORPH_OUTPUT
     if (outputPath != null) destinationDirectory = file(outputPath)
 }
