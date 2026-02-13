@@ -111,10 +111,21 @@ public class FabricClientUtils implements ClientPlatformUtils {
 			acc.setSpecialRenderingMode(true);
 			var model = MC.get().getBlockRenderer().getBlockModel(blockState);
 			var renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockState);
+			if (renderType == RenderType.translucentMovingBlock()) renderType = TRANSLUCENT_MOVING_BLOCK_WITHOUT_RENDER_TARGET;
 			MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(MC.get().level, model, blockState, zeroOrFake, stack, bufferSource.getBuffer(renderType), false, random, blockState.getSeed(zeroOrFake), OverlayTexture.NO_OVERLAY);
 			acc.setSpecialRenderingMode(false);
 		}
 	}
+
+	private static final RenderType TRANSLUCENT_MOVING_BLOCK_WITHOUT_RENDER_TARGET =
+			RenderType.create(
+					GuiUtils.res("translucent_gui_block").toString(),
+					DefaultVertexFormat.BLOCK,
+					VertexFormat.Mode.QUADS, 786432, true, true, RenderType.CompositeState.builder()
+							.setShaderState(RenderStateShard.RENDERTYPE_TRANSLUCENT_MOVING_BLOCK_SHADER)
+							.setTextureState(RenderStateShard.BLOCK_SHEET_MIPPED)
+							.setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setLightmapState(RenderStateShard.LIGHTMAP)
+							.createCompositeState(true));
 
 	@Override
 	public void renderBrake(PoseStack posestack, VertexConsumer buffer, PlayerAccessor pl, BlockInPlayer2 block, RandomSource randomSource) {
@@ -131,7 +142,7 @@ public class FabricClientUtils implements ClientPlatformUtils {
 	@Override
 	public RenderType bakeGuiShader(ResourceLocation texture) {
 		return RenderType.create(
-				"gui_texture_with_alpha",
+				GuiUtils.res("gui_texture_with_alpha").toString(),
 				DefaultVertexFormat.POSITION_TEX,
 				VertexFormat.Mode.QUADS, 786432, RenderType.CompositeState.builder().setTextureState(
 						new RenderStateShard.TextureStateShard(texture, false, false)

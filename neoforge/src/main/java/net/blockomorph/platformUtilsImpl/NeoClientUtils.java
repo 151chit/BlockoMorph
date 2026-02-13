@@ -14,9 +14,7 @@ import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.TerrainParticle;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -89,12 +87,22 @@ public class NeoClientUtils implements ClientPlatformUtils {
 			var model = MC.get().getBlockRenderer().getBlockModel(blockState);
 			var modeldata = model.getModelData(MC.get().level, zeroOrFake, blockState, ModelData.EMPTY);
 			for (var renderType : model.getRenderTypes(blockState, random, modeldata)) {
-				VertexConsumer vertex = bufferSource.getBuffer(RenderTypeHelper.getMovingBlockRenderType(renderType));
+				VertexConsumer vertex = bufferSource.getBuffer(renderType == RenderType.translucent() ? TRANSLUCENT_MOVING_BLOCK_WITHOUT_RENDER_TARGET : renderType);
 				MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(MC.get().level, model, blockState, zeroOrFake, stack, vertex, false, random, blockState.getSeed(zeroOrFake), OverlayTexture.NO_OVERLAY, modeldata, renderType);
 			}
 			acc.setSpecialRenderingMode(false);
 		}
 	}
+
+	private static final RenderType TRANSLUCENT_MOVING_BLOCK_WITHOUT_RENDER_TARGET =
+		RenderType.create(
+				GuiUtils.res("translucent_gui_block").toString(),
+				DefaultVertexFormat.BLOCK,
+				VertexFormat.Mode.QUADS, 786432, true, true, RenderType.CompositeState.builder()
+						.setShaderState(RenderStateShard.RENDERTYPE_TRANSLUCENT_MOVING_BLOCK_SHADER)
+						.setTextureState(RenderStateShard.BLOCK_SHEET_MIPPED)
+						.setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setLightmapState(RenderStateShard.LIGHTMAP)
+						.createCompositeState(true));
 
 	@Override
 	public void renderBrake(PoseStack posestack, VertexConsumer buffer, PlayerAccessor pl, BlockInPlayer2 block, RandomSource randomSource) {
@@ -119,7 +127,7 @@ public class NeoClientUtils implements ClientPlatformUtils {
 	@Override
 	public RenderType bakeGuiShader(ResourceLocation texture) {
 		return RenderType.create(
-				"gui_texture_with_alpha",
+				GuiUtils.res("gui_texture_with_alpha").toString(),
 				DefaultVertexFormat.POSITION_TEX,
 				VertexFormat.Mode.QUADS, 786432, RenderType.CompositeState.builder().setTextureState(
 						new RenderStateShard.TextureStateShard(texture, false, false)
