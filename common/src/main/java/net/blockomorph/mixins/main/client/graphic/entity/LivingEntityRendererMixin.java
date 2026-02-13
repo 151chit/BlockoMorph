@@ -1,7 +1,9 @@
 package net.blockomorph.mixins.main.client.graphic.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.MorphedPlayerRenderer;
+import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.RenderStateAccessor;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -31,6 +33,9 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
 			this.shadowRadius = 0.5f;
 			if (RENDERER.render(acc.getPlayer(), acc.tick().floatValue(), poseStack, multiBufferSource, i, SHADOW))
 				ci.cancel();
+			if (MorphUtils.ONE_PHASE_PLAYER_RENDER && acc.getPlayer() instanceof PlayerAccessor pl && pl.isFullActive()) {
+				RENDERER.renderTranslucentBlocks(pl, poseStack, multiBufferSource);
+			}
 		}
 	}
 
