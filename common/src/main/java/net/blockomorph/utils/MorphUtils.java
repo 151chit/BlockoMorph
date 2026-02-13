@@ -65,6 +65,7 @@ public class MorphUtils {
 	public static final ResourceKey<DamageType> PLAYER_DESTROYED_NULL = ResourceKey.create(Registries.DAMAGE_TYPE, res("player_destroyed_null"));
 	private static final StackWalker STACK_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 	public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
+	public static final boolean ONE_PHASE_PLAYER_RENDER = EarlyLoadingPlatformUtils.INSTANCE.isModLoaded("iris");
 
 	public static Path getGameDir() {
 		return EarlyLoadingPlatformUtils.INSTANCE.getGameDir();
