@@ -34,7 +34,7 @@ public abstract class FluidEntitySupportMixin {
 
 	@Shadow protected Object2DoubleMap<TagKey<Fluid>> fluidHeight;
 
-	@Inject(method = "updateFluidHeightAndDoFluidPushing", at = @At(value = "TAIL"), cancellable = true)
+	@Inject(method = "updateFluidHeightAndDoFluidPushing", at = @At(value = "HEAD"), cancellable = true)
 	public void handleFluid(TagKey<Fluid> tagKey, double fluidMotionScale, CallbackInfoReturnable<Boolean> cir) {
 		boolean isPushedByFluid = this.isPushedByFluid();
 		var map = CommonPlatformUtils.handleFluidDetection((Entity) (Object)this,
