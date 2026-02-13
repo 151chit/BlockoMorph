@@ -18,7 +18,7 @@ public abstract class FluidEntitySupportMixin implements IForgeEntity {
 	protected abstract void setFluidTypeHeight(FluidType type, double height);
 	@Shadow(remap = false) private FluidType forgeFluidTypeOnEyes;
 
-	@Inject(method = "updateFluidHeightAndDoFluidPushing(Ljava/util/function/Predicate;)V", at = @At(value = "TAIL"), remap = false)
+	@Inject(method = "updateFluidHeightAndDoFluidPushing(Ljava/util/function/Predicate;)V", at = @At(value = "HEAD"), remap = false)
 	public void handleFluid(Predicate<FluidState> shouldUpdate, CallbackInfo ci) {
 		var map = CommonPlatformUtils.handleFluidDetection((Entity) (Object)this,
 				shouldUpdate::test,
