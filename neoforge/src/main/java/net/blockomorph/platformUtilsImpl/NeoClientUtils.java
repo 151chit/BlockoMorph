@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -92,12 +93,31 @@ public class NeoClientUtils implements ClientPlatformUtils {
 			var model = MC.get().getBlockRenderer().getBlockModel(blockState);
 			var modeldata = model.getModelData(MC.get().level, zeroOrFake, blockState, ModelData.EMPTY);
 			for (var renderType : model.getRenderTypes(blockState, random, modeldata)) {
-				VertexConsumer vertex = bufferSource.getBuffer(RenderTypeHelper.getMovingBlockRenderType(renderType));
+				VertexConsumer vertex = bufferSource.getBuffer(renderType == RenderType.translucent() ? TRANSLUCENT_MOVING_BLOCK_WITHOUT_RENDER_TARGET : renderType);
 				MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(MC.get().level, model, blockState, zeroOrFake, stack, vertex, false, random, blockState.getSeed(zeroOrFake), OverlayTexture.NO_OVERLAY, modeldata, renderType);
 			}
 			acc.setSpecialRenderingMode(false);
 		}
 	}
+
+	private static final RenderStateShard.TransparencyStateShard TRANSPARENCY_STATE_SHARD = new RenderStateShard.TransparencyStateShard("translucent_gui_texture", () -> {
+		RenderSystem.enableBlend();
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+	}, () -> {
+		RenderSystem.disableBlend();
+		RenderSystem.defaultBlendFunc();
+	});
+
+	private static final RenderType TRANSLUCENT_MOVING_BLOCK_WITHOUT_RENDER_TARGET =
+			RenderType.create(
+					GuiUtils.res("translucent_gui_block").toString(),
+					DefaultVertexFormat.BLOCK,
+					VertexFormat.Mode.QUADS, 786432, true, true, RenderType.CompositeState.builder()
+							.setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getRendertypeTranslucentMovingBlockShader))
+							.setTextureState(new RenderStateShard.TextureStateShard(TextureAtlas.LOCATION_BLOCKS, false, true))
+							.setTransparencyState(TRANSPARENCY_STATE_SHARD)
+							.setLightmapState(new RenderStateShard.LightmapStateShard(true))
+							.createCompositeState(true));
 
 	@Override
 	public void renderBrake(PoseStack posestack, VertexConsumer buffer, PlayerAccessor pl, BlockInPlayer2 block, RandomSource randomSource) {
@@ -122,19 +142,13 @@ public class NeoClientUtils implements ClientPlatformUtils {
 	@Override
 	public RenderType bakeGuiShader(ResourceLocation texture) {
 		return RenderType.create(
-				"gui_texture_with_alpha", //alpha rendering fix for textures on this game version, because it's not fixed in vanilla
+				GuiUtils.res("gui_texture_with_alpha").toString(), //alpha rendering fix for textures on this game version, because it's not fixed in vanilla
 				DefaultVertexFormat.POSITION_TEX,
 				VertexFormat.Mode.QUADS, 786432, false, false,
 				RenderType.CompositeState.builder()
 						.setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
 						.setShaderState(new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexShader))
-						.setTransparencyState(new RenderStateShard.TransparencyStateShard("translucent_gui_texture", () -> {
-							RenderSystem.enableBlend();
-							RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-						}, () -> {
-							RenderSystem.disableBlend();
-							RenderSystem.defaultBlendFunc();
-						}))
+						.setTransparencyState(TRANSPARENCY_STATE_SHARD)
 						.setDepthTestState(new RenderStateShard.DepthTestStateShard("<=", 515))
 						.createCompositeState(false));
 	}

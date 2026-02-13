@@ -2,10 +2,7 @@ package net.blockomorph.platformUtilsImpl;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.*;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.BlockInPlayer2;
 import net.blockomorph.utils.PlayerAccessor;
@@ -22,6 +19,7 @@ import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.BlockPos;
@@ -111,10 +109,32 @@ public class FabricClientUtils implements ClientPlatformUtils {
 			acc.setSpecialRenderingMode(true);
 			var model = MC.get().getBlockRenderer().getBlockModel(blockState);
 			var renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockState);
+			if (renderType == RenderType.translucentMovingBlock()) renderType = TRANSLUCENT_MOVING_BLOCK_WITHOUT_RENDER_TARGET;
 			MC.get().getBlockRenderer().getModelRenderer().tesselateBlock(MC.get().level, model, blockState, zeroOrFake, stack, bufferSource.getBuffer(renderType), false, random, blockState.getSeed(zeroOrFake), OverlayTexture.NO_OVERLAY);
 			acc.setSpecialRenderingMode(false);
 		}
 	}
+
+	private static final RenderStateShard TRANSPARENCY_STATE_SHARD = new RenderStateShard("translucent_gui_texture", () -> {
+		RenderSystem.enableBlend();
+		RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+	}, () -> {
+		RenderSystem.disableBlend();
+		RenderSystem.defaultBlendFunc();
+	}) {};
+
+	private static final RenderType TRANSLUCENT_MOVING_BLOCK_WITHOUT_RENDER_TARGET =
+			new RenderType(GuiUtils.res("translucent_gui_block").toString(), DefaultVertexFormat.BLOCK, VertexFormat.Mode.QUADS, 786432, true, true, () -> {
+				RenderSystem.setShader(GameRenderer::getRendertypeTranslucentMovingBlockShader);
+				TextureManager textureManager = Minecraft.getInstance().getTextureManager();
+				textureManager.getTexture(TextureAtlas.LOCATION_BLOCKS).setFilter(false, true);
+				RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_BLOCKS);
+				TRANSPARENCY_STATE_SHARD.setupRenderState();
+				Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
+			}, () -> {
+				TRANSPARENCY_STATE_SHARD.clearRenderState();
+				Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
+			}) {};
 
 	@Override
 	public void renderBrake(PoseStack posestack, VertexConsumer buffer, PlayerAccessor pl, BlockInPlayer2 block, RandomSource randomSource) {
@@ -130,18 +150,16 @@ public class FabricClientUtils implements ClientPlatformUtils {
 
 	@Override
 	public RenderType bakeGuiShader(ResourceLocation texture) {
-		return new RenderType("gui_texture_with_alpha", DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS, 786432, false, false, () -> {
+		return new RenderType(GuiUtils.res("gui_texture_with_alpha").toString(), DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS, 786432, false, false, () -> {
 			TextureManager textureManager = Minecraft.getInstance().getTextureManager();
 			textureManager.getTexture(texture).setFilter(false, false);
 			RenderSystem.setShaderTexture(0, texture);
 			RenderSystem.setShader(GameRenderer::getPositionTexShader);
-			RenderSystem.enableBlend();
-			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+			TRANSPARENCY_STATE_SHARD.setupRenderState();
 			RenderSystem.enableDepthTest();
 			RenderSystem.depthFunc(515);
 		}, () -> {
-			RenderSystem.disableBlend();
-			RenderSystem.defaultBlendFunc();
+			TRANSPARENCY_STATE_SHARD.clearRenderState();
 			RenderSystem.disableDepthTest();
 			RenderSystem.depthFunc(515);
 		}) {/*ALPHA TEXTURE RENDERING FIX*/};
