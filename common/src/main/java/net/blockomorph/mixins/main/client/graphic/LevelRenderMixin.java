@@ -2,6 +2,7 @@ package net.blockomorph.mixins.main.client.graphic;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.accessors.AvatarRenderStateAccessor;
 import net.blockomorph.utils.accessors.LevelRendererAccessor;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
@@ -41,6 +42,7 @@ public abstract class LevelRenderMixin implements LevelRendererAccessor {
 
 	@Override
 	public void prepareTranslucentPlayersForSubmit$blockomorph(LevelRenderState levelRenderState) {
+		if (MorphUtils.ONE_PHASE_PLAYER_RENDER) return;
 		Profiler.get().popPush("morphedPlayerTranslucentBlocks");
 		Vec3 vec3 = levelRenderState.cameraRenderState.pos;
 		double x = vec3.x();
