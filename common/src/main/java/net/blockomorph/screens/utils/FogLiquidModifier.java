@@ -1,12 +1,14 @@
 package net.blockomorph.screens.utils;
 
-import net.blockomorph.utils.BlockInPlayer2;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
@@ -46,10 +48,10 @@ public final class FogLiquidModifier {
 	}
 
 	@Nullable
-	public static TextureAtlasSprite[] getPlatformFluidSprite(Level lv, BlockInPlayer2 block) {
-		return ClientPlatformUtils.INSTANCE.getPlatformFluidSprite(lv, block);
+	public static TextureAtlasSprite[] getPlatformFluidSprite(BlockAndTintGetter lv, BlockState blockState, BlockPos pos) {
+		return ClientPlatformUtils.INSTANCE.getPlatformFluidSprite(lv, blockState, pos);
 	}
-	public static @NotNull Integer getPlatformFluidTint(Level lv, BlockInPlayer2 block) {
-		return ClientPlatformUtils.INSTANCE.getPlatformFluidTint(lv, block);
+	public static @NotNull Integer getPlatformFluidTint(BlockAndTintGetter lv, BlockState blockState, BlockPos pos) {
+		return ClientPlatformUtils.INSTANCE.getPlatformFluidTint(lv, blockState, pos);
 	}
 }

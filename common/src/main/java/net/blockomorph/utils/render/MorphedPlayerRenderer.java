@@ -3,8 +3,10 @@ package net.blockomorph.utils.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.blockomorph.screens.utils.FogLiquidModifier;
 import net.blockomorph.utils.VertexConsumerWrapper;
 import net.blockomorph.utils.accessors.ClientLevelAccessor;
+import net.blockomorph.utils.accessors.compat.SpriteRunner;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.minecraft.ReportedException;
@@ -17,6 +19,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.ARGB;
@@ -129,11 +132,23 @@ public class MorphedPlayerRenderer {
 				ClientLevelAccessor acc = ClientLevelAccessor.of(level);
 				try {
 					acc.lockExternalMorphedBlockGetter(true);
+					this.activateSprite(level, blockInfo);
 					MC.getBlockRenderer().renderLiquid(pos, level, vertexConsumerWrapper, blockInfo.blockState, fluidState);
 					acc.lockExternalMorphedBlockGetter(false);
 				} catch (ReportedException ignored) {
 				}
 			});
+		}
+	}
+
+	private void activateSprite(BlockAndTintGetter blockAndTintGetter, MorphedPlayerRenderState.BlockInfo blockInfo) {
+		TextureAtlasSprite[] sprites = FogLiquidModifier.getPlatformFluidSprite(blockAndTintGetter, blockInfo.blockState, blockInfo.keyPos);
+		if (sprites != null) {
+			for (TextureAtlasSprite sprite : sprites) {
+				if (sprite.contents() instanceof SpriteRunner runner) {
+					runner.run$blockomorph();
+				}
+			}
 		}
 	}
 

@@ -48,8 +48,8 @@ public interface ClientPlatformUtils {
 		return calculateAutomatic(lv, block);
 	}
 
-	@Nullable TextureAtlasSprite[] getPlatformFluidSprite(Level lv, BlockInPlayer2 block);
-	Integer getPlatformFluidTint(Level lv, BlockInPlayer2 block);
+	@Nullable TextureAtlasSprite[] getPlatformFluidSprite(BlockAndTintGetter lv, BlockState blockState, BlockPos pos);
+	Integer getPlatformFluidTint(BlockAndTintGetter lv, BlockState blockState, BlockPos pos);
 	default void submitBlockInWorld(boolean translucent, BlockAndTintGetter level, BlockState blockstate, BlockPos keyPos, PoseStack posestack, SubmitNodeCollector collector, RandomSource randomSource) {
 		RenderType renderType = ItemBlockRenderTypes.getMovingBlockRenderType(blockstate);
 		if (this.needChangeToCutout(blockstate)) renderType = RenderType.cutout();
@@ -103,8 +103,8 @@ public interface ClientPlatformUtils {
 	}
 
 	private static Map.Entry<TextureAtlasSprite[], Integer> getPlatformFluidTexture(Level lv, BlockInPlayer2 block) {
-		int tint = INSTANCE.getPlatformFluidTint(lv, block);
-		TextureAtlasSprite[] atextureatlassprite = INSTANCE.getPlatformFluidSprite(lv, block);
+		int tint = INSTANCE.getPlatformFluidTint(lv, block.getBlockState(), block.getPos());
+		TextureAtlasSprite[] atextureatlassprite = INSTANCE.getPlatformFluidSprite(lv, block.getBlockState(), block.getPos());
 		return new AbstractMap.SimpleEntry<>(atextureatlassprite, tint == -1 || tint == 16777215 ? null : tint);
 	}
 

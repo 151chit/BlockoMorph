@@ -27,6 +27,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
@@ -70,21 +71,21 @@ public class FabricClientUtils implements ClientPlatformUtils {
 	}
 
 	@Override
-	public @Nullable TextureAtlasSprite[] getPlatformFluidSprite(Level lv, BlockInPlayer2 block) {
-		FluidState fluidState = block.getBlockState().getFluidState();
+	public @Nullable TextureAtlasSprite[] getPlatformFluidSprite(BlockAndTintGetter lv, BlockState blockState, BlockPos pos) {
+		FluidState fluidState = blockState.getFluidState();
 		FluidRenderHandler info = FluidRenderHandlerRegistry.INSTANCE.get(fluidState.getType());
 		if (info != null) {
-			return info.getFluidSprites(lv, block.getPos(), fluidState);
+			return info.getFluidSprites(lv, pos, fluidState);
 		}
 		return null;
 	}
 
 	@Override
-	public Integer getPlatformFluidTint(Level lv, BlockInPlayer2 block) {
-		FluidState fluidState = block.getBlockState().getFluidState();
+	public Integer getPlatformFluidTint(BlockAndTintGetter lv, BlockState blockState, BlockPos pos) {
+		FluidState fluidState = blockState.getFluidState();
 		FluidRenderHandler info = FluidRenderHandlerRegistry.INSTANCE.get(fluidState.getType());
 		if (info != null) {
-			return info.getFluidColor(lv, block.getPos(), fluidState);
+			return info.getFluidColor(lv, pos, fluidState);
 		}
 		return null;
 	}

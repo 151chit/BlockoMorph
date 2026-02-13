@@ -101,7 +101,7 @@ public class BlockHeartOverlay implements Overlay {
 		static TextureData get(PlayerAccessor player) {
 			TextureAtlasSprite sprite = GuiUtils.MC.getBlockRenderer().getBlockModel(player.getBlockState(InPlayerBlockPos.ZERO)).particleIcon();
 			BlockInPlayer2 block = player.getBlocksData2().get(InPlayerBlockPos.ZERO);
-			Integer tint = (block != null && block.getBlockState().getBlock() instanceof LiquidBlock) ? FogLiquidModifier.getPlatformFluidTint(GuiUtils.MC.player.level(), block) : null;
+			Integer tint = (block != null && block.getBlockState().getBlock() instanceof LiquidBlock) ? FogLiquidModifier.getPlatformFluidTint(GuiUtils.MC.player.level(), block.getBlockState(), block.getPos()) : null;
 			return new TextureData(sprite, tint != null ? (0xFF000000 | tint) : -1);
 		}
 	}

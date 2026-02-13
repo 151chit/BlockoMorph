@@ -56,13 +56,13 @@ public class NeoClientUtils implements ClientPlatformUtils {
 	}
 
 	@Override
-	public @Nullable TextureAtlasSprite[] getPlatformFluidSprite(Level lv, BlockInPlayer2 block) {
-		return FluidSpriteCache.getFluidSprites(lv, block.getPos(), block.getBlockState().getFluidState());
+	public @Nullable TextureAtlasSprite[] getPlatformFluidSprite(BlockAndTintGetter lv, BlockState blockState, BlockPos pos) {
+		return FluidSpriteCache.getFluidSprites(lv, pos, blockState.getFluidState());
 	}
 
 	@Override
-	public Integer getPlatformFluidTint(Level lv, BlockInPlayer2 block) {
-		return IClientFluidTypeExtensions.of(block.getBlockState().getFluidState()).getTintColor(block.getBlockState().getFluidState(), lv, block.getPos());
+	public Integer getPlatformFluidTint(BlockAndTintGetter lv, BlockState blockState, BlockPos pos) {
+		return IClientFluidTypeExtensions.of(blockState.getFluidState()).getTintColor(blockState.getFluidState(), lv, pos);
 	}
 
 	@Override
