@@ -146,7 +146,7 @@ public class MorphedPlayerRenderer {
 		TextureAtlasSprite[] sprites = FogLiquidModifier.getPlatformFluidSprite(blockAndTintGetter, blockInfo.blockState, blockInfo.keyPos);
 		if (sprites != null) {
 			for (TextureAtlasSprite sprite : sprites) {
-				if (sprite instanceof SpriteRunner runner) {
+				if (sprite.contents() instanceof SpriteRunner runner) {
 					runner.run$blockomorph();
 				}
 			}
