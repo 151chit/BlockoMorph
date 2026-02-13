@@ -15,7 +15,7 @@ public abstract class FluidEntitySupportMixin implements IEntityExtension {
 	protected abstract void setFluidTypeHeight(FluidType type, double height);
 	@Shadow private FluidType forgeFluidTypeOnEyes;
 
-	@Inject(method = "updateFluidHeightAndDoFluidPushing(Z)V", at = @At(value = "TAIL"))
+	@Inject(method = "updateFluidHeightAndDoFluidPushing(Z)V", at = @At(value = "HEAD"))
 	public void handleFluid(boolean doFluidPushing, CallbackInfo ci) {
 		var map = CommonPlatformUtils.handleFluidDetection((Entity) (Object)this,
 				this::isPushedByFluid,
