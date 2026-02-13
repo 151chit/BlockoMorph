@@ -1,6 +1,7 @@
 package net.blockomorph.mixins.main.client.graphic.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.AvatarRenderStateAccessor;
 import net.blockomorph.utils.render.MorphedPlayerRenderState;
@@ -32,6 +33,9 @@ public abstract class LivingEntityRendererMixin<T extends LivingEntity, S extend
 			MorphedPlayerRenderState state = acc.getMorphedRenderStateStorage().get();
 			if (RENDERER.submitMorphedState(poseStack, state, submitNodeCollector, cameraRenderState)) {
 				ci.cancel();
+			}
+			if (MorphUtils.ONE_PHASE_PLAYER_RENDER && state.morphedState instanceof MorphedPlayerRenderState.BlockMorphedState st) {
+				RENDERER.submitTranslucentBlocks(st, poseStack, submitNodeCollector);
 			}
 			if (state != null && state.isBlock()) {
 				livingEntityRenderState.shadowRadius = 0;
