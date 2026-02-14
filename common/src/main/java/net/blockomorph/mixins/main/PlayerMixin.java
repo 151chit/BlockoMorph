@@ -1,5 +1,7 @@
 package net.blockomorph.mixins.main;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JavaOps;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
@@ -42,12 +44,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockEventData;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -675,6 +679,15 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		if (this.isActive()) {
 			cir.setReturnValue(HITBOX_HANDLER.calculateDimensions());
 		}
+	}
+
+	@WrapOperation(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getFluidState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;"))
+	private FluidState modifyState(Level instance, BlockPos blockPos, Operation<FluidState> original) {
+		var entry = MorphUtils.getLiquidOnPos(this, this.position().add(0, 0.9, 0));
+		if (entry != null) {
+			return entry.getValue().getBlockState().getFluidState();
+		}
+		return original.call(instance, blockPos);
 	}
 
 	public PlayerMixin() {
