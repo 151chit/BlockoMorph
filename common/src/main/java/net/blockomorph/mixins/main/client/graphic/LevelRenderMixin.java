@@ -92,7 +92,6 @@ public abstract class LevelRenderMixin implements LevelRendererAccessor {
 
 	@Inject(method = "renderEntity", at = @At("HEAD"))
 	private void renderPlayer(Entity entity, double p_109519_, double p_109520_, double p_109521_, float p_109522_, PoseStack p_109523_, MultiBufferSource p_109524_, CallbackInfo ci) {
-		if (MorphUtils.ONE_PHASE_PLAYER_RENDER) return;
 		if (entity instanceof AbstractClientPlayer player) {
 			this.playersToRender.add(player);
 		}
@@ -111,7 +110,9 @@ public abstract class LevelRenderMixin implements LevelRendererAccessor {
 			Vec3 offset = renderer.getRenderOffset(renderer.createRenderState(player, tick));
 			posestack.pushPose();
 			posestack.translate(d0 - camPos.x + offset.x, d1 - camPos.y + offset.y, d2 - camPos.z + offset.z);
-			CUSTOM_RENDERER.renderTranslucentBlocks(pl, posestack, buffer);
+			if (!MorphUtils.ONE_PHASE_PLAYER_RENDER)
+				CUSTOM_RENDERER.renderTranslucentBlocks(pl, posestack, buffer);
+			CUSTOM_RENDERER.renderFrame(posestack, buffer, pl);
 			posestack.popPose();
 			this.checkPoseStack(posestack);
 		}
