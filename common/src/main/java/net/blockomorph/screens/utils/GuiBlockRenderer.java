@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.blockomorph.utils.accessors.LightningSetter;
+import net.blockomorph.utils.accessors.compat.BlockEntitySpecialRenderer;
 import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
@@ -58,10 +59,12 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 					Camera cam = MC.gameRenderer.getMainCamera();
 					acc.setSpecialRenderingMode(true);
 					FeatureRenderDispatcher renderDispatcher = MC.gameRenderer.getFeatureRenderDispatcher();
-					S state = renderer.createRenderState();
-					renderer.extractRenderState(blockEntity, state, delta, cam.position(), null);
-					state.lightCoords = LightTexture.FULL_BRIGHT;
-					renderer.submit(state, stack, renderDispatcher.getSubmitNodeStorage(), MC.gameRenderer.getLevelRenderState().cameraRenderState);
+					BlockEntitySpecialRenderer.tryRenderWithoutOptimizations(() -> {
+						S state = renderer.createRenderState();
+						renderer.extractRenderState(blockEntity, state, delta, cam.position(), null);
+						state.lightCoords = LightTexture.FULL_BRIGHT;
+						renderer.submit(state, stack, renderDispatcher.getSubmitNodeStorage(), MC.gameRenderer.getLevelRenderState().cameraRenderState);
+					});
 					renderDispatcher.renderAllFeatures();
 				} catch (Exception ignored) {
 				} finally {

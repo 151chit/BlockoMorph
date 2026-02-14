@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.blockomorph.screens.utils.FogLiquidModifier;
 import net.blockomorph.utils.VertexConsumerWrapper;
 import net.blockomorph.utils.accessors.ClientLevelAccessor;
+import net.blockomorph.utils.accessors.compat.BlockEntitySpecialRenderer;
 import net.blockomorph.utils.accessors.compat.SpriteRunner;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.platform.ClientPlatformUtils;
@@ -161,17 +162,21 @@ public class MorphedPlayerRenderer {
 				BlockEntityRenderer<BlockEntity, BlockEntityRenderState> renderer = MC.getBlockEntityRenderDispatcher().getRenderer(blockEntity);
 				if (renderer != null) {
 					int k = blockInfo.brakeProgress;
-					ModelFeatureRenderer.CrumblingOverlay overlay = null;
+					ModelFeatureRenderer.CrumblingOverlay overlay;
 					if (k > -1 && k < 10) {
 						overlay = new ModelFeatureRenderer.CrumblingOverlay(k, posestack.last().copy());
+					} else {
+						overlay = null;
 					}
 
 					ClientLevelAccessor acc = ClientLevelAccessor.of(blockEntity.getLevel());
 					acc.setSpecialRenderingMode(true);
 
-					BlockEntityRenderState state = renderer.createRenderState();
-					renderer.extractRenderState(blockEntity, state, deltaTick, cam.pos, overlay);
-					renderer.submit(state, posestack, collector, cam);
+					BlockEntitySpecialRenderer.tryRenderWithoutOptimizations(() -> {
+						BlockEntityRenderState state = renderer.createRenderState();
+						renderer.extractRenderState(blockEntity, state, deltaTick, cam.pos, overlay);
+						renderer.submit(state, posestack, collector, cam);
+					});
 
 					acc.setSpecialRenderingMode(false);
 				}
