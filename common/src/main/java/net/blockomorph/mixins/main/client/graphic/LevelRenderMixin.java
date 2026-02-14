@@ -42,7 +42,6 @@ public abstract class LevelRenderMixin implements LevelRendererAccessor {
 
 	@Override
 	public void prepareTranslucentPlayersForSubmit$blockomorph(LevelRenderState levelRenderState) {
-		if (MorphUtils.ONE_PHASE_PLAYER_RENDER) return;
 		Profiler.get().popPush("morphedPlayerTranslucentBlocks");
 		Vec3 vec3 = levelRenderState.cameraRenderState.pos;
 		double x = vec3.x();
@@ -55,7 +54,9 @@ public abstract class LevelRenderMixin implements LevelRendererAccessor {
 				if (state.morphedState instanceof MorphedPlayerRenderState.BlockMorphedState morphedState) {
 					poseStack.pushPose();
 					poseStack.translate(entityRenderState.x - x, entityRenderState.y - y, entityRenderState.z - z);
-					CUSTOM_RENDERER.submitTranslucentBlocks(morphedState, poseStack, this.submitNodeStorage);
+					if (!MorphUtils.ONE_PHASE_PLAYER_RENDER)
+						CUSTOM_RENDERER.submitTranslucentBlocks(morphedState, poseStack, this.submitNodeStorage);
+					CUSTOM_RENDERER.submitFrame(morphedState, poseStack, this.submitNodeStorage);
 					poseStack.popPose();
 				}
 			}
