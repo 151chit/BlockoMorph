@@ -88,7 +88,6 @@ public class MorphedPlayerRenderer {
 			this.submitMainBlock(true, state.level, block, posestack, collector);
 			posestack.popPose();
 		}
-		this.submitFrame(state.framedBlock, posestack, collector);
 		posestack.popPose();
 	}
 
@@ -203,9 +202,12 @@ public class MorphedPlayerRenderer {
 		}
 	}
 
-	private void submitFrame(VoxelShape shape, PoseStack posestack, SubmitNodeCollector collector) {
+	public void submitFrame(MorphedPlayerRenderState.BlockMorphedState state, PoseStack posestack, SubmitNodeCollector collector) {
+		VoxelShape shape = state.framedBlock;
+		Vector2d vector2d = state.matrixOffset;
 		if (shape != null) {
 			posestack.pushPose();
+			posestack.translate(vector2d.x, 0, vector2d.y);
 			int i = MC.options.highContrastBlockOutline().get() ? -11010079 : ARGB.color(102, -16777216);
 			collector.submitCustomGeometry(posestack, RenderTypes.LINES, ((pose, vertexConsumer) -> {
 				PoseStack poseStack = new PoseStack();
