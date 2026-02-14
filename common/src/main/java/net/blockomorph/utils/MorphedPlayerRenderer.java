@@ -85,7 +85,6 @@ public class MorphedPlayerRenderer {
 			this.renderMainBlock(true, posestack, buffer, pl, block);
 			posestack.popPose();
 		}
-		this.renderFrame(posestack, buffer, pl);
 		posestack.popPose();
 	}
 
@@ -253,10 +252,11 @@ public class MorphedPlayerRenderer {
 		posestack.popPose();
 	}
 
-	private void renderFrame(PoseStack posestack, MultiBufferSource buffer, PlayerAccessor pl) {
+	public void renderFrame(PoseStack posestack, MultiBufferSource buffer, PlayerAccessor pl) {
 		MorphedPlayerHitResult hit = this.shouldRenderFrame(pl);
 		if (hit != null) {
 			posestack.pushPose();
+			this.adjustMatrixForPlayer(posestack, pl);
 			VoxelShape shape = pl.getRenderShape(hit.getOffset(), MC.player);
 			if (shape != null) {
 				int i = MC.options.highContrastBlockOutline().get() ? -11010079 : ARGB.color(102, -16777216);
