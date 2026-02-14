@@ -21,7 +21,8 @@ public class MixinConfig implements IMixinConfigPlugin {
 			"frapi", "fabric_api",
 			"sodium", "sodium",
 			"ebe", "enhancedblockentities",
-			"betterF3", "betterf3"
+			"betterF3", "betterf3",
+			"bbe", "betterblockentities"
 	);
 
 	@Override

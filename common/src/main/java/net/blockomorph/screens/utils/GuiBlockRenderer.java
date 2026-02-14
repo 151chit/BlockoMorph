@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.blockomorph.utils.accessors.LightningSetter;
+import net.blockomorph.utils.accessors.compat.BlockEntitySpecialRenderer;
 import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -57,7 +58,9 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 				try {
 					Camera cam = Minecraft.getInstance().getBlockEntityRenderDispatcher().camera;
 					acc.setSpecialRenderingMode(true);
-					renderer.render(blockEntity, delta, stack, bufferSource, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY, cam.getPosition());//TODO
+					BlockEntitySpecialRenderer.tryRenderWithoutOptimizations(() -> {
+						renderer.render(blockEntity, delta, stack, bufferSource, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY, cam.getPosition());//TODO
+					});
 				} catch (Exception ignored) {
 				} finally {
 					acc.setSpecialRenderingMode(false);

@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import net.blockomorph.screens.utils.FogLiquidModifier;
 import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.blockomorph.utils.accessors.LevelRendererAccessor;
+import net.blockomorph.utils.accessors.compat.BlockEntitySpecialRenderer;
 import net.blockomorph.utils.accessors.compat.SpriteRunner;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigEnums;
@@ -214,7 +215,7 @@ public class MorphedPlayerRenderer {
 			try {
 				BlockEntityRenderer<BlockEntity> renderer = MC.getBlockEntityRenderDispatcher().getRenderer(blockEntity);
 				if (renderer != null) {
-					MultiBufferSource bufferSourceWrapper = buffer;
+					MultiBufferSource bufferSourceWrapper;
 					int k = this.getBrakeProgress(pl, blockEntity.getBlockPos());
 					if (k > -1 && k < 10) {
 						PoseStack.Pose posestack$pose = posestack.last();
@@ -223,10 +224,14 @@ public class MorphedPlayerRenderer {
 							VertexConsumer original = buffer.getBuffer(shader);
 							return shader.affectsCrumbling() ? VertexMultiConsumer.create(wrapped, original) : original;
 						};
+					} else {
+						bufferSourceWrapper = buffer;
 					}
 					ClientLevelAccessor acc = ClientLevelAccessor.of(blockEntity.getLevel());
 					acc.setSpecialRenderingMode(true);
-					MC.getBlockEntityRenderDispatcher().render(blockEntity, partialTicks, posestack, bufferSourceWrapper);
+					BlockEntitySpecialRenderer.tryRenderWithoutOptimizations(() -> {
+						MC.getBlockEntityRenderDispatcher().render(blockEntity, partialTicks, posestack, bufferSourceWrapper);
+					});
 					acc.setSpecialRenderingMode(false);
 				}
 			} catch (Exception ignored) {
