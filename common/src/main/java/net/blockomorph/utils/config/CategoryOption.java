@@ -36,7 +36,9 @@ public class CategoryOption extends ConfigInstance<List<ConfigInstance<?>>> {
 	public void readFromStorage(JsonElement option) {
 		JsonObject object = option.getAsJsonObject();
 		for (ConfigInstance<?> instance : this.value) {
-			instance.readFromStorage(object.get(instance.getName()));
+			JsonElement element = object.get(instance.getName());
+			if (element != null)
+				instance.readFromStorage(element);
 		}
 	}
 
