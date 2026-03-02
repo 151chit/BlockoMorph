@@ -2,7 +2,7 @@
   "jars": [
     {
       "identifier": {
-        "group": "io.github.llamalad7",
+        "group": "com.github.llamalad7.mixinextras",
         "artifact": "mixinextras-forge"
       },
       "version": {

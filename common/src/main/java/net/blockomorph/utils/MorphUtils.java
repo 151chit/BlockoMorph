@@ -359,6 +359,9 @@ public class MorphUtils {
 		LivingEntity mob = (Player) mob_pl;
 		Holder<DamageType> damage = mob.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).
 				getHolderOrThrow(attacker == null ? PLAYER_DESTROYED_NULL : PLAYER_DESTROYED);
-		mob.hurt(new DamageSource(damage, attacker), Float.MAX_VALUE);
+		DamageSource damageSource = new DamageSource(damage, attacker);
+		mob.getCombatTracker().recordDamage(damageSource, Float.MAX_VALUE);
+		mob.setHealth(0);
+		mob.die(damageSource);
 	}
 }
