@@ -19,7 +19,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.world.MenuProvider;
@@ -28,6 +27,7 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -373,11 +373,12 @@ public class MorphUtils {
 	}
 
 	public static void destroy(PlayerAccessor mob_pl, @Nullable Entity attacker) {
-		Entity mob = (Player) mob_pl;
-		if (mob.level() instanceof ServerLevel lv) {
-			Holder<DamageType> damage = mob.level().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).
-					getOrThrow(attacker == null ? PLAYER_DESTROYED_NULL : PLAYER_DESTROYED);
-			mob.hurtServer(lv, new DamageSource(damage, attacker), Float.MAX_VALUE);
-		}
+		LivingEntity mob = (Player) mob_pl;
+		Holder<DamageType> damage = mob.level().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).
+				getOrThrow(attacker == null ? PLAYER_DESTROYED_NULL : PLAYER_DESTROYED);
+		DamageSource damageSource = new DamageSource(damage, attacker);
+		mob.getCombatTracker().recordDamage(damageSource, Float.MAX_VALUE);
+		mob.setHealth(0);
+		mob.die(damageSource);
 	}
 }
