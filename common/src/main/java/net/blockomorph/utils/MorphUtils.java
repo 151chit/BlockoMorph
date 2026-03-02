@@ -18,7 +18,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
@@ -360,7 +359,7 @@ public class MorphUtils {
 		return Config.get().screenAccess.getValue();
 	}
 
-	public static void destroy(PlayerAccessor mob_pl, @org.jetbrains.annotations.Nullable Entity attacker) {
+	public static void destroy(PlayerAccessor mob_pl, @Nullable Entity attacker) {
 		LivingEntity mob = (Player) mob_pl;
 		Holder<DamageType> damage = mob.level().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).
 				getOrThrow(attacker == null ? PLAYER_DESTROYED_NULL : PLAYER_DESTROYED);
