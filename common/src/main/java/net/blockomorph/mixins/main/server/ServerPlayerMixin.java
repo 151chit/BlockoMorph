@@ -5,6 +5,7 @@ import net.blockomorph.utils.BannedBlock;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.ForceLevelChanger;
+import net.blockomorph.utils.accessors.ServerPlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
@@ -29,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayerMixin extends Player {
+public abstract class ServerPlayerMixin extends Player implements ServerPlayerAccessor {
 
 	@Shadow
 	public abstract boolean startRiding(Entity p_277395_, boolean p_278062_);
@@ -76,6 +77,11 @@ public abstract class ServerPlayerMixin extends Player {
 				this.level().levelEvent(2001, block.getPos(), Block.getId(block.getBlockState()));
 			});
 		}
+	}
+
+	@Override
+	public void dropAllDeathLoot$blockomorph(ServerLevel lv, DamageSource dm) {
+		this.dropAllDeathLoot(lv, dm);
 	}
 
 	@Inject(method = "restoreFrom", at = @At("TAIL"))
