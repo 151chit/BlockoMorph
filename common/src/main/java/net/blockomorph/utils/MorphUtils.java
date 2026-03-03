@@ -2,6 +2,7 @@ package net.blockomorph.utils;
 
 import com.mojang.serialization.DataResult;
 import net.blockomorph.network.BlockMorphPacket;
+import net.blockomorph.utils.accessors.ServerPlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigEnums;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
@@ -17,6 +18,8 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
@@ -380,5 +383,18 @@ public class MorphUtils {
 		mob.getCombatTracker().recordDamage(damageSource, Float.MAX_VALUE);
 		mob.setHealth(0);
 		mob.die(damageSource);
+		if (mob_pl instanceof ServerPlayer pl && pl.connection.hasClientLoaded() && pl instanceof ServerPlayerAccessor acc) {
+			try {
+				Component deathMessage = mob.getCombatTracker().getDeathMessage();
+				pl.connection.send(new ClientboundPlayerCombatKillPacket(pl.getId(), deathMessage));
+				pl.level().getServer().getPlayerList().broadcastSystemMessage(deathMessage, false);
+				if (!pl.isSpectator()) acc.dropAllDeathLoot$blockomorph(pl.level(), damageSource);
+				mob.getCombatTracker().recheckStatus();
+				pl.connection.markClientUnloadedAfterDeath();
+			} catch (Throwable ex) {
+				mob_pl.applyBlockMorph(Blocks.AIR.defaultBlockState(), null, BannedBlock.Source.SYSTEM);
+				LOGGER.error("While unmorph killing an exception occurred! Something might not work: ", ex);
+			}
+		}
 	}
 }
