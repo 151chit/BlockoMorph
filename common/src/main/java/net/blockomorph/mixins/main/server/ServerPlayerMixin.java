@@ -5,6 +5,7 @@ import net.blockomorph.utils.BannedBlock;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.ForceLevelChanger;
+import net.blockomorph.utils.accessors.ServerPlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
@@ -20,6 +21,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -29,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayerMixin extends Player {
+public abstract class ServerPlayerMixin extends Player implements ServerPlayerAccessor {
 	@Shadow private boolean respawnForced;
 
 	@Shadow
@@ -37,6 +39,7 @@ public abstract class ServerPlayerMixin extends Player {
 
 	@Shadow
 	public abstract void stopRiding();
+	@Unique private boolean markDeath;
 
 	public ServerPlayerMixin(Level p_250508_, BlockPos p_250289_, float p_251702_, GameProfile p_252153_) {
 		super(p_250508_, p_250289_, p_251702_, p_252153_);
@@ -89,6 +92,23 @@ public abstract class ServerPlayerMixin extends Player {
 				this.level().levelEvent(2001, block.getPos(), Block.getId(block.getBlockState()));
 			});
 		}
+	}
+
+	@Inject(method = "die", at= @At(value = "INVOKE", target = "Lnet/minecraft/world/damagesource/CombatTracker;recheckStatus()V"))
+	private void setMarkDeath(DamageSource damageSource, CallbackInfo ci) {
+		this.markDeath = true;
+	}
+
+	@Override
+	public void dropAllDeathLoot$blockomorph(DamageSource dm) {
+		this.dropAllDeathLoot(dm);
+	}
+
+	@Override
+	public boolean isDeadAndReset$blockomorph() {
+		boolean value = this.markDeath;
+		this.markDeath = false;
+		return value;
 	}
 
 	@Inject(method = "restoreFrom", at = @At("TAIL"))
