@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(targets = "org.valkyrienskies.mod.common.VSGameUtilsKt", remap = false)
 public abstract class VS2_BM_VsUtilsMixin {
 
-	@Inject(method = "squaredDistanceBetweenInclShips", at = @At("RETURN"), locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
+	@Inject(method = "squaredDistanceBetweenInclShips(Lnet/minecraft/world/level/Level;DDDDDD)D", at = @At("RETURN"), locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
 	private static void normalizeCoords(Level lv, double x, double y, double z, double x2, double y2, double z2, CallbackInfoReturnable<Double> cir,
 										double dx, double dy, double dz, double x3, double y3, double z3, double x4, double y4, double z4
 	) {
