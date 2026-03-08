@@ -21,13 +21,25 @@ import java.util.function.Predicate;
 @Mixin(targets = "org.valkyrienskies.mod.common.world.RaycastUtilsKt", remap = false)
 public class VS2_BM_RaycastUtil {
 
-	@Inject(method = "clipIncludeShips", at = @At(value = "RETURN", ordinal = 0), cancellable = true)
-	private static void modifyClipIncludeShips(Level level, ClipContext ctx, boolean shouldTransformHitPos, Long skipShip, CallbackInfoReturnable<BlockHitResult> cir) {
+	@Inject(require = 0, method = "clipIncludeShips(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/ClipContext;ZLjava/lang/Long;Z)Lnet/minecraft/world/phys/BlockHitResult;", at = @At(value = "RETURN", ordinal = 0), cancellable = true)
+	private static void modifyClipIncludeShips(Level level, ClipContext ctx, boolean shouldTransformHitPos, Long skipShip, boolean includeWorld, CallbackInfoReturnable<BlockHitResult> cir) {
 		PlayerHitResult.checkHitResult(cir.getReturnValue().getLocation(), ctx, cir::setReturnValue);
 	}
 
-	@Inject(method = "clipIncludeShips", at = @At(value = "RETURN", ordinal = 1), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
-	private static void modifyClipIncludeShipsWith(Level level, ClipContext ctx, boolean shouldTransformHitPos, Long skipShip, CallbackInfoReturnable<BlockHitResult> cir,
+	@Inject(require = 0, method = "clipIncludeShips(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/ClipContext;ZLjava/lang/Long;Z)Lnet/minecraft/world/phys/BlockHitResult;", at = @At(value = "RETURN", ordinal = 1), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
+	private static void modifyClipIncludeShipsWith(Level level, ClipContext ctx, boolean shouldTransformHitPos, Long skipShip, boolean includeWorld, CallbackInfoReturnable<BlockHitResult> cir,
+												   BlockHitResult vanillaHit, BlockHitResult closestHit, Vec3 closestHitPos
+	) {
+		PlayerHitResult.checkHitResult(closestHitPos, ctx, cir::setReturnValue);
+	}
+
+	@Inject(require = 0, method = "clipIncludeShips(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/ClipContext;ZLjava/lang/Long;)Lnet/minecraft/world/phys/BlockHitResult;", at = @At(value = "RETURN", ordinal = 0), cancellable = true)
+	private static void modifyClipIncludeShipsOld(Level level, ClipContext ctx, boolean shouldTransformHitPos, Long skipShip, CallbackInfoReturnable<BlockHitResult> cir) {
+		PlayerHitResult.checkHitResult(cir.getReturnValue().getLocation(), ctx, cir::setReturnValue);
+	}
+
+	@Inject(require = 0, method = "clipIncludeShips(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/ClipContext;ZLjava/lang/Long;)Lnet/minecraft/world/phys/BlockHitResult;", at = @At(value = "RETURN", ordinal = 1), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
+	private static void modifyClipIncludeShipsWithOld(Level level, ClipContext ctx, boolean shouldTransformHitPos, Long skipShip, CallbackInfoReturnable<BlockHitResult> cir,
 												   BlockHitResult vanillaHit, BlockHitResult closestHit, Vec3 closestHitPos
 	) {
 		PlayerHitResult.checkHitResult(closestHitPos, ctx, cir::setReturnValue);
