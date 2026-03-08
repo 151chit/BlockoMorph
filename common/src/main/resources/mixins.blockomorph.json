@@ -77,7 +77,6 @@
     "compat.sodium.BlockOcclusionCacheMixin",
     "compat.sodium.SmoothPipelineMixin",
     "compat.sodium.SpriteContentsAccessorMixin",
-    "compat.bbe.BBEconfigAccessor",
     "main.blockFix.BeaconRendererFixMixin",
     "main.client.AttackSupportMixin",
     "main.client.ClientChunkCacheMixin",
