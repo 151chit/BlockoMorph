@@ -121,11 +121,11 @@ public class BlockIdsSetConfig extends ConfigInstance<Set<Identifier>> {
 			Identifier name = ResourceArgument.getResource(args, "value", Registries.BLOCK).key().identifier();
 			Component end;
 			if (remove) {
-				end = Component.translatable("blockomorph.commands.option_change.list.remove", name, this.name);
+				end = Component.translatable("blockomorph.commands.option_change.list.remove", name.toString(), this.name);
 				this.value.remove(name);
 			} else {
 				this.value.add(name);
-				end = Component.translatable("blockomorph.commands.option_change.list.add", name, this.name);
+				end = Component.translatable("blockomorph.commands.option_change.list.add", name.toString(), this.name);
 			}
 			Config.writeAndSend();
 			args.getSource().sendSuccess(() -> end, true);
