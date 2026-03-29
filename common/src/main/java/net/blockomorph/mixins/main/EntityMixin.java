@@ -12,10 +12,12 @@ import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -139,6 +141,15 @@ public abstract class EntityMixin implements EntityAccessor, ForceLevelChanger {
 			cir.setReturnValue(true);
 			this.startRiding(ent, true, false);
 		}
+	}
+
+	@WrapOperation(method = "isInWall", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/EntityDimensions;width()F"))
+	private float changeHitbox(EntityDimensions instance, Operation<Float> original) {
+		if (this instanceof PlayerAccessor pl && pl.isActive()) {
+			AABB playerBox = pl.player().getBoundingBox();
+			return (float) Math.min(playerBox.getXsize(), playerBox.getZsize());
+		}
+		return original.call(instance);
 	}
 
 	@ModifyVariable(method = "setPosRaw", at = @At(value = "HEAD"), ordinal = 0)

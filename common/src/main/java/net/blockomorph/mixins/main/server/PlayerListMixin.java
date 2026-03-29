@@ -78,6 +78,7 @@ public class PlayerListMixin {
 		for (PlayersTicks<?> ticks : PlayersTickManager.getTicks()) {
 			ticks.stopAndUnload(serverPlayer);
 		}
+		PlayerMorphedSection.cleanProxyChunks(serverPlayer);
 	}
 
 	@Inject(method = "placeNewPlayer", at = @At(shift = At.Shift.BEFORE, value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;addNewPlayer(Lnet/minecraft/server/level/ServerPlayer;)V"))
