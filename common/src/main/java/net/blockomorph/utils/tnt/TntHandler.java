@@ -1,9 +1,6 @@
 package net.blockomorph.utils.tnt;
 
-import net.blockomorph.utils.BannedBlock;
-import net.blockomorph.utils.BlockInPlayer2;
-import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.*;
 import net.blockomorph.utils.accessors.ForceLevelChanger;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
@@ -16,7 +13,6 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -65,7 +61,7 @@ public class TntHandler {
 					this.setFuse(tnt.getFuse());
 					if (!tnt.isAlive()) {
 						if (Config.get().playerDieAfterDestroy.getValue()) {
-							MorphUtils.destroy(this.pl, null);
+							DamageHandler.destroy(this.pl, null);
 						} else {
 							this.deMorph();
 						}
@@ -126,7 +122,7 @@ public class TntHandler {
 					this.tnt.setNoGravity(true);
 					if (this.player.level().isClientSide()) {
 						double d0 = this.player.level().random.nextDouble() * (double) ((float) Math.PI * 2F);
-						this.player.setDeltaMovement(new Vec3(-Math.sin(d0) * 0.02D, 0.3F, -Math.cos(d0) * 0.02D));
+						this.player.addDeltaMovement(new Vec3(-Math.sin(d0) * 0.02D, 0.3F, -Math.cos(d0) * 0.02D));
 					}
 					return true;
 				}

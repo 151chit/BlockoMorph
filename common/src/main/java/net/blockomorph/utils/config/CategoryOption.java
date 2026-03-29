@@ -11,6 +11,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -52,7 +53,7 @@ public class CategoryOption extends ConfigInstance<List<ConfigInstance<?>>> {
 	}
 
 	@Override
-	public void parseFromUser(String value) {
+	public void parseFromUser(ServerPlayer ctx, String value) {
 		throw new UnsupportedOperationException("You can't change the value of a category property directly, you need to specify the specific property name in the category.");
 	}
 

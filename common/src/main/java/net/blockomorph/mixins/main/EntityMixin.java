@@ -1,5 +1,8 @@
 package net.blockomorph.mixins.main;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.blockomorph.utils.ChairController;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
@@ -10,9 +13,11 @@ import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -133,6 +138,15 @@ public abstract class EntityMixin implements EntityAccessor, ForceLevelChanger {
 			cir.setReturnValue(true);
 			this.startRiding(ent, true);
 		}
+	}
+
+	@ModifyExpressionValue(method = "isInWall", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/EntityDimensions;width:F"))
+	private float changeHitbox(float original) {
+		if (this instanceof PlayerAccessor pl && pl.isActive()) {
+			AABB playerBox = pl.player().getBoundingBox();
+			return (float) Math.min(playerBox.getXsize(), playerBox.getZsize());
+		}
+		return original;
 	}
 
 	@ModifyVariable(method = "setPosRaw", at = @At(value = "HEAD"), ordinal = 0)

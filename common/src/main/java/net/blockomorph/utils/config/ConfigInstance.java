@@ -9,6 +9,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public abstract class ConfigInstance<T> {
 
 	public abstract JsonElement getDataForStorage();
 
-	public abstract void parseFromUser(String value);
+	public abstract void parseFromUser(ServerPlayer ctx, String value);
 
 	public abstract void readFromNetwork(FriendlyByteBuf buf);
 

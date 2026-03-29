@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 @Mixin(Level.class)
-public abstract class LevelInjectsMixin {
+public abstract class LevelInjectsMixin implements FakeChunkStorage {
 	@Unique
 	private DummyChunkStorage CHUNKS;
 
@@ -64,7 +64,6 @@ public abstract class LevelInjectsMixin {
 	@ModifyVariable(method = "getChunk(IILnet/minecraft/world/level/chunk/ChunkStatus;Z)Lnet/minecraft/world/level/chunk/ChunkAccess;", at = @At("STORE"))
 	private ChunkAccess override(ChunkAccess chunkAccess, int x, int z) {
 		if (InPlayerBlockPos.isMorphedPlayerX(SectionPos.sectionToBlockCoord(x))) {
-			var callback = new CallbackInfoReturnable<ChunkAccess>("gc", true);
 			DummyChunkStorage storage;
 			if (LevelAcc.of(this).getChunkSource() instanceof FakeChunkStorage st) {
 				storage = st.getStorage();
@@ -74,10 +73,14 @@ public abstract class LevelInjectsMixin {
 				}
 				storage = CHUNKS;
 			}
-			storage.getFakeChunk(x, z, callback, LevelAcc.of(this));
-			return callback.getReturnValue();
+			return storage.getFakeChunk(x, z, LevelAcc.of(this));
 		}
 		return chunkAccess;
+	}
+
+	@Override
+	public DummyChunkStorage getStorage() {
+		return CHUNKS;
 	}
 
 	@Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true)
