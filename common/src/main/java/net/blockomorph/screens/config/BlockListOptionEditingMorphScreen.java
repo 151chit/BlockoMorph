@@ -4,7 +4,7 @@ import net.blockomorph.screens.morph.AbstractMorphScreen;
 import net.blockomorph.screens.morph.tabs.CreativeModeBlockTab;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.SavedBlock;
-import net.blockomorph.utils.config.BlockIdsSetConfig;
+import net.blockomorph.utils.config.list.BlockIdsSetConfig;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.resources.sounds.SoundInstance;
@@ -16,11 +16,11 @@ import java.util.function.Consumer;
 
 import static net.blockomorph.screens.morph.tabs.TabManager.BLOCK_FRAME_SIZE;
 
-public class ListOptionEditingMorphScreen extends AbstractMorphScreen {
+public class BlockListOptionEditingMorphScreen extends AbstractMorphScreen {
 	private final BlockIdsSetConfig blockIdsSetConfig;
 	private final ConfigRenderer.ConfigRenderingContext context;
 
-	public ListOptionEditingMorphScreen(BlockIdsSetConfig configInstance, ConfigRenderer.ConfigRenderingContext context) {
+	public BlockListOptionEditingMorphScreen(BlockIdsSetConfig configInstance, ConfigRenderer.ConfigRenderingContext context) {
 		this.blockIdsSetConfig = configInstance;
 		this.context = context;
 	}

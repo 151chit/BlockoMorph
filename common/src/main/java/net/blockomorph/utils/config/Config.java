@@ -5,6 +5,7 @@ import net.blockomorph.network.ClientBoundConfigUpdatePacket;
 import net.blockomorph.utils.MorphUtils;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -78,11 +79,11 @@ public class Config {
 		}
 	}
 
-	public static void parse(String optionName, String value, boolean fromNetwork) {
+	public static void parse(ServerPlayer ctx, String optionName, String value, boolean fromNetwork) {
 		if (SNAPSHOT == null) return;
 		ConfigInstance<?> option = getOption(optionName);
 		if (option.canEditedByOperators()) {
-			option.parseFromUser(value);
+			option.parseFromUser(ctx, value);
 			writeAndSend();
 			return;
 		}

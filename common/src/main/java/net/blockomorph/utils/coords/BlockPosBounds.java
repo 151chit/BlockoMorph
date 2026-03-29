@@ -146,8 +146,10 @@ public class BlockPosBounds {
 	public static void handleBlockPosBound(ClientBoundBlockPosBoundPacket packet) {
 		if (packet.delete) {
 			Player old = CLIENT_CACHE.remove(packet.pos);
-			if (old != null)
+			if (old != null) {
+				PlayerMorphedSection.cleanProxyChunks(old);
 				CLIENT_BOUNDS.remove(old.getUUID());
+			}
 		} else {
 			Player pl = packet.getPlayer();
 			if (pl != null) {
