@@ -6,15 +6,9 @@ import net.blockomorph.utils.coords.DummyChunkStorage;
 import net.blockomorph.utils.coords.DummyLevelChunk;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -24,7 +18,6 @@ import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,7 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 @Mixin(Level.class)
-public abstract class LevelInjectsMixin {
+public abstract class LevelInjectsMixin implements FakeChunkStorage {
 	@Unique
 	private DummyChunkStorage CHUNKS;
 
@@ -64,7 +57,6 @@ public abstract class LevelInjectsMixin {
 	@ModifyVariable(method = "getChunk(IILnet/minecraft/world/level/chunk/status/ChunkStatus;Z)Lnet/minecraft/world/level/chunk/ChunkAccess;", at = @At("STORE"))
 	private ChunkAccess override(ChunkAccess chunkAccess, int x, int z) {
 		if (InPlayerBlockPos.isMorphedPlayerX(SectionPos.sectionToBlockCoord(x))) {
-			var callback = new CallbackInfoReturnable<ChunkAccess>("gc", true);
 			DummyChunkStorage storage;
 			if (LevelAcc.of(this).getChunkSource() instanceof FakeChunkStorage st) {
 				storage = st.getStorage();
@@ -74,10 +66,14 @@ public abstract class LevelInjectsMixin {
 				}
 				storage = CHUNKS;
 			}
-			storage.getFakeChunk(x, z, callback, LevelAcc.of(this));
-			return callback.getReturnValue();
+			return storage.getFakeChunk(x, z, LevelAcc.of(this));
 		}
 		return chunkAccess;
+	}
+
+	@Override
+	public DummyChunkStorage getStorage() {
+		return CHUNKS;
 	}
 
 	@Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true)

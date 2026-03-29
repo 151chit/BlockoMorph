@@ -3,6 +3,7 @@ package net.blockomorph.utils.coords;
 import it.unimi.dsi.fastutil.longs.Long2LongArrayMap;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.accessors.FakeChunkStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.player.Player;
@@ -51,6 +52,18 @@ public class PlayerMorphedSection {
 			}
 		}
 		return poses;
+	}
+
+	public static void cleanProxyChunks(Player old) {
+		ChunkPos[] chunks = getPlayerChunks(old);
+		if (old.level() instanceof FakeChunkStorage st) {
+			DummyChunkStorage storage = st.getStorage();
+			if (storage != null) storage.cleanFakeChunk(chunks);
+			if (old.level().getChunkSource() instanceof FakeChunkStorage chunkSt) {
+				DummyChunkStorage storageChunk = chunkSt.getStorage();
+				if (storageChunk != null) storageChunk.cleanFakeChunk(chunks);
+			}
+		}
 	}
 
 	@Nullable

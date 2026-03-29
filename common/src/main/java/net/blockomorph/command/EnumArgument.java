@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.blockomorph.utils.MorphUtils;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -63,7 +64,7 @@ public class EnumArgument<ENUM extends Enum<ENUM>> implements ArgumentType<ENUM>
 		return Stream.of(this.type.getEnumConstants()).map(Enum::name).toList();
 	}
 
-	public static class ContextInfo<ENUM extends Enum<ENUM>> implements ArgumentTypeInfo<EnumArgument<ENUM>, ContextInfo<ENUM>.Template> {
+	public static class ContextInfo<ENUM extends Enum<ENUM>> implements MorphUtils.ArgumentEncoder<EnumArgument<ENUM>, ContextInfo<ENUM>.Template> {
 		@Override
 		public void serializeToNetwork(Template template, FriendlyByteBuf buffer) {
 			buffer.writeUtf(template.enumType.getName());
@@ -88,6 +89,11 @@ public class EnumArgument<ENUM extends Enum<ENUM>> implements ArgumentType<ENUM>
 		@Override
 		public Template unpack(EnumArgument<ENUM> argument) {
 			return new Template(argument.type);
+		}
+
+		@Override
+		public Class<?> getArgClass() {
+			return EnumArgument.class;
 		}
 
 		public class Template implements ArgumentTypeInfo.Template<EnumArgument<ENUM>> {
