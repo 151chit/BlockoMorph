@@ -2,7 +2,7 @@ package net.blockomorph.mixins.main.server;
 
 import com.mojang.authlib.GameProfile;
 import net.blockomorph.utils.BannedBlock;
-import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.DamageHandler;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.ForceLevelChanger;
 import net.blockomorph.utils.accessors.ServerPlayerAccessor;
@@ -67,7 +67,7 @@ public abstract class ServerPlayerMixin extends Player implements ServerPlayerAc
 
 	@Inject(method = "die", at = @At("HEAD"))
 	public void dead(DamageSource damageSource, CallbackInfo ci) {
-		if (PlayerAccessor.of(this).isFullActive() && !damageSource.is(MorphUtils.PLAYER_DESTROYED) && !damageSource.is(MorphUtils.PLAYER_DESTROYED_NULL)) {
+		if (PlayerAccessor.of(this).isFullActive() && !damageSource.is(DamageHandler.PLAYER_DESTROYED) && !damageSource.is(DamageHandler.PLAYER_DESTROYED_NULL)) {
 			PlayerAccessor.of(this).getBlocksData2().values().forEach(block -> {
 				this.level().levelEvent(2001, block.getPos(), Block.getId(block.getBlockState()));
 			});
@@ -95,7 +95,7 @@ public abstract class ServerPlayerMixin extends Player implements ServerPlayerAc
 
 	@Inject(method = "hurtServer", at = @At("HEAD"), cancellable = true)
 	public void hurt(ServerLevel serverLevel, DamageSource damageSource, float f, CallbackInfoReturnable<Boolean> cir) {
-		if (MorphUtils.onPlayerAttacked(damageSource, this)) cir.setReturnValue(false);
+		if (DamageHandler.needSuppressDamage(damageSource, f, this)) cir.setReturnValue(false);
 	}
 
 	@Inject(method = "setServerLevel", at= @At("TAIL"))

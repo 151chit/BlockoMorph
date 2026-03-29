@@ -11,6 +11,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -30,7 +32,7 @@ public class EnumConfig<T extends Enum<T>> extends ConfigInstance<T> {
 
 	@Override
 	public void readFromStorage(JsonElement option) {
-		this.parseFromUser(option.getAsString());
+		this.parse(option.getAsString(), false);
 	}
 
 	@Override
@@ -38,13 +40,17 @@ public class EnumConfig<T extends Enum<T>> extends ConfigInstance<T> {
 		return new JsonPrimitive(this.value.name());
 	}
 
-	@Override
-	public void parseFromUser(String input) {
+	private void parse(String input, boolean needThrow) {
 		try {
 			this.value = Enum.valueOf(this.classType, input);
 		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("Invalid option value for option: " + this.getName() + ", value: " + input);
+			if (needThrow) throw new IllegalArgumentException("Invalid option value for option: " + this.getName() + ", value: " + input);
 		}
+	}
+
+	@Override
+	public void parseFromUser(ServerPlayer ctx, String input) {
+		this.parse(input, true);
 	}
 
 	@Override

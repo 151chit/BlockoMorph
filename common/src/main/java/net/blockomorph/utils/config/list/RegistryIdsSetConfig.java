@@ -1,34 +1,39 @@
-package net.blockomorph.utils.config;
+package net.blockomorph.utils.config.list;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.blockomorph.screens.config.renderers.BlockListConfigRenderer;
+import net.blockomorph.command.FilteredResourceArgument;
+import net.blockomorph.utils.config.Config;
+import net.blockomorph.utils.config.ConfigInstance;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.ResourceArgument;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Registry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
 
-public class BlockIdsSetConfig extends ConfigInstance<Set<Identifier>> {
-	private static BlockListConfigRenderer RENDERER;
-	private final ListOptionContext context;
-
-	public BlockIdsSetConfig(String name, Set<Identifier> initialValue, boolean canOperatorModify, @Nullable Component tip, ListOptionContext ctx) {
+public abstract class RegistryIdsSetConfig<T> extends ConfigInstance<Set<Identifier>> {
+	protected final IdsSetOptionContext context;
+	protected final ResourceKey<Registry<T>> registryId;
+	protected RegistryIdsSetConfig(String name, Set<Identifier> initialValue, boolean canOperatorModify, @Nullable Component tip, IdsSetOptionContext context, ResourceKey<Registry<T>> registryId) {
 		super(name, initialValue, canOperatorModify, tip);
-		this.context = ctx;
+		this.context = context;
+		this.registryId = registryId;
 	}
 
 	@Override
 	public void readFromStorage(JsonElement option) {
+		this.value.clear();
 		for (JsonElement el : option.getAsJsonArray()) {
 			Identifier raw = Identifier.tryParse(el.getAsString());
 			if (raw != null)
@@ -63,37 +68,37 @@ public class BlockIdsSetConfig extends ConfigInstance<Set<Identifier>> {
 		}
 	}
 
-	public Identifier getFrameTexture() {
-		return this.context.frame;
-	}
-
 	@Override
-	public void parseFromUser(String value) {
+	public void parseFromUser(ServerPlayer ctx, String value) {
 		String[] parts = value.split(" ", 2);
 		if (parts.length != 2) {
 			throw new IllegalArgumentException("Invalid input format: " + value);
 		}
 
-		String element = parts[1];
+		String id = parts[1];
 		String action = parts[0];
-		Identifier blockId = Identifier.parse(element);
+		Identifier ID = Identifier.tryParse(id);
 
 		switch (action) {
 			case "+":
-				if (context.allowedAddValue != null && context.allowedAddValue.test(blockId)) {
-					this.value.add(blockId);
+				var registry = ctx.level().registryAccess().lookupOrThrow(this.registryId);
+				if (registry.get(ResourceKey.create(this.registryId, ID)).isEmpty()) {
+					throw new IllegalArgumentException("Resource with ID " + id + " does not exist in registry!");
+				}
+				if (context.addCensorList == null || ((context.addCensorList.getValue()) != context.addCensorList.getKey().contains(ID))) {
+					this.value.add(ID);
 					break;
-				} else throwError(action, element);
+				} else throwError(action, id);
 			case "-":
-				if (context.allowedRemoveValue != null && context.allowedRemoveValue.test(blockId)) {
-					this.value.remove(blockId);
+				if (context.removeCensorList == null || ((context.removeCensorList.getValue()) != context.removeCensorList.getKey().contains(ID))) {
+					this.value.remove(ID);
 					break;
-				} else throwError(action, element);
+				} else throwError(action, id);
 			case "r":
 				if (context.canClear) {
 					this.value.clear();
 					break;
-				} else throwError(action, element);
+				} else throwError(action, id);
 			default:
 				throw new IllegalArgumentException("Invalid action: " + action);
 		}
@@ -117,8 +122,10 @@ public class BlockIdsSetConfig extends ConfigInstance<Set<Identifier>> {
 	}
 
 	private LiteralArgumentBuilder<CommandSourceStack> end(LiteralArgumentBuilder<CommandSourceStack> actionString, boolean remove, CommandBuildContext ctx) {
-		return actionString.then(Commands.argument("value", ResourceArgument.resource(ctx, Registries.BLOCK)).executes(args -> {
-			Identifier name = ResourceArgument.getResource(args, "value", Registries.BLOCK).key().identifier();
+		Map.Entry<Set<Identifier>, Boolean> censorListHolder = remove ? this.context.removeCensorList : this.context.addCensorList;
+		Map.Entry<Set<Identifier>, Boolean> preparedCensorListHolder = Objects.requireNonNullElseGet(censorListHolder, () -> Map.entry(Set.of(), true));
+		return actionString.then(Commands.argument("value", FilteredResourceArgument.id(ctx, this.registryId, preparedCensorListHolder.getKey(), preparedCensorListHolder.getValue())).executes(args -> {
+			Identifier name = FilteredResourceArgument.getId(args, "value", this.registryId).identifier();
 			Component end;
 			if (remove) {
 				end = Component.translatable("blockomorph.commands.option_change.list.remove", name.toString(), this.name);
@@ -143,15 +150,7 @@ public class BlockIdsSetConfig extends ConfigInstance<Set<Identifier>> {
 		};
 	}
 
-	@Override
-	public BlockListConfigRenderer getRenderer() {
-		if (RENDERER == null) {
-			RENDERER = new BlockListConfigRenderer();
-		}
-		return RENDERER;
-	}
-
-	public record ListOptionContext(Identifier frame, @Nullable Predicate<Identifier> allowedAddValue,
-									@Nullable Predicate<Identifier> allowedRemoveValue, boolean canClear) {
+	public record IdsSetOptionContext(boolean canClear, @Nullable Map.Entry<Set<Identifier>, Boolean> addCensorList, @Nullable Map.Entry<Set<Identifier>, Boolean> removeCensorList) {
+		public static final IdsSetOptionContext ALWAYS_TRUE = new IdsSetOptionContext(true, null, null);
 	}
 }

@@ -3,6 +3,7 @@ package net.blockomorph.network;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.config.Config;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
 public class ServerBoundConfigUpdatePacket implements BlockMorphPacket {
@@ -33,8 +34,8 @@ public class ServerBoundConfigUpdatePacket implements BlockMorphPacket {
 
 	@Override
 	public void handle(Player player) {
-		if (MorphUtils.hasBlockMorphActionsPermissions(player.permissions(), MorphUtils.AllowType.CONFIG_SCREEN) && Config.get().canOperatorModifyConfig.getValue()) {
-			Config.parse(this.option, this.value, true);
+		if (player instanceof ServerPlayer pl && MorphUtils.hasBlockMorphActionsPermissions(player.permissions(), MorphUtils.AllowType.CONFIG_SCREEN) && Config.get().canOperatorModifyConfig.getValue()) {
+			Config.parse(pl, this.option, this.value, true);
 		}
 	}
 }
