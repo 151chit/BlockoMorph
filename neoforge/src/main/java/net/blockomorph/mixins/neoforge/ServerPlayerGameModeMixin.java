@@ -1,6 +1,6 @@
 package net.blockomorph.mixins.neoforge;
 
-import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.DamageHandler;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.platform.CommonPlatformUtils;
 import net.minecraft.core.BlockPos;
@@ -29,7 +29,7 @@ public class ServerPlayerGameModeMixin {
 			boolean flag = pl.isBreaking();
 			pl.breakingModeStart(false);
 			if (flag && pl.getBlocksData2().size() == 1 && pl.getBlockState(InPlayerBlockPos.ZERO) == Blocks.VOID_AIR.defaultBlockState()) {
-				MorphUtils.destroy(pl, this.player);
+				DamageHandler.destroy(pl, this.player);
 			}
 		}, null, false);
 	}

@@ -1,8 +1,8 @@
 package net.blockomorph.utils;
 
+import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.serialization.DataResult;
 import net.blockomorph.network.BlockMorphPacket;
-import net.blockomorph.utils.accessors.ServerPlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigEnums;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
@@ -10,26 +10,15 @@ import net.blockomorph.utils.coords.PlayerMorphedSection;
 import net.blockomorph.utils.platform.CommonPlatformUtils;
 import net.blockomorph.utils.platform.EarlyLoadingPlatformUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
-import net.minecraft.core.Vec3i;
+import net.minecraft.commands.synchronization.ArgumentTypeInfo;
+import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.BlockItem;
@@ -41,7 +30,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.TntBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.phys.AABB;
@@ -57,16 +45,11 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
-import java.util.function.DoubleConsumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 
 public class MorphUtils {
 	public static final String MODID = "blockomorph";
-	public static final ResourceKey<DamageType> PLAYER_DESTROYED = ResourceKey.create(Registries.DAMAGE_TYPE, res("player_destroyed"));
-	public static final ResourceKey<DamageType> PLAYER_DESTROYED_NULL = ResourceKey.create(Registries.DAMAGE_TYPE, res("player_destroyed_null"));
 	private static final StackWalker STACK_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
 	public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
 	public static final boolean ONE_PHASE_PLAYER_RENDER = EarlyLoadingPlatformUtils.INSTANCE.isModLoaded("iris");
@@ -115,6 +98,10 @@ public class MorphUtils {
 	}
 
 	/****************************PACKET SYSTEM************************************/
+
+	public interface ArgumentEncoder<ARG extends ArgumentType<?>, TEMPLATE extends ArgumentTypeInfo.Template<ARG>> extends ArgumentTypeInfo<ARG, TEMPLATE> {
+		Class<?> getArgClass();
+	}
 
 	public static void doBlockInMorphedPlayerOnPos(@Nullable Entity self, Iterable<Entity> entities, Vec3 pos, BiConsumer<PlayerAccessor, BlockInPlayer2> action) {
 		for (Entity entity : entities) {
@@ -255,41 +242,6 @@ public class MorphUtils {
 		return false;
 	}
 
-	public static boolean onPlayerAttacked(DamageSource damage, Entity attacked) {
-		if (attacked instanceof PlayerAccessor pl) {
-			if (damage.getDirectEntity() instanceof Player) {
-				if (Config.get().hitReaction.getValue().hand) {
-					return false;
-				}
-			} else if (damage.getDirectEntity() instanceof Projectile) {
-				if (Config.get().hitReaction.getValue().projectile) {
-					return false;
-				}
-			}
-			boolean noTnt = pl.getTnt() == null;
-			boolean tntBlock = pl.getBlockState(InPlayerBlockPos.ZERO).getBlock() instanceof TntBlock;
-			boolean tntDamage =
-					damage.is(DamageTypes.PLAYER_EXPLOSION) ||
-							damage.is(DamageTypes.EXPLOSION);
-			boolean allowed =
-					damage.is(DamageTypes.GENERIC_KILL) ||
-							damage.is(DamageTypes.FELL_OUT_OF_WORLD);
-			if (pl.isActive()) {
-				if (allowed || (!tntBlock && tntDamage)) {
-					destroy(pl, damage.getEntity());
-				} else if (tntBlock && tntDamage && noTnt) {
-					pl.setTnt();
-					PrimedTnt tnt = pl.getTnt();
-					if (tnt != null) {
-						tnt.setFuse(tnt.getFuse() / 2);
-					}
-				}
-				return !(damage.is(PLAYER_DESTROYED) || damage.is(PLAYER_DESTROYED_NULL));
-			}
-		}
-		return false;
-	}
-
 	public static boolean needRejectUse(Level lv, BlockHitResult block) {
 		if (InPlayerBlockPos.isMorphedPlayerX(block.getBlockPos().getX())) {
 			BlockState state = lv.getBlockState(block.getBlockPos());
@@ -357,28 +309,5 @@ public class MorphUtils {
 	public static ConfigEnums.ScreenAccess getScreenAccess(Player player) {
 		if (player != null && player.hasPermissions(2)) return ConfigEnums.ScreenAccess.ALL;
 		return Config.get().screenAccess.getValue();
-	}
-
-	public static void destroy(PlayerAccessor mob_pl, @Nullable Entity attacker) {
-		LivingEntity mob = (Player) mob_pl;
-		Holder<DamageType> damage = mob.level().registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).
-				getOrThrow(attacker == null ? PLAYER_DESTROYED_NULL : PLAYER_DESTROYED);
-		DamageSource damageSource = new DamageSource(damage, attacker);
-		mob.getCombatTracker().recordDamage(damageSource, Float.MAX_VALUE);
-		mob.setHealth(0);
-		mob.die(damageSource);
-		if (mob_pl instanceof ServerPlayer pl && pl.hasClientLoaded() && pl instanceof ServerPlayerAccessor acc) {
-			try {
-				Component deathMessage = mob.getCombatTracker().getDeathMessage();
-				pl.connection.send(new ClientboundPlayerCombatKillPacket(pl.getId(), deathMessage));
-				Objects.requireNonNull(pl.level().getServer()).getPlayerList().broadcastSystemMessage(deathMessage, false);
-				if (!pl.isSpectator()) acc.dropAllDeathLoot$blockomorph(pl.serverLevel(), damageSource);
-				mob.getCombatTracker().recheckStatus();
-				pl.setClientLoaded(false);
-			} catch (Throwable ex) {
-				mob_pl.applyBlockMorph(Blocks.AIR.defaultBlockState(), null, BannedBlock.Source.SYSTEM);
-				LOGGER.error("While unmorph killing an exception occurred! Something might not work: ", ex);
-			}
-		}
 	}
 }

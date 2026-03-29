@@ -12,7 +12,7 @@
     "main.EntityDataSupportMixin",
     "main.EntityInsideSupportMixin",
     "main.EntityMixin",
-    "main.EnumArgumentRegister",
+    "main.ArgumentRegister",
     "main.GameEventSupportMixin",
     "main.LivingEntityMixin",
     "main.PlayerMixin",
