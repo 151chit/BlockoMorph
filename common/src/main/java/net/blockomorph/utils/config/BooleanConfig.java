@@ -10,9 +10,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class BooleanConfig extends ConfigInstance<Boolean> {
 	private static BooleanConfigRenderer RENDERER;
@@ -32,7 +31,7 @@ public class BooleanConfig extends ConfigInstance<Boolean> {
 	}
 
 	@Override
-	public void parseFromUser(String value) {
+	public void parseFromUser(ServerPlayer ctx, String value) {
 		this.value = Boolean.parseBoolean(value);
 	}
 

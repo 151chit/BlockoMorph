@@ -3,6 +3,7 @@ package net.blockomorph.mixins.main.server;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import net.blockomorph.utils.DamageHandler;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.LevelAcc;
 import net.blockomorph.utils.accessors.ServerLevelAccessor;
@@ -10,14 +11,20 @@ import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.gameEvent.SectionGameEventListenerRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.damagesource.DamageEffects;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockEventData;
@@ -25,6 +32,8 @@ import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.storage.WritableLevelData;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -34,13 +43,36 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
 @Mixin(ServerLevel.class)
-public abstract class ServerLevelMixin implements ServerLevelAccessor {
+public abstract class ServerLevelMixin extends Level implements ServerLevelAccessor {
 	private final Long2ObjectMap<Int2ObjectMap<SectionGameEventListenerRegistry>> gameEventMap = new Long2ObjectOpenHashMap<>();
+	@Unique private Set<ResourceKey<DamageType>> allowedDamages;
+
+	protected ServerLevelMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, Supplier<ProfilerFiller> supplier, boolean bl, boolean bl2, long l, int i) {
+		super(writableLevelData, resourceKey, registryAccess, holder, supplier, bl, bl2, l, i);
+	}
 
 	@Override
 	public Long2ObjectMap<Int2ObjectMap<SectionGameEventListenerRegistry>> getPlayerGameEventListenerMap() {
 		return this.gameEventMap;
+	}
+
+	@Override
+	public Set<ResourceKey<DamageType>> formAngGetTntDamages$blockomorph() {
+		if (this.allowedDamages == null) {
+			Set<ResourceKey<DamageType>> damages = this.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).entrySet().stream().filter(entry -> {
+				return entry.getValue().effects() == DamageEffects.BURNING;
+			}).map(Map.Entry::getKey).collect(Collectors.toSet());
+			damages.addAll(DamageHandler.TNT_DAMAGE);
+			this.allowedDamages = Collections.unmodifiableSet(damages);
+		}
+		return this.allowedDamages;
 	}
 
 	@Inject(method = "blockEvent", at = @At(value = "HEAD"), cancellable = true)
@@ -90,7 +122,7 @@ public abstract class ServerLevelMixin implements ServerLevelAccessor {
 	private Vec3 explosion;
 
 	@Inject(method = "explode", at = @At(value = "HEAD"))
-	public void redirect(Entity p_256039_, DamageSource p_255778_, ExplosionDamageCalculator p_256002_, double x, double y, double z, float p_256045_, boolean p_255686_, Level.ExplosionInteraction p_255827_, ParticleOptions p_312436_, ParticleOptions p_312391_, Holder<SoundEvent> p_320497_, CallbackInfoReturnable<Explosion> cir) {
+	public void redirect(Entity entity, DamageSource damageSource, ExplosionDamageCalculator explosionDamageCalculator, double x, double y, double z, float g, boolean bl, ExplosionInteraction explosionInteraction, ParticleOptions particleOptions, ParticleOptions particleOptions2, Holder<SoundEvent> holder, CallbackInfoReturnable<Explosion> cir) {
 		this.explosion = InPlayerBlockPos.checkOnReal(new Vec3(x, y, z));
 	}
 

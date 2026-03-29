@@ -1,6 +1,7 @@
 package net.blockomorph.mixins.main.blockFix;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import net.blockomorph.utils.DamageHandler;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
@@ -45,7 +46,7 @@ public class BucketItemMixin {
 			boolean flag = pl.isBreaking();
 			pl.breakingModeStart(false);
 			if (!level.isClientSide() && flag && pl.getBlocksData2().size() == 1 && pl.getBlockState(InPlayerBlockPos.ZERO) == Blocks.VOID_AIR.defaultBlockState()) {
-				MorphUtils.destroy(pl, player);
+				DamageHandler.destroy(pl, player);
 			}
 		}
 	}

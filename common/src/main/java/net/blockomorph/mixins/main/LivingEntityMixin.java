@@ -1,11 +1,19 @@
 package net.blockomorph.mixins.main;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.config.Config;
+import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.utils.hit.MorphedPlayerHitResult;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,25 +30,24 @@ public abstract class LivingEntityMixin extends Entity {
 
 	@Inject(method = "canBeSeenByAnyone", at = @At("RETURN"), cancellable = true)
 	public void checkSeen(CallbackInfoReturnable<Boolean> cir) {
-		boolean result = cir.getReturnValue();
-		if (this instanceof PlayerAccessor pl && pl.isActive()) {
+		if (this instanceof PlayerAccessor pl && !Config.get().canBeSeenByMobs.getValue() && pl.isActive()) {
 			cir.setReturnValue(false);
-			return;
 		}
-		cir.setReturnValue(result);
+	}
+
+	@WrapOperation(method = "hasLineOfSight",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/world/phys/BlockHitResult;getType()Lnet/minecraft/world/phys/HitResult$Type;"))
+	private HitResult.Type removeSelf(BlockHitResult instance, Operation<HitResult.Type> original) {
+		if (instance instanceof MorphedPlayerHitResult || InPlayerBlockPos.isMorphedPlayerX(instance.getBlockPos().getX())) {
+			if (Config.get().canBeSeenByMobs.getValue()) return HitResult.Type.MISS;
+		}
+		return original.call(instance);
 	}
 
 	@Inject(method = "push", at = @At("HEAD"), cancellable = true)
 	public void rejectPush(Entity entity, CallbackInfo ci) {
-		if (this instanceof PlayerAccessor pl && pl.isActive())
+		if (this instanceof PlayerAccessor pl && pl.isActive() || entity instanceof PlayerAccessor pla && pla.isActive())
 			ci.cancel();
-	}
-
-	@Inject(method = "pushEntities", at = @At("HEAD"), cancellable = true)
-	public void rejectPushEntities(CallbackInfo ci) {
-		if (this instanceof PlayerAccessor pl && pl.isActive()) {
-			ci.cancel();
-		}
 	}
 
 	@Inject(method = "getDimensions", at = @At("HEAD"), cancellable = true)

@@ -1,18 +1,18 @@
 package net.blockomorph.screens.config.renderers;
 
-import net.blockomorph.screens.config.ListOptionEditingMorphScreen;
+import net.blockomorph.screens.config.BlockListOptionEditingMorphScreen;
 import net.blockomorph.screens.utils.GuiUtils;
-import net.blockomorph.utils.config.BlockIdsSetConfig;
+import net.blockomorph.utils.config.list.BlockIdsSetConfig;
 import net.minecraft.client.renderer.Rect2i;
 
-public class BlockListConfigRenderer extends ButtonRightOption<BlockIdsSetConfig> {
-	public BlockListConfigRenderer() {
+public class BlockIdsSetConfigRenderer extends ButtonRightOption<BlockIdsSetConfig> {
+	public BlockIdsSetConfigRenderer() {
 		super(125, 2, 16, 16, 144, 40);
 	}
 
 	@Override
 	public void onClick(BlockIdsSetConfig configInstance, double mouseX, double mouseY, Rect2i box, ConfigRenderingContext context) {
-		GuiUtils.MC.setScreen(new ListOptionEditingMorphScreen(configInstance, context));
+		GuiUtils.MC.setScreen(new BlockListOptionEditingMorphScreen(configInstance, context));
 	}
 
 	@Override
