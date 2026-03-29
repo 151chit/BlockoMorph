@@ -11,7 +11,7 @@
     "main.BlockInputMixin",
     "main.EntityDataSupportMixin",
     "main.EntityMixin",
-    "main.EnumArgumentRegister",
+    "main.ArgumentRegister",
     "main.EntityInsideSupportMixin",
     "main.GameEventSupportMixin",
     "main.LivingEntityMixin",

@@ -81,14 +81,14 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 
 	@Shadow @Final private Abilities abilities;
 	@Unique private boolean init$bmMorph;
-	private final TntHandler TNT_HANDLER = new TntHandler(this);
-	private final HitBoxCalculator HITBOX_HANDLER = new HitBoxCalculator(this);
-	private final ConcurrentHashMap<InPlayerBlockPos, BlockInPlayer2> blocksData = new ConcurrentHashMap<>();
-	private final Map<InPlayerBlockPos, BlockInPlayer2> unmodifiableBlocksData = Collections.unmodifiableMap(this.blocksData);
-	private final Set<InPlayerBlockPos> updates = ConcurrentHashMap.newKeySet();
-	private final ObjectLinkedOpenHashSet<InPlayerBlockEventData> blockEvents = new ObjectLinkedOpenHashSet<>();
-	private final InPlayerBlockEntityTickManager blockEntityTickManager = new InPlayerBlockEntityTickManager(this);
-	private PlayerDynamicGameEventListener listenerStorage;
+	@Unique private final TntHandler TNT_HANDLER = new TntHandler(this);
+	@Unique private final HitBoxCalculator HITBOX_HANDLER = new HitBoxCalculator(this);
+	@Unique private final ConcurrentHashMap<InPlayerBlockPos, BlockInPlayer2> blocksData = new ConcurrentHashMap<>();
+	@Unique private final Map<InPlayerBlockPos, BlockInPlayer2> unmodifiableBlocksData = Collections.unmodifiableMap(this.blocksData);
+	@Unique private final Set<InPlayerBlockPos> updates = ConcurrentHashMap.newKeySet();
+	@Unique private final ObjectLinkedOpenHashSet<InPlayerBlockEventData> blockEvents = new ObjectLinkedOpenHashSet<>();
+	@Unique private final InPlayerBlockEntityTickManager blockEntityTickManager = new InPlayerBlockEntityTickManager(this);
+	@Unique private PlayerDynamicGameEventListener listenerStorage;
 	@Unique private boolean onLoadingBlocks;
 	@Unique private boolean breakingMode;
 	@Unique private boolean unContextedBreakingMode;
@@ -515,7 +515,6 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 	@Inject(method = "causeFallDamage", at = @At("HEAD"), cancellable = true) //TODO
 	public void causeFallDamage(float f, float g, DamageSource damageSource, CallbackInfoReturnable<Boolean> cir) {
 		if (this.isActive()) {
-			cir.cancel();
 			if (!(this.getBlockState(InPlayerBlockPos.ZERO).getBlock() instanceof AnvilBlock)) {
 				return;
 			}
