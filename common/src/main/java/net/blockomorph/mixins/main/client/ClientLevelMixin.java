@@ -6,16 +6,15 @@ import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.blockomorph.utils.accessors.LevelAcc;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.entity.LevelEntityGetter;
 import net.minecraft.world.phys.AABB;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,8 +32,6 @@ import java.util.Map;
 
 @Mixin(ClientLevel.class)
 public abstract class ClientLevelMixin implements ClientLevelAccessor {
-	@Shadow
-	protected abstract LevelEntityGetter<Entity> getEntities();
 
 	@Shadow @Final private Minecraft minecraft;
 
@@ -50,14 +47,14 @@ public abstract class ClientLevelMixin implements ClientLevelAccessor {
 		this.blocksForTick.clear();
 		if (Config.get().blockClientParticles.getValue()) {
 			AABB searchBox = new AABB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
-			this.getEntities().get(searchBox, (entity) -> {
-				if (entity instanceof PlayerAccessor pl && pl.isFullActive() && (entity != this.minecraft.player || !this.minecraft.options.getCameraType().isFirstPerson())) {
-					pl.getBlocksData2InArea(searchBox, (pos, block, realPos) -> {
+			for (PlayerAccessor pl : PlayersMultiSectionStorage.fromLevel(LevelAcc.of(this)).findMorphed(null, searchBox)) {
+				if (pl != this.minecraft.player || !this.minecraft.options.getCameraType().isFirstPerson()) {
+					pl.getBlocksData2InArea(searchBox, (_, block, realPos) -> {
 						BlockPos realBlockPosInWorld = BlockPos.containing(realPos);
-						this.blocksForTick.computeIfAbsent(realBlockPosInWorld, blockPos -> new ArrayList<>()).add(block);
+						this.blocksForTick.computeIfAbsent(realBlockPosInWorld, _ -> new ArrayList<>()).add(block);
 					});
 				}
-			});
+			}
 		}
 	}
 

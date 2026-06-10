@@ -9,6 +9,7 @@ import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.coords.PlayerMorphedSection;
 import net.blockomorph.utils.platform.CommonPlatformUtils;
 import net.blockomorph.utils.platform.EarlyLoadingPlatformUtils;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
@@ -20,7 +21,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.permissions.PermissionSet;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.BlockItem;
@@ -46,7 +46,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.*;
 
 
@@ -104,18 +103,6 @@ public class MorphUtils {
 		Class<?> getArgClass();
 	}
 
-	public static void doBlockInMorphedPlayerOnPos(@Nullable Entity self, Iterable<Entity> entities, Vec3 pos, BiConsumer<PlayerAccessor, BlockInPlayer2> action) {
-		for (Entity entity : entities) {
-			if (entity != self && entity instanceof PlayerAccessor pl && pl.isFullActive()) {
-				if (entity.getBoundingBox().contains(pos)) {
-					pl.getBlocksData2InArea(new AABB(pos, pos), (blockOffset, block, realPos) -> {
-						action.accept(pl, block);
-					});
-				}
-			}
-		}
-	}
-
 	public static boolean needModedHit(Predicate<Class<?>> predicate) {
 		if (Config.get().hitReaction.getValue().projectile) {
 			Optional<Class<?>> findedClazz = STACK_WALKER.walk(stackFrameStream -> {
@@ -126,18 +113,6 @@ public class MorphUtils {
 			}
 		}
 		return true;
-	}
-
-	@Nullable
-	public static AbstractMap.SimpleEntry<PlayerAccessor, BlockInPlayer2> getLiquidOnPos(Entity entity, Vec3 position) {
-		AtomicReference<AbstractMap.SimpleEntry<PlayerAccessor, BlockInPlayer2>> reference = new AtomicReference<>();
-		List<Entity> entities = entity.level().getEntities(entity, new AABB(BlockPos.ZERO).move(position.add(-0.5, -0.5, -0.5)), EntitySelector.NO_SPECTATORS);
-		MorphUtils.doBlockInMorphedPlayerOnPos(entity, entities, position, (pl, block) -> {
-			if (block.shouldDoFluidAction()) {
-				reference.set(new AbstractMap.SimpleEntry<>(pl, block));
-			}
-		});
-		return reference.get();
 	}
 
 	public static ChunkPos getChangedChunk(ChunkPos orig, boolean isClientSide) {
@@ -154,16 +129,8 @@ public class MorphUtils {
 	public static void fillListWithPlayerCollisions(EntityGetter lv, @Nullable Entity entity, AABB aabb, List<VoxelShape> shapes) {
 		if (!(aabb.getSize() < 1.0E-7D) && !(entity instanceof Projectile && Config.get().hitReaction.getValue().projectile)) {
 			AABB finderAABB = aabb.inflate(1).inflate(1.0E-7);
-			lv.getEntities(entity, finderAABB, EntitySelector.NO_SPECTATORS).forEach(entity1 -> {
-				if (entity1 != entity && EntitySelector.NO_SPECTATORS.test(entity1)) {
-					if (entity1 instanceof PlayerAccessor pl && pl.isFullActive()){
-						addCustomShapes(shapes, pl, finderAABB, aabb);
-					} if (false && entity instanceof PlayerAccessor pl && pl.isFullActive()) {
-						AABB playerBox = entity1.getBoundingBox();
-						if (playerBox.intersects(aabb))
-							shapes.add(Shapes.create(playerBox));
-					}
-				}
+			PlayersMultiSectionStorage.fromLevel(lv).findMorphed(entity, finderAABB).forEach(pl -> {
+				addCustomShapes(shapes, pl, finderAABB, aabb);
 			});
 		}
 	}

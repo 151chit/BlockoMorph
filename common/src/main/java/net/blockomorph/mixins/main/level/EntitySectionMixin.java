@@ -19,9 +19,4 @@ public class EntitySectionMixin {
 	public AABB getAABBLite(AABB orig) {
 		return InPlayerBlockPos.checkOnReal(orig);
 	}
-
-	@ModifyVariable(method = "forEachAccessibleNonEmptySection", ordinal = 0, at = @At(value = "HEAD"))
-	public AABB inflate(AABB orig) {
-		return orig.inflate(16 + 1.0E-7, 32 + 1.0E-7, 16 + 1.0E-7);
-	}
 }

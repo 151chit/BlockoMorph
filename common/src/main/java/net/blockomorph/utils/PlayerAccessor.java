@@ -1,14 +1,11 @@
 package net.blockomorph.utils;
 
 import net.blockomorph.network.ClientBoundMorphUpdatePacket;
-import net.blockomorph.utils.coords.BlockPosBounds;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
-import net.blockomorph.utils.coords.PlayerMorphedSection;
-import net.blockomorph.utils.gameEvent.PlayerDynamicGameEventListener;
+import net.blockomorph.utils.playerSection.PlayerSectionHandler;
+import net.blockomorph.utils.playerSection.SafeIterableStorage;
 import net.blockomorph.utils.tick.InPlayerBlockEntityTickManager;
 import net.blockomorph.utils.tnt.TntHandler;
-import net.minecraft.client.renderer.block.BlockAndTintGetter;
-import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -16,12 +13,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockEventData;
-import net.minecraft.world.level.ColorResolver;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
-import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.gameevent.GameEventListener;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -32,10 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
-import static net.blockomorph.utils.coords.InPlayerBlockPos.X_CHUNK_START;
-import static net.blockomorph.utils.coords.InPlayerBlockPos.Y_CHUNK_START;
-
-public interface PlayerAccessor extends BlockAndTintGetter {
+public interface PlayerAccessor {
 	BannedBlock applyBlockMorph(BlockState state, CompoundTag tag, BannedBlock.Source source);
 
 	void sendAllContentToPlayer(ServerPlayer player);
@@ -60,7 +51,8 @@ public interface PlayerAccessor extends BlockAndTintGetter {
 
 	HitBoxCalculator getHitBoxHandler();
 
-	PlayerDynamicGameEventListener getListenersStorage();
+	SafeIterableStorage<GameEventListener> getListenersStorage();
+	PlayerSectionHandler getSectionHandler();
 
 	InPlayerBlockEntityTickManager getBlockEntityTickManager();
 

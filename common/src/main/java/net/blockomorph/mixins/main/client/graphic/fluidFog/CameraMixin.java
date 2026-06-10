@@ -1,6 +1,8 @@
 package net.blockomorph.mixins.main.client.graphic.fluidFog;
 
+import net.blockomorph.utils.BlockInPlayer2;
 import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -42,12 +44,12 @@ public abstract class CameraMixin {
 			Camera.NearPlane nearPlane = this.getNearPlane(this.minecraft.options.fov().get());
 			for (Vec3 pos : Arrays.asList(nearPlane.getPointOnPlane(0, 0), nearPlane.getTopLeft(), nearPlane.getTopRight(), nearPlane.getBottomLeft(), nearPlane.getBottomRight())) {
 				Vec3 position = this.position.add(pos);
-				MorphUtils.doBlockInMorphedPlayerOnPos(this.entity, lv.entitiesForRendering(), position, ((pl, block) -> {
+				for (BlockInPlayer2 block : PlayersMultiSectionStorage.getBlockOnPos(this.entity, lv, position)) {
 					if (block.getBlockState().is(Blocks.POWDER_SNOW)) {
 						cir.setReturnValue(FogType.POWDER_SNOW);
 					} else if (block.shouldDoFluidAction()) {
 						FluidState fluidState = block.getBlockState().getFluidState();
-						if (position.y < (MorphUtils.getRealBlockPos(pl, block.getOffset()).y + fluidState.getHeight(this.level, block.getPos()))) {
+						if (position.y < (MorphUtils.getRealBlockPos(block.getPlayer(), block.getOffset()).y + fluidState.getHeight(this.level, block.getPos()))) {
 							if (fluidState.is(FluidTags.WATER)) {
 								cir.setReturnValue(FogType.WATER);
 							} else if (fluidState.is(FluidTags.LAVA)) {
@@ -55,7 +57,7 @@ public abstract class CameraMixin {
 							}
 						}
 					}
-				}));
+				}
 			}
 		}
 	}

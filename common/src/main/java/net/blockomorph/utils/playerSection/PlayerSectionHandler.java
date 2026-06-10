@@ -1,32 +1,34 @@
-package net.blockomorph.utils.gameEvent;
+package net.blockomorph.utils.playerSection;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import net.blockomorph.utils.accessors.ServerLevelAccessor;
+import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.accessors.PlayersProvider;
 import net.minecraft.core.SectionPos;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.gameevent.GameEventListener;
-import net.minecraft.world.level.gameevent.GameEventListenerRegistry;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 
-import java.util.HashSet;
-
-public class PlayerDynamicGameEventListener {
-	public final SafeIterableStorage<GameEventListener> storage;
-	public final ServerPlayer player;
+public class PlayerSectionHandler {
+	public final Player player;
 	private final int[] currentCoords = new int[6];
 	private boolean firstRun = true;
 
-	public PlayerDynamicGameEventListener(ServerPlayer player, SafeIterableStorage<GameEventListener> storage) {
-		this.storage = storage;
-		this.player = player;
+	public PlayerSectionHandler(PlayerAccessor player) {
+		this.player = player.player();
+	}
+
+	public void onAdd() {
+		this.onMove();
+	}
+
+	public void onHitboxChange() {
+		this.onMove();
 	}
 
 	public void onMove() {
-		if (this.player.level() instanceof ServerLevelAccessor acc) {
+		if (this.player.level() instanceof PlayersProvider provider) {
 			AABB box = this.player.getBoundingBox();
 
 			int minX = SectionPos.blockToSectionCoord(Math.floor(box.minX));
@@ -38,8 +40,8 @@ public class PlayerDynamicGameEventListener {
 
 			if (this.firstRun || this.isChanged(minX, minY, minZ, maxX, maxY, maxZ)) {
 				this.firstRun = false;
-				Long2ObjectMap<Int2ObjectMap<SectionGameEventListenerRegistry>> map = acc.getPlayerGameEventListenerMap();
-				this.onRemove(map);
+				Long2ObjectMap<Int2ObjectMap<PlayersMultiSectionStorage.PlayerSection>> map = provider.getStorage$blockomorph().getMutableStorage();
+				this.onRemove();
 
 				this.save(minX, minY, minZ, maxX, maxY, maxZ);
 
@@ -49,12 +51,12 @@ public class PlayerDynamicGameEventListener {
 						var sectionMap = map.computeIfAbsent(chunkKey, l -> new Int2ObjectOpenHashMap<>());
 						for (int y = currentCoords[1]; y <= currentCoords[4]; y++) {
 							int finalY = y;
-							sectionMap.computeIfAbsent(y, l -> new SectionGameEventListenerRegistry(this.player.level(), finalY, i -> {
+							sectionMap.computeIfAbsent(y, l -> new PlayersMultiSectionStorage.PlayerSection(finalY, i -> {
 								sectionMap.remove(i);
 								if (sectionMap.isEmpty()) {
 									map.remove(chunkKey);
 								}
-							})).add(this.storage);
+							})).add(this.player);
 						}
 					}
 				}
@@ -62,15 +64,18 @@ public class PlayerDynamicGameEventListener {
 		}
 	}
 
-	public void onRemove(Long2ObjectMap<Int2ObjectMap<SectionGameEventListenerRegistry>> map) {
-		for (int x = currentCoords[0]; x <= currentCoords[3]; x++) {
-			for (int z = currentCoords[2]; z <= currentCoords[5]; z++) {
-				long chunkKey = ChunkPos.pack(x, z);
-				var sectionMap = map.get(chunkKey);
-				if (sectionMap != null) {
-					for (int y = currentCoords[1]; y <= currentCoords[4]; y++) {
-						var sectionRegistry = sectionMap.get(y);
-						if (sectionRegistry != null) sectionRegistry.remove(this.storage);
+	public void onRemove() {
+		if (this.player.level() instanceof PlayersProvider provider) {
+			Long2ObjectMap<Int2ObjectMap<PlayersMultiSectionStorage.PlayerSection>> map = provider.getStorage$blockomorph().getMutableStorage();
+			for (int x = currentCoords[0]; x <= currentCoords[3]; x++) {
+				for (int z = currentCoords[2]; z <= currentCoords[5]; z++) {
+					long chunkKey = ChunkPos.pack(x, z);
+					var sectionMap = map.get(chunkKey);
+					if (sectionMap != null) {
+						for (int y = currentCoords[1]; y <= currentCoords[4]; y++) {
+							var sectionRegistry = sectionMap.get(y);
+							if (sectionRegistry != null) sectionRegistry.remove(this.player);
+						}
 					}
 				}
 			}
@@ -83,12 +88,5 @@ public class PlayerDynamicGameEventListener {
 
 	private void save(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
 		currentCoords[0] = minX; currentCoords[1] = minY; currentCoords[2] = minZ; currentCoords[3] = maxX; currentCoords[4] = maxY; currentCoords[5] = maxZ;
-	}
-
-	public record ListenerVisitorWithHook(GameEventListenerRegistry.ListenerVisitor orig, HashSet<SafeIterableStorage<GameEventListener>> alreadyUsed) implements GameEventListenerRegistry.ListenerVisitor {
-		@Override
-		public void visit(GameEventListener gameEventListener, Vec3 vec3) {
-			this.orig.visit(gameEventListener, vec3);
-		}
 	}
 }
