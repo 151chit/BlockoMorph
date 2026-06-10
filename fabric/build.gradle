@@ -1,0 +1,55 @@
+plugins {
+    id 'net.fabricmc.fabric-loom'
+    id 'maven-publish'
+}
+
+loom {
+    runs {
+        client {
+            client()
+            programArgs.addAll('--username', 'Opa')
+        }
+        twoClient {
+            client()
+            programArgs.addAll('--username', 'Dev')
+        }
+        server {
+            server()
+        }
+        configureEach {
+            setIdeConfigGenerated(false)
+            vmArgs.add("-Xmx" + min_memoryGb + "G")
+            vmArgs.add("-Xms" + max_memoryGb + "G")
+        }
+    }
+}
+
+base.archivesName = "blockomorph-" + minecraft_version + "-fabric-" + mod_version
+
+dependencies {
+    implementation project(':common')
+
+    minecraft "com.mojang:minecraft:" + minecraft_version
+
+    implementation "net.fabricmc:fabric-loader:" + fabric_loader
+    implementation "net.fabricmc.fabric-api:fabric-api:" + fabric_api+ "+" + minecraft_version
+    implementation project.fileTree(dir: 'run/mods/' + minecraft_version, include: ['*.jar'])
+}
+
+List<String> cfgs = List.of("mixins.blockomorph.json", "mixins.blockomorph.fabric.json")
+
+compileJava {
+    source(project(":common").sourceSets.main.allSource)
+}
+
+processResources {
+    from project(':common').sourceSets.main.resources
+    doLast {
+        patchRefmaps(cfgs, base.archivesName.get() + "-refmap.json", outputs.files)
+    }
+}
+
+jar {
+    String outputPath = System.getenv().BLOCKOMORPH_OUTPUT
+    if (outputPath != null) destinationDirectory = file(outputPath)
+}
