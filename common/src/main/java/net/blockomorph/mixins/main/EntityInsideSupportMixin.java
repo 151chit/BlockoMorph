@@ -33,7 +33,7 @@ public abstract class EntityInsideSupportMixin {
 	@Shadow public abstract boolean collidedWithShapeMovingFrom(Vec3 vec3, Vec3 vec32, List<AABB> list);
 
 	@Inject(at = @At("TAIL"), method = "checkInsideBlocks(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/InsideBlockEffectApplier$StepBasedCollector;Lit/unimi/dsi/fastutil/longs/LongSet;I)I")
-	private void checkInsideBlocks(Vec3 from, Vec3 to, InsideBlockEffectApplier.StepBasedCollector stepBasedCollector, LongSet p_428369_, int p_436707_, CallbackInfoReturnable<Integer> cir) {
+	private void checkInsideBlocks(Vec3 from, Vec3 to, InsideBlockEffectApplier.StepBasedCollector stepBasedCollector, LongSet visitedBlocks, int p_436707_, CallbackInfoReturnable<Integer> cir) {
 		if (Config.get().entityInside.getValue() && this.isAffectedByBlocks()) {
 			AABB entityBox = this.makeBoundingBox(to).deflate(1.0E-5F);
 			Entity self = (Entity) (Object) this;
@@ -41,7 +41,7 @@ public abstract class EntityInsideSupportMixin {
 			for (PlayerAccessor pl : PlayersMultiSectionStorage.fromLevel(this.level).findMorphed(self, entityBox)) {
 				pl.getBlocksData2InArea(entityBox, (pos, block, realPos) -> {
 					BlockState blockState = block.getBlockState();
-					if (!blockState.isAir()) {
+					if (!blockState.isAir() && visitedBlocks.add(block.getPos().asLong())) {
 						VoxelShape voxelShape = blockState.getEntityInsideCollisionShape(this.level, block.getPos(), self);
 						boolean bl = voxelShape == Shapes.block() || this.collidedWithShapeMovingFrom(from, to, voxelShape.move(realPos).toAabbs());
 						if (bl) {
