@@ -2,11 +2,12 @@ package net.blockomorph.mixins.main;
 
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.blockomorph.utils.PlayerAccessor;
-import net.blockomorph.utils.accessors.MovementAccessor;
 import net.blockomorph.utils.config.Config;
+import net.blockomorph.utils.hit.PlayerHitResult;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,6 +20,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
@@ -36,40 +38,37 @@ public abstract class EntityInsideSupportMixin {
 		if (Config.get().entityInside.getValue() && this.isAffectedByBlocks()) {
 			AABB entityBox = this.makeBoundingBox(to).deflate(1.0E-5F);
 			Entity self = (Entity) (Object) this;
-			List<Entity> entities = this.level.getEntities(self, entityBox, EntitySelector.NO_SPECTATORS);
-			for (Entity entity : entities) {
-				if (entity instanceof PlayerAccessor pl && pl.isFullActive()) {
-					pl.getBlocksData2InArea(entityBox, (pos, block, realPos) -> {
-						BlockState blockState = block.getBlockState();
-						if (!blockState.isAir()) {
-							VoxelShape voxelShape = blockState.getEntityInsideCollisionShape(this.level, block.getPos(), self);
-							boolean bl = voxelShape == Shapes.block() || this.collidedWithShapeMovingFrom(from, to, voxelShape.move(realPos).toAabbs());
-							if (bl) {
-								try {
-									stepBasedCollector.advanceStep(0);
-									stepBasedCollector.advanceStep(-1);
-									blockState.entityInside(this.level, block.getPos(), self, stepBasedCollector);
-									this.onInsideBlock(blockState);
-								} catch (Exception ignored) {
-								}
+			for (PlayerAccessor pl : PlayersMultiSectionStorage.fromLevel(this.level).findMorphed(self, entityBox)) {
+				pl.getBlocksData2InArea(entityBox, (pos, block, realPos) -> {
+					BlockState blockState = block.getBlockState();
+					if (!blockState.isAir()) {
+						VoxelShape voxelShape = blockState.getEntityInsideCollisionShape(this.level, block.getPos(), self);
+						boolean bl = voxelShape == Shapes.block() || this.collidedWithShapeMovingFrom(from, to, voxelShape.move(realPos).toAabbs());
+						if (bl) {
+							try {
+								stepBasedCollector.advanceStep(0);
+								stepBasedCollector.advanceStep(-1);
+								blockState.entityInside(this.level, block.getPos(), self, stepBasedCollector);
+								this.onInsideBlock(blockState);
+							} catch (Exception ignored) {
 							}
-							if (block.shouldDoFluidAction()) {
-								AABB fluidBox = blockState.getFluidState().getAABB(this.level, block.getPos());
-								if (fluidBox != null) {
-									AABB zeroHitbox = fluidBox.move(BlockPos.ZERO.subtract(block.getPos()));
-									if (this.collidedWithShapeMovingFrom(from, to, List.of(zeroHitbox.move(realPos)))) {
-										try {
-											stepBasedCollector.advanceStep(0);
-											stepBasedCollector.advanceStep(-1);
-											blockState.getFluidState().entityInside(this.level, block.getPos(), self, stepBasedCollector);
-										} catch (Exception ignored) {
-										}
+						}
+						if (block.shouldDoFluidAction()) {
+							AABB fluidBox = blockState.getFluidState().getAABB(this.level, block.getPos());
+							if (fluidBox != null) {
+								AABB zeroHitbox = fluidBox.move(BlockPos.ZERO.subtract(block.getPos()));
+								if (this.collidedWithShapeMovingFrom(from, to, List.of(zeroHitbox.move(realPos)))) {
+									try {
+										stepBasedCollector.advanceStep(0);
+										stepBasedCollector.advanceStep(-1);
+										blockState.getFluidState().entityInside(this.level, block.getPos(), self, stepBasedCollector);
+									} catch (Exception ignored) {
 									}
 								}
 							}
 						}
-					});
-				}
+					}
+				});
 			}
 		}
 	}

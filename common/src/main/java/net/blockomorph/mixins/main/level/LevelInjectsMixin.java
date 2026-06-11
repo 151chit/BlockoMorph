@@ -2,9 +2,11 @@ package net.blockomorph.mixins.main.level;
 
 import net.blockomorph.utils.accessors.FakeChunkStorage;
 import net.blockomorph.utils.accessors.LevelAcc;
+import net.blockomorph.utils.accessors.PlayersProvider;
 import net.blockomorph.utils.coords.DummyChunkStorage;
 import net.blockomorph.utils.coords.DummyLevelChunk;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.entity.Entity;
@@ -29,9 +31,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 @Mixin(Level.class)
-public abstract class LevelInjectsMixin implements FakeChunkStorage {
+public abstract class LevelInjectsMixin implements FakeChunkStorage, PlayersProvider {
 	@Unique
 	private DummyChunkStorage CHUNKS;
+
+	@Unique private final PlayersMultiSectionStorage playersMultiSectionStorage = new PlayersMultiSectionStorage();
+
+	@Override
+	public PlayersMultiSectionStorage getStorage$blockomorph() {
+		return this.playersMultiSectionStorage;
+	}
 
 	@Inject(method = "isInWorldBoundsHorizontal", at = @At(value = "HEAD"), cancellable = true)
 	private static void acceptIfPlayerPos(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {

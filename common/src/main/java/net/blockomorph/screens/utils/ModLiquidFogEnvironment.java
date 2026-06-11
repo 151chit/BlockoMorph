@@ -37,7 +37,7 @@ public class ModLiquidFogEnvironment extends FogEnvironment {
 	public boolean isApplicable(@Nullable FogType fogType, Entity entity) {
 		if (this.cachedFog != null) return true;
 		if (entity.level() instanceof ClientLevel lv) {
-			this.cachedFog = MODIFIER.getFog(lv.entitiesForRendering(), false);
+			this.cachedFog = MODIFIER.getFog(lv, false);
 		}
 		return this.cachedFog != null;
 	}

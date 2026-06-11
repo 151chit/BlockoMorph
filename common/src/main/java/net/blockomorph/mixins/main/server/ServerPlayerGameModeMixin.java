@@ -30,7 +30,7 @@ public class ServerPlayerGameModeMixin {
 		}, null, false);
 	}
 
-	@Inject(method = "useItemOn", at = @At(value = "NEW", target = "(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/item/context/UseOnContext;"), cancellable = true)
+	@Inject(method = "useItemOn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;copy()Lnet/minecraft/world/item/ItemStack;"), cancellable = true)
 	public void runTnt(ServerPlayer pl, Level lv, ItemStack stack, InteractionHand hand, BlockHitResult res, CallbackInfoReturnable<InteractionResult> cir) {
 		InPlayerBlockPos.check(res.getBlockPos(), (player, realPos) -> {
 			InteractionResult result = player.getTntHandler().clickTnt(pl, hand, realPos);
