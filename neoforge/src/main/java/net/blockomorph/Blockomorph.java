@@ -16,6 +16,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadHandler;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
+@Deprecated(since = "7.0.4")
 @Mod(MorphUtils.MODID)
 public class Blockomorph {
 
