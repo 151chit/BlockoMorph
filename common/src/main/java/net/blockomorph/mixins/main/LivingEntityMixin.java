@@ -2,11 +2,11 @@ package net.blockomorph.mixins.main;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.hit.MorphedPlayerHitResult;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
@@ -17,7 +17,6 @@ import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -66,9 +65,9 @@ public abstract class LivingEntityMixin extends Entity {
 
 	@WrapOperation(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getFluidState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;"))
 	private FluidState modifyState(Level instance, BlockPos blockPos, Operation<FluidState> original) {
-		var entry = MorphUtils.getLiquidOnPos(this, this.position());
-		if (entry != null) {
-			return entry.getValue().getBlockState().getFluidState();
+		var blocks = PlayersMultiSectionStorage.getBlockOnPos(this, this.level(), this.position());
+		if (!blocks.isEmpty()) {
+			return blocks.iterator().next().getBlockState().getFluidState();
 		}
 		return original.call(instance, blockPos);
 	}

@@ -53,7 +53,9 @@ public class DummyChunkStorage {
 		if (chunk != null && chunk.getLevel() == level) {
 			return chunk;
 		}
-		chunk = new DummyLevelChunk(level, new ChunkPos(pos));
+		int x = ChunkPos.getX(pos);
+		int z = ChunkPos.getZ(pos);
+		chunk = new DummyLevelChunk(level, new ChunkPos(x + InPlayerBlockPos.X_CENTER, z + InPlayerBlockPos.X_CHUNK_START / 2));
 		FAKE_CHUNKS.put(pos, chunk);
 		return chunk;
 	}

@@ -5,7 +5,6 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.environment.FogEnvironment;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.material.FogType;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +36,7 @@ public class ModLiquidFogEnvironment extends FogEnvironment {
 	public boolean isApplicable(@Nullable FogType fogType, Entity entity) {
 		if (this.cachedFog != null) return true;
 		if (entity.level() instanceof ClientLevel lv) {
-			this.cachedFog = MODIFIER.getFog(lv.entitiesForRendering(), false);
+			this.cachedFog = MODIFIER.getFog(lv, false);
 		}
 		return this.cachedFog != null;
 	}
