@@ -41,7 +41,7 @@ public abstract class EntityInsideSupportMixin {
 			for (PlayerAccessor pl : PlayersMultiSectionStorage.fromLevel(this.level).findMorphed(self, entityBox)) {
 				pl.getBlocksData2InArea(entityBox, (pos, block, realPos) -> {
 					BlockState blockState = block.getBlockState();
-					if (!blockState.isAir()) {
+					if (!blockState.isAir() && p_428369_.add(block.getPos().asLong())) {
 						VoxelShape voxelShape = blockState.getEntityInsideCollisionShape(this.level, block.getPos(), self);
 						boolean bl = voxelShape == Shapes.block() || this.collidedWithShapeMovingFrom(from, to, voxelShape.move(realPos).toAabbs());
 						if (bl) {
