@@ -32,12 +32,12 @@ public class TargetLineMixin {
 		}
 	}
 
-	@Inject(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;getTags()Ljava/util/stream/Stream;"))
+	@Inject(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;tags()Ljava/util/stream/Stream;"))
 	private void changeBlock(Minecraft client, CallbackInfo ci, @Local(ordinal = 0) HitResult blockHit) {
 		this.doChange(this.blockLine, blockHit);
 	}
 
-	@Inject(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FluidState;getTags()Ljava/util/stream/Stream;"))
+	@Inject(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FluidState;tags()Ljava/util/stream/Stream;"))
 	private void changeFluid(Minecraft client, CallbackInfo ci, @Local(ordinal = 1) HitResult fluidHit) {
 		this.doChange(this.fluidLine, fluidHit);
 	}

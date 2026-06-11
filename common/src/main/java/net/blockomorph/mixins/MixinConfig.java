@@ -18,7 +18,6 @@ public class MixinConfig implements IMixinConfigPlugin {
 			"create", "create",
 			"vs2", "valkyrienskies",
 			"lithium", "lithium",
-			"frapi", "fabric_api",
 			"sodium", "sodium",
 			"ebe", "enhancedblockentities",
 			"betterF3", "betterf3"

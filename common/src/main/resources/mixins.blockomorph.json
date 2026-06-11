@@ -6,8 +6,6 @@
   "mixins": [
     "compat.create.BeltItemMixin",
     "compat.lithium.EntityCollisionsMixin",
-    "compat.vs2.VS2_BM_RaycastUtil",
-    "compat.vs2.VS2_BM_VsUtilsMixin",
     "main.ArgumentRegister",
     "main.AvatarMixin",
     "main.BlockInputMixin",
@@ -78,7 +76,6 @@
     "compat.create.BeltHandlerMixin",
     "compat.ebe.WorldUtilMixin",
     "compat.flywheel.Flywheel_BM_BackendMixin",
-    "compat.frapi.FabricModelMixin",
     "compat.sodium.BlockOcclusionCacheMixin",
     "compat.sodium.SmoothPipelineMixin",
     "compat.sodium.SpriteContentsAccessorMixin",
