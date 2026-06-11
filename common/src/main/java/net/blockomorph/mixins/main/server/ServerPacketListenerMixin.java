@@ -5,6 +5,7 @@ import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigEnums;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
@@ -25,8 +26,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
-
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerPacketListenerMixin {
 
@@ -34,14 +33,11 @@ public abstract class ServerPacketListenerMixin {
 	public void test(Entity entity, CallbackInfoReturnable<Boolean> cir) {
 		if (cir.getReturnValue()) {
 			AABB roundAABB = entity.getBoundingBox().inflate(0.0625F).expandTowards(0.0F, -0.55, 0.0F);
-			List<Entity> entities = this.player.level().getEntities(entity, roundAABB);
-			for (Entity ent : entities) {
+			for (PlayerAccessor pl : PlayersMultiSectionStorage.fromLevel(this.player.level()).findMorphed(entity, roundAABB)) {
 				if (!cir.getReturnValue()) return;
-				if (ent instanceof PlayerAccessor pl && pl.isFullActive()) {
-					pl.getBlocksData2InArea(roundAABB, (realPos, block, vec3) -> {
-						cir.setReturnValue(false);
-					});
-				}
+				pl.getBlocksData2InArea(roundAABB, (realPos, block, vec3) -> {
+					cir.setReturnValue(false);
+				});
 			}
 		}
 	}
