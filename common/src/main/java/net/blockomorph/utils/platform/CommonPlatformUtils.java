@@ -10,6 +10,7 @@ import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigEnums;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.blockomorph.utils.tnt.TntSpawnLevel;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
@@ -48,11 +49,11 @@ public interface CommonPlatformUtils {
 	void sendAll(BlockMorphPacket packet);
 
 	static void handleUpdateFluidOnEyes(Entity entity, Consumer<FluidState> fluidStateConsumer) {
-		AbstractMap.SimpleEntry<PlayerAccessor, BlockInPlayer2> liquid = MorphUtils.getLiquidOnPos(entity, entity.getEyePosition());
-		if (liquid != null) {
-			BlockInPlayer2 block = liquid.getValue();
+		var blocks = PlayersMultiSectionStorage.getBlockOnPos(entity, entity.level(), entity.getEyePosition());
+		if (!blocks.isEmpty()) {
+			BlockInPlayer2 block = blocks.iterator().next();
 			FluidState fluidState = block.getBlockState().getFluidState();
-			double y = MorphUtils.getRealBlockPos(liquid.getKey(), block.getOffset()).y;
+			double y = MorphUtils.getRealBlockPos(block.getPlayer(), block.getOffset()).y;
 			double height = fluidState.getHeight(entity.level(), block.getPos());
 			if (y + height > entity.getEyeY()) {
 				fluidStateConsumer.accept(fluidState);
@@ -63,36 +64,33 @@ public interface CommonPlatformUtils {
 	static <T> Object2ObjectMap<T, Object[]> handleFluidDetection(Entity thisEntity, Function<T, Boolean> isPushedByFluid, Function<FluidState, Boolean> fluidValid, Function<FluidState, T> convertToSpecialType) {
 		Object2ObjectMap<T, Object[]> calcs = new Object2ObjectArrayMap<>();
 		AABB aabb = thisEntity.getBoundingBox().deflate(0.001);
-		List<Entity> entities = thisEntity.level().getEntities(thisEntity, aabb, EntitySelector.NO_SPECTATORS);
-		for (Entity entity : entities) {
-			if (entity instanceof PlayerAccessor pl && pl.isFullActive()) {
-				pl.getBlocksData2InArea(aabb, (pos, block, realPos) -> {
-					if (block.shouldDoFluidAction()) {
-						FluidState fluidState = block.getBlockState().getFluidState();
-						T specialType = convertToSpecialType.apply(fluidState);
-						double fluidHeight = realPos.y + fluidState.getHeight(thisEntity.level(), block.getPos());
-						if (fluidValid.apply(fluidState) && fluidHeight >= aabb.minY) {
-							Object[] list = calcs.computeIfAbsent(specialType, (o) -> {
-								Object[] objs = new Object[3];// 0 - fluidHeight 1 - flowVector 2 - blockCount
-								objs[0] = 0.0d;
-								objs[1] = Vec3.ZERO;
-								objs[2] = 0;
-								return objs;
-							});
-							list[0] = Math.max(fluidHeight - aabb.minY, (double) list[0]);
-							if (isPushedByFluid.apply(specialType)) {
-								Vec3 flowSpeed = fluidState.getFlow(thisEntity.level(), block.getPos());
-								if ((double) list[0] < 0.4) {
-									flowSpeed = flowSpeed.scale((double) list[0]);
-								}
-
-								list[1] = ((Vec3) list[1]).add(flowSpeed);
-								list[2] = (int) list[2] + 1;
+		for (PlayerAccessor pl : PlayersMultiSectionStorage.fromLevel(thisEntity.level()).findMorphed(thisEntity, aabb)) {
+			pl.getBlocksData2InArea(aabb, (pos, block, realPos) -> {
+				if (block.shouldDoFluidAction()) {
+					FluidState fluidState = block.getBlockState().getFluidState();
+					T specialType = convertToSpecialType.apply(fluidState);
+					double fluidHeight = realPos.y + fluidState.getHeight(thisEntity.level(), block.getPos());
+					if (fluidValid.apply(fluidState) && fluidHeight >= aabb.minY) {
+						Object[] list = calcs.computeIfAbsent(specialType, (o) -> {
+							Object[] objs = new Object[3];// 0 - fluidHeight 1 - flowVector 2 - blockCount
+							objs[0] = 0.0d;
+							objs[1] = Vec3.ZERO;
+							objs[2] = 0;
+							return objs;
+						});
+						list[0] = Math.max(fluidHeight - aabb.minY, (double) list[0]);
+						if (isPushedByFluid.apply(specialType)) {
+							Vec3 flowSpeed = fluidState.getFlow(thisEntity.level(), block.getPos());
+							if ((double) list[0] < 0.4) {
+								flowSpeed = flowSpeed.scale((double) list[0]);
 							}
+
+							list[1] = ((Vec3) list[1]).add(flowSpeed);
+							list[2] = (int) list[2] + 1;
 						}
 					}
-				});
-			}
+				}
+			});
 		}
 		return calcs;
 	}

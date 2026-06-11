@@ -2,11 +2,11 @@ package net.blockomorph.mixins.main;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.hit.MorphedPlayerHitResult;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.level.Level;
@@ -66,9 +66,9 @@ public abstract class LivingEntityMixin extends Entity {
 
 	@ModifyVariable(method = "travel", at = @At("STORE"))
 	private FluidState modifyState(FluidState original) {
-		var entry = MorphUtils.getLiquidOnPos(this, this.position());
-		if (entry != null) {
-			return entry.getValue().getBlockState().getFluidState();
+		var blocks = PlayersMultiSectionStorage.getBlockOnPos(this, this.level(), this.position());
+		if (!blocks.isEmpty()) {
+			return blocks.iterator().next().getBlockState().getFluidState();
 		}
 		return original;
 	}

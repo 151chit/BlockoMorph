@@ -4,8 +4,11 @@ import net.blockomorph.utils.BlockInPlayer2;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.ClipContextAccessor;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.utils.playerSection.PlayersFinder;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ClipBlockStateContext;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -31,47 +34,44 @@ public class PlayerHitResult {
 	public static final AABB CUBE = Shapes.block().bounds();
 
 	@Nullable
-	public static MorphedPlayerHitResult calculateMorphedPlayerHitResult(Level lv, @Nullable Entity looker, Vec3 eyePosition, Vec3 reachVector, TriFunction<InPlayerBlockPos, BlockInPlayer2, Vec3, List<AABB>> shapeGetter) {
+	public static MorphedPlayerHitResult calculateMorphedPlayerHitResult(PlayersFinder finder, @Nullable Entity looker, Vec3 eyePosition, Vec3 reachVector, TriFunction<InPlayerBlockPos, BlockInPlayer2, Vec3, List<AABB>> shapeGetter) {
 
 		AABB areaBetweenAndReachEnd = new AABB(eyePosition, reachVector);
-		List<Entity> entities = lv.getEntities(looker, areaBetweenAndReachEnd);
 
 		AtomicReference<MorphedPlayerHitResult> result = new AtomicReference<>();
 		AtomicReference<Double> distanceToPartOfBlock = new AtomicReference<>(Double.MAX_VALUE);
 
-		for (Entity entity : entities) {
-			if (entity instanceof PlayerAccessor mob && mob.isFullActive()) {
-				mob.getBlocksData2InArea(areaBetweenAndReachEnd, (offset, block, offsetPosInWorld) -> {
-					for (AABB partBlockShape : shapeGetter.apply(offset, block, offsetPosInWorld)) {
-						Optional<Vec3> partHitResult = partBlockShape.clip(eyePosition, reachVector);
-						if (partHitResult.isPresent()) {
-							Vec3 res = partHitResult.get();
-							double dist = eyePosition.distanceTo(res);
-							if (dist < distanceToPartOfBlock.get() || isMainBlock(result.get(), res, offsetPosInWorld)) {
-								distanceToPartOfBlock.set(dist);
-								Direction dir = calculateHitDirection(res, partBlockShape);
-								if (dir != null) {
-									Vec3 inBlockOffset = new Vec3(res.x() - offsetPosInWorld.x, res.y() - offsetPosInWorld.y, res.z() - offsetPosInWorld.z);
-									result.set(MorphedPlayerHitResult.of(
-											mob,
-											offset,
-											dir,
-											inBlockOffset.x == (int) inBlockOffset.x || inBlockOffset.y == (int) inBlockOffset.y || inBlockOffset.z == (int) inBlockOffset.z,
-											inBlockOffset,
-											res
-									));
-								}
+		for (PlayerAccessor mob : finder.findMorphed(looker, areaBetweenAndReachEnd)) {
+			mob.getBlocksData2InArea(areaBetweenAndReachEnd, (offset, block, offsetPosInWorld) -> {
+				for (AABB partBlockShape : shapeGetter.apply(offset, block, offsetPosInWorld)) {
+					Optional<Vec3> partHitResult = partBlockShape.clip(eyePosition, reachVector);
+					if (partHitResult.isPresent()) {
+						Vec3 res = partHitResult.get();
+						double dist = eyePosition.distanceTo(res);
+						if (dist < distanceToPartOfBlock.get() || isMainBlock(result.get(), res, offsetPosInWorld)) {
+							distanceToPartOfBlock.set(dist);
+							Direction dir = calculateHitDirection(res, partBlockShape);
+							if (dir != null) {
+								Vec3 inBlockOffset = new Vec3(res.x() - offsetPosInWorld.x, res.y() - offsetPosInWorld.y, res.z() - offsetPosInWorld.z);
+								result.set(MorphedPlayerHitResult.of(
+										mob,
+										offset,
+										dir,
+										inBlockOffset.x == (int) inBlockOffset.x || inBlockOffset.y == (int) inBlockOffset.y || inBlockOffset.z == (int) inBlockOffset.z,
+										inBlockOffset,
+										res
+								));
 							}
 						}
 					}
-				});
-			}
+				}
+			});
 		}
 
 		return result.get();
 	}
 
-	private static List<AABB> getBoxesList(Level lv, Vec3 offsetPosInWorld, BlockInPlayer2 block, ClipContext.Block mode, ClipContext.Fluid fluidMode, @Nullable Entity looker) {
+	private static List<AABB> getBoxesList(BlockGetter lv, Vec3 offsetPosInWorld, BlockInPlayer2 block, ClipContext.Block mode, ClipContext.Fluid fluidMode, @Nullable Entity looker) {
 
 		VoxelShape blockShape = mode.get(block.getBlockState(), lv, block.getPos(), looker != null ? CollisionContext.of(looker) : CollisionContext.empty());
 		blockShape = blockShape.move(offsetPosInWorld.x, offsetPosInWorld.y, offsetPosInWorld.z);
@@ -118,7 +118,7 @@ public class PlayerHitResult {
 
 	public static void checkHitResult(Level level, Vec3 oldHitPos, ClipBlockStateContext ctx, Consumer<MorphedPlayerHitResult> ifGood) {
 		Vec3 start = ctx.getFrom();
-		MorphedPlayerHitResult hit = PlayerHitResult.calculateMorphedPlayerHitResult(level, null, start, ctx.getTo(), (offset, block, offsetPosInWorld) -> {
+		MorphedPlayerHitResult hit = PlayerHitResult.calculateMorphedPlayerHitResult(PlayersMultiSectionStorage.fromLevel(level), null, start, ctx.getTo(), (offset, block, offsetPosInWorld) -> {
 			if (!ctx.isTargetBlock().test(block.getBlockState())) return List.of();
 			return List.of(CUBE.move(offsetPosInWorld));
 		});
@@ -135,7 +135,7 @@ public class PlayerHitResult {
 			if (looker != null) {
 				Vec3 start = ctx.getFrom();
 				Level level = looker.level();
-				MorphedPlayerHitResult hit = PlayerHitResult.calculateMorphedPlayerHitResult(looker.level(), looker, start, ctx.getTo(),  (offset, block, offsetPosInWorld) -> {
+				MorphedPlayerHitResult hit = PlayerHitResult.calculateMorphedPlayerHitResult(PlayersMultiSectionStorage.fromLevel(looker.level()), looker, start, ctx.getTo(),  (offset, block, offsetPosInWorld) -> {
 					return getBoxesList(level, offsetPosInWorld, block, accessor.getMode(), accessor.getFluidMode(), looker);
 				});
 				if (hit != null && start.distanceTo(hit.getRealLocation()) < start.distanceTo(oldHitPos)) {

@@ -2,7 +2,8 @@ package net.blockomorph.utils;
 
 import net.blockomorph.network.ClientBoundMorphUpdatePacket;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
-import net.blockomorph.utils.gameEvent.PlayerDynamicGameEventListener;
+import net.blockomorph.utils.playerSection.PlayerSectionHandler;
+import net.blockomorph.utils.playerSection.SafeIterableStorage;
 import net.blockomorph.utils.tick.InPlayerBlockEntityTickManager;
 import net.blockomorph.utils.tnt.TntHandler;
 import net.minecraft.nbt.CompoundTag;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockEventData;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEventListener;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -49,7 +51,8 @@ public interface PlayerAccessor {
 
 	HitBoxCalculator getHitBoxHandler();
 
-	PlayerDynamicGameEventListener getListenersStorage();
+	SafeIterableStorage<GameEventListener> getListenersStorage();
+	PlayerSectionHandler getSectionHandler();
 
 	InPlayerBlockEntityTickManager getBlockEntityTickManager();
 
