@@ -12,8 +12,9 @@ import net.blockomorph.utils.*;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.coords.PlayerMorphedSection;
-import net.blockomorph.utils.gameEvent.PlayerDynamicGameEventListener;
-import net.blockomorph.utils.gameEvent.SafeIterableStorage;
+import net.blockomorph.utils.playerSection.PlayerSectionHandler;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
+import net.blockomorph.utils.playerSection.SafeIterableStorage;
 import net.blockomorph.utils.MorphedPlayerRenderer;
 import net.blockomorph.utils.tick.InPlayerBlockEntityTickManager;
 import net.blockomorph.utils.tick.PlayersTickManager;
@@ -50,6 +51,7 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEventListener;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -87,7 +89,8 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 	@Unique private final Set<InPlayerBlockPos> updates = ConcurrentHashMap.newKeySet();
 	@Unique private final ObjectLinkedOpenHashSet<InPlayerBlockEventData> blockEvents = new ObjectLinkedOpenHashSet<>();
 	@Unique private final InPlayerBlockEntityTickManager blockEntityTickManager = new InPlayerBlockEntityTickManager(this);
-	@Unique private PlayerDynamicGameEventListener listenerStorage;
+	@Unique private final PlayerSectionHandler sectionHandler = new PlayerSectionHandler(this);
+	@Unique private SafeIterableStorage<GameEventListener> listenerStorage;
 	@Unique private boolean onLoadingBlocks;
 	@Unique private boolean breakingMode;
 	@Unique private boolean unContextedBreakingMode;
@@ -583,10 +586,15 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 	}
 
 	@Override @Nullable
-	public PlayerDynamicGameEventListener getListenersStorage() {
-		if (this.listenerStorage == null && this.player() instanceof ServerPlayer player)
-			this.listenerStorage = new PlayerDynamicGameEventListener(player, new SafeIterableStorage<>());
+	public SafeIterableStorage<GameEventListener> getListenersStorage() {
+		if (this.listenerStorage == null && this.player() instanceof ServerPlayer)
+			this.listenerStorage = new SafeIterableStorage<>();
 		return this.listenerStorage;
+	}
+
+	@Override
+	public PlayerSectionHandler getSectionHandler() {
+		return this.sectionHandler;
 	}
 
 	public boolean isActive() {
@@ -673,9 +681,9 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 
 	@WrapOperation(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getFluidState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;"))
 	private FluidState modifyState(Level instance, BlockPos blockPos, Operation<FluidState> original) {
-		var entry = MorphUtils.getLiquidOnPos(this, this.position().add(0, 0.9, 0));
-		if (entry != null) {
-			return entry.getValue().getBlockState().getFluidState();
+		var blocks = PlayersMultiSectionStorage.getBlockOnPos(this, this.level(), this.position().add(0, 0.9, 0));
+		if (!blocks.isEmpty()) {
+			return blocks.iterator().next().getBlockState().getFluidState();
 		}
 		return original.call(instance, blockPos);
 	}

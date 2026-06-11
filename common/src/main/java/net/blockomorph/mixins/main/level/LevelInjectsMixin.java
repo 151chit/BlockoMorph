@@ -2,19 +2,15 @@ package net.blockomorph.mixins.main.level;
 
 import net.blockomorph.utils.accessors.FakeChunkStorage;
 import net.blockomorph.utils.accessors.LevelAcc;
+import net.blockomorph.utils.accessors.PlayersProvider;
 import net.blockomorph.utils.coords.DummyChunkStorage;
 import net.blockomorph.utils.coords.DummyLevelChunk;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
@@ -24,7 +20,6 @@ import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,9 +31,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 @Mixin(Level.class)
-public abstract class LevelInjectsMixin implements FakeChunkStorage {
+public abstract class LevelInjectsMixin implements FakeChunkStorage, PlayersProvider {
 	@Unique
 	private DummyChunkStorage CHUNKS;
+
+	@Unique private final PlayersMultiSectionStorage playersMultiSectionStorage = new PlayersMultiSectionStorage();
+
+	@Override
+	public PlayersMultiSectionStorage getStorage$blockomorph() {
+		return this.playersMultiSectionStorage;
+	}
 
 	@Inject(method = "isInWorldBoundsHorizontal", at = @At(value = "HEAD"), cancellable = true)
 	private static void acceptIfPlayerPos(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {

@@ -1,14 +1,10 @@
 package net.blockomorph.mixins.main.server;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.blockomorph.utils.DamageHandler;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.LevelAcc;
 import net.blockomorph.utils.accessors.ServerLevelAccessor;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
-import net.blockomorph.utils.gameEvent.SectionGameEventListenerRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
@@ -25,7 +21,6 @@ import net.minecraft.world.damagesource.DamageEffects;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockEventData;
 import net.minecraft.world.level.ExplosionDamageCalculator;
 import net.minecraft.world.level.Level;
@@ -47,16 +42,10 @@ import java.util.stream.Collectors;
 
 @Mixin(ServerLevel.class)
 public abstract class ServerLevelMixin extends Level implements ServerLevelAccessor {
-	private final Long2ObjectMap<Int2ObjectMap<SectionGameEventListenerRegistry>> gameEventMap = new Long2ObjectOpenHashMap<>();
 	@Unique private Set<ResourceKey<DamageType>> allowedDamages;
 
 	protected ServerLevelMixin(WritableLevelData writableLevelData, ResourceKey<Level> resourceKey, RegistryAccess registryAccess, Holder<DimensionType> holder, boolean bl, boolean bl2, long l, int i) {
 		super(writableLevelData, resourceKey, registryAccess, holder, bl, bl2, l, i);
-	}
-
-	@Override
-	public Long2ObjectMap<Int2ObjectMap<SectionGameEventListenerRegistry>> getPlayerGameEventListenerMap() {
-		return this.gameEventMap;
 	}
 
 	@Override

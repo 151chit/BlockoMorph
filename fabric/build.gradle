@@ -38,8 +38,13 @@ dependencies {
     modImplementation project.fileTree(dir: 'run/mods/' + minecraft_version, include: ['*.jar'])
 }
 
-sourceSets.main.java.srcDirs += project(":common").sourceSets.main.java.srcDirs
-sourceSets.main.resources.srcDirs += project(":common").sourceSets.main.resources.srcDirs
+compileJava {
+    source(project(":common").sourceSets.main.allSource)
+}
+
+processResources {
+    from project(':common').sourceSets.main.resources
+}
 
 remapJar {
     String outputPath = System.getenv().BLOCKOMORPH_OUTPUT
