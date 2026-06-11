@@ -3,10 +3,8 @@ package net.blockomorph.mixins.main;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
-import net.blockomorph.utils.hit.PlayerHitResult;
 import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.level.Level;
@@ -20,7 +18,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
@@ -41,7 +38,7 @@ public abstract class EntityInsideSupportMixin {
 			for (PlayerAccessor pl : PlayersMultiSectionStorage.fromLevel(this.level).findMorphed(self, entityBox)) {
 				pl.getBlocksData2InArea(entityBox, (pos, block, realPos) -> {
 					BlockState blockState = block.getBlockState();
-					if (!blockState.isAir()) {
+					if (!blockState.isAir() && longSet.add(block.getPos().asLong())) {
 						VoxelShape voxelShape = blockState.getEntityInsideCollisionShape(this.level, block.getPos(), self);
 						boolean bl = voxelShape == Shapes.block() || this.collidedWithShapeMovingFrom(from, to, voxelShape.move(realPos).toAabbs());
 						if (bl) {
