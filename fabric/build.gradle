@@ -36,17 +36,12 @@ dependencies {
     implementation project.fileTree(dir: 'run/mods/' + minecraft_version, include: ['*.jar'])
 }
 
-List<String> cfgs = List.of("mixins.blockomorph.json", "mixins.blockomorph.fabric.json")
-
 compileJava {
     source(project(":common").sourceSets.main.allSource)
 }
 
 processResources {
     from project(':common').sourceSets.main.resources
-    doLast {
-        patchRefmaps(cfgs, base.archivesName.get() + "-refmap.json", outputs.files)
-    }
 }
 
 jar {

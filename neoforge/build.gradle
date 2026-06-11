@@ -46,18 +46,12 @@ dependencies {
     implementation fileTree(dir: 'run/mods/fabricApi', include: ['*.jar'])
 }
 
-List<String> cfgs = List.of("mixins.blockomorph.json", "mixins.blockomorph.neoforge.json")
-String refMapName = base.archivesName.get() + "-refmap.json"
-
 compileJava {
     source(project(":common").sourceSets.main.allSource)
 }
 
 processResources {
     from project(':common').sourceSets.main.resources
-    doLast {
-        patchRefmaps(cfgs, refMapName, outputs.files)
-    }
 }
 
 jar {
