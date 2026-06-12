@@ -58,15 +58,6 @@ public class KeyMappings {
 		return false;
 	});
 
-	public static boolean BAD;
-
-	public static final KeyMapping CONFIG2 = new HandlerKeymapping("config_menu2", GLFW.GLFW_KEY_K, () -> {
-		BlockPos pos = InPlayerBlockPos.ZERO.boundedBlockPos(GuiUtils.MC.player);
-		GuiUtils.MC.getChatListener().handleSystemMessage(Component.literal(pos.toShortString()), false);
-		BAD = !BAD;
-		return true;
-	});
-
 	public static void registerKeyMappings(Consumer<KeyMapping> register) {
 		for (KeyMapping key : KEYS) {
 			register.accept(key);
