@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.util.FastColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -19,11 +20,11 @@ public class FogRendererMixin {
 	@Shadow private static float fogRed;
 	@Shadow private static float fogGreen;
 	@Shadow private static float fogBlue;
-	private static final FogLiquidModifier LIQUID_MODIFIER = new FogLiquidModifier();
+	@Unique private static final FogLiquidModifier LIQUID_MODIFIER = new FogLiquidModifier();
 
 	@Inject(method = "setupColor", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;clearColor(FFFF)V", ordinal = 1, remap = false))
 	private static void setCol(Camera camera, float f, ClientLevel clientLevel, int i, float g, CallbackInfo ci) {
-		FogLiquidModifier.LiquidFogData fogData = LIQUID_MODIFIER.getFog(GuiUtils.MC.level.entitiesForRendering(), false);
+		FogLiquidModifier.LiquidFogData fogData = LIQUID_MODIFIER.getFog(GuiUtils.MC.level, false);
 		if (fogData == null) return;
 		int color = fogData.color();
 		fogRed = (float) FastColor.ARGB32.red(color) / 255;
@@ -33,7 +34,7 @@ public class FogRendererMixin {
 
 	@Inject(method = "setupFog", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderFogStart(F)V", remap = false), cancellable = true)
 	private static void setF(Camera camera, FogRenderer.FogMode fogMode, float f, boolean bl, float g, CallbackInfo ci) {
-		FogLiquidModifier.LiquidFogData fogData = LIQUID_MODIFIER.getFog(GuiUtils.MC.level.entitiesForRendering(), false);
+		FogLiquidModifier.LiquidFogData fogData = LIQUID_MODIFIER.getFog(GuiUtils.MC.level, false);
 		if (fogData == null) return;
 		FogShape shape = FogShape.SPHERE;
 		float end = fogData.end();

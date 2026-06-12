@@ -1,4 +1,4 @@
-package net.blockomorph.utils.gameEvent;
+package net.blockomorph.utils.playerSection;
 
 import java.util.*;
 import java.util.function.Consumer;
