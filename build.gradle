@@ -1,3 +1,7 @@
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+
 plugins {
     id 'eclipse'
     id 'java'
@@ -15,6 +19,22 @@ subprojects {
         inputs.properties(configProps)
         filesMatching(["fabric.mod.json", "META-INF/mods.toml"]) {
             expand(configProps)
+        }
+    }
+}
+
+ext {
+    patchRefmaps = { List<String> cfgs, String refMapName, FileCollection outputs ->
+        outputs.forEach { path ->
+            cfgs.forEach {cfg ->
+                File file = new File(path, cfg)
+                def jsonElement = JsonParser.parseString(file.text)
+                JsonObject json = jsonElement.getAsJsonObject()
+                if (!json.has("refmap")) {
+                    json.addProperty("refmap", refMapName)
+                    file.text = new GsonBuilder().setPrettyPrinting().create().toJson(json)
+                }
+            }
         }
     }
 }

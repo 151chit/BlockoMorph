@@ -2,7 +2,6 @@ package net.blockomorph.mixins.main.server;
 
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.world.InteractionHand;
@@ -20,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ServerPlayerGameMode.class)
 public class ServerPlayerGameModeMixin {
 
-	@Inject(method = "useItemOn", at = @At(value = "NEW", target = "(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/phys/BlockHitResult;)Lnet/minecraft/world/item/context/UseOnContext;"), cancellable = true)
+	@Inject(method = "useItemOn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;copy()Lnet/minecraft/world/item/ItemStack;"), cancellable = true)
 	public void runTnt(ServerPlayer pl, Level lv, ItemStack stack, InteractionHand hand, BlockHitResult res, CallbackInfoReturnable<InteractionResult> cir) {
 		InPlayerBlockPos.check(res.getBlockPos(), (player, realPos) -> {
 			InteractionResult result = player.getTntHandler().clickTnt(pl, hand, realPos);

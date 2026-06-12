@@ -79,6 +79,10 @@ public class BlockInPlayer2 {
 		return offset;
 	}
 
+	public PlayerAccessor getPlayer() {
+		return this.owner;
+	}
+
 	protected boolean shouldShowFluidState() {
 		return Config.get().liquidsInBlocks.getValue();
 	}
@@ -159,7 +163,7 @@ public class BlockInPlayer2 {
 			}
 			if (updateTicker) {
 				if (this.player.level() instanceof ServerLevel && this.blockEntity instanceof GameEventListener.Holder<?> provider) {
-					this.owner.getListenersStorage().storage.add(provider.getListener());
+					this.owner.getListenersStorage().add(provider.getListener());
 				}
 				this.owner.getBlockEntityTickManager().updateBlockEntityTicker(this);
 			}
@@ -169,7 +173,7 @@ public class BlockInPlayer2 {
 	public void clearBlockEntity() {
 		if (this.blockEntity != null) {
 			if (this.player.level() instanceof ServerLevel && this.blockEntity instanceof GameEventListener.Holder<?> provider) {
-				this.owner.getListenersStorage().storage.remove(provider.getListener());
+				this.owner.getListenersStorage().remove(provider.getListener());
 			}
 			if (!this.blockEntity.isRemoved())
 				this.blockEntity.setRemoved();
@@ -203,11 +207,11 @@ public class BlockInPlayer2 {
 			FluidState fluidState = this.blockState.getFluidState();
 			if (!fluidState.isEmpty()) {
 				fluidState.animateTick(this.player.level(), this.pos, randomSource);
-				needSpawnFluidDrip.accept(PlayerAccessor.of(this.player).getBlockState(this.offset.offset(0, -1, 0)));
+				needSpawnFluidDrip.accept(this.owner.getBlockState(this.offset.offset(0, -1, 0)));
 			}
 		}
 		if (this.blockState.getBlock() == marker) {
-			Vec3 real = MorphUtils.getCetneredRealBlockPos(PlayerAccessor.of(this.player), this.offset);
+			Vec3 real = MorphUtils.getCetneredRealBlockPos(this.owner, this.offset);
 			this.player.level().addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, this.blockState), real.x, real.y, real.z, 0.0D, 0.0D, 0.0D);
 		}
 	}

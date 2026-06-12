@@ -38,8 +38,19 @@ dependencies {
     modImplementation project.fileTree(dir: 'run/mods/' + minecraft_version, include: ['*.jar'])
 }
 
-sourceSets.main.java.srcDirs += project(":common").sourceSets.main.java.srcDirs
-sourceSets.main.resources.srcDirs += project(":common").sourceSets.main.resources.srcDirs
+
+List<String> cfgs = List.of("mixins.blockomorph.json", "mixins.blockomorph.fabric.json")
+
+compileJava {
+    source(project(":common").sourceSets.main.allSource)
+}
+
+processResources {
+    from project(':common').sourceSets.main.resources
+    doLast {
+        patchRefmaps(cfgs, base.archivesName.get() + "-refmap.json", outputs.files)
+    }
+}
 
 remapJar {
     String outputPath = System.getenv().BLOCKOMORPH_OUTPUT

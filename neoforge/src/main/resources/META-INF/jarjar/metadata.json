@@ -2,14 +2,14 @@
   "jars": [
     {
       "identifier": {
-        "group": "com.github.llamalad7.mixinextras",
+        "group": "io.github.llamalad7",
         "artifact": "mixinextras-forge"
       },
       "version": {
-        "range": "[0.3.5,)",
-        "artifactVersion": "0.3.5"
+        "range": "[{0.5.4},)",
+        "artifactVersion": "0.5.4"
       },
-      "path": "META-INF/jarjar/mixinextras-forge-0.3.5.jar",
+      "path": "META-INF/jarjar/mixinextras-forge-0.5.4.jar",
       "isObfuscated": false
     }
   ]

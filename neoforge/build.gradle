@@ -1,5 +1,3 @@
-import com.google.gson.*
-
 plugins {
     id 'net.minecraftforge.gradle'
     id 'org.spongepowered.mixin' version '0.7.+'
@@ -35,10 +33,6 @@ minecraft {
     }
 }
 
-
-sourceSets.main.java.srcDirs += project(":common").sourceSets.main.java.srcDirs
-sourceSets.main.resources.srcDirs += project(":common").sourceSets.main.resources.srcDirs
-
 dependencies {
     implementation project(':common')
     minecraft "net.minecraftforge:forge:" + minecraft_version + "-" + forge_loader_version
@@ -62,18 +56,13 @@ jar {
     if (outputPath != null) destinationDirectory = file(outputPath)
 }
 
+compileJava {
+    source(project(":common").sourceSets.main.allSource)
+}
+
 processResources {
+    from project(':common').sourceSets.main.resources
     doLast {
-        outputs.files.forEach { path ->
-            cfgs.forEach {cfg ->
-                File file = new File(path, cfg)
-                def jsonElement = JsonParser.parseString(file.text)
-                JsonObject json = jsonElement.getAsJsonObject()
-                if (!json.has("refmap")) {
-                    json.addProperty("refmap", refMapName)
-                    file.text = new GsonBuilder().setPrettyPrinting().create().toJson(json)
-                }
-            }
-        }
+        patchRefmaps(cfgs, refMapName, outputs.files)
     }
 }
