@@ -34,7 +34,8 @@ public class ConfigStorage {
 	public final BooleanConfig liquidsInBlocks = new BooleanConfig("liquidsInBlocks", false, true, Component.translatable("blockomorph.config_option.liquidsInBlocks.tooltip"));
 	public final BooleanConfig blockClientParticles = new BooleanConfig("blockClientParticles", true, true, null);
 	public final BooleanConfig gameEvents = new BooleanConfig("gameEvents", true, true, null);
-	public final CategoryOption blockBehaviour = (CategoryOption) new CategoryOption("blockBehaviour", List.of(useMode, placeMode, hitReaction, entityInside, allowedDamages, canBeSeenByMobs, liquidsInBlocks, blockClientParticles, gameEvents), null, false)
+	public final BooleanConfig dynamicRedstone = new BooleanConfig("dynamicRedstone", true, true, null);
+	public final CategoryOption blockBehaviour = (CategoryOption) new CategoryOption("blockBehaviour", List.of(useMode, placeMode, hitReaction, entityInside, allowedDamages, canBeSeenByMobs, liquidsInBlocks, blockClientParticles, gameEvents, dynamicRedstone), null, false)
 			.boundDataFixer(new CategoryOption.MovingFixer(new NbtPath.RootNbtPath()));
 
 	public final BooleanConfig playerDieAfterDestroy = new BooleanConfig("playerDieAfterDestroy", true, true, null);

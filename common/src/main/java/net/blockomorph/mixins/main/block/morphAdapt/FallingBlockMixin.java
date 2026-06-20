@@ -1,4 +1,4 @@
-package net.blockomorph.mixins.main.blockFix;
+package net.blockomorph.mixins.main.block.morphAdapt;
 
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;

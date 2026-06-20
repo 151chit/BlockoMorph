@@ -108,7 +108,7 @@ public class TntHandler {
 						}
 					}
 					TNT = lv.extractTnt();
-					Vec3 ps = MorphUtils.getRealBlockPos(this.pl, block.getOffset());
+					Vec3 ps = MorphMath.getRealBlockPos(this.pl, block.getOffset());
 					if (TNT == null) {
 						PrimedTnt primedtnt = new PrimedTnt(this.player.level(), ps.x + 0.5D, ps.y, ps.z + 0.5D, null);
 						this.player.level().playSound(null, primedtnt.getX(), primedtnt.getY(), primedtnt.getZ(), SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F, 1.0F);

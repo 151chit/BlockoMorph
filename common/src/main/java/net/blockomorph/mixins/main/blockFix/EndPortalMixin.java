@@ -1,5 +1,6 @@
 package net.blockomorph.mixins.main.blockFix;
 
+import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
@@ -34,7 +35,7 @@ public abstract class EndPortalMixin {
 				List<AABB> aabbs = SHAPE.toAabbs();
 				if (!aabbs.isEmpty()) {
 					AABB aabb = aabbs.get(0);
-					Vec3 vec = MorphUtils.getRealBlockPos(pl, realPos);
+					Vec3 vec = MorphMath.getRealBlockPos(pl, realPos);
 					if (aabb.move(vec).intersects(entity.getBoundingBox())) {
 						ResourceKey<Level> resourceKey = level.dimension() == Level.END ? Level.OVERWORLD : Level.END;
 						ServerLevel serverLevel = lv.getServer().getLevel(resourceKey);

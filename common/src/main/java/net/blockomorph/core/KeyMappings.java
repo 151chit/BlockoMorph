@@ -7,6 +7,7 @@ import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.BannedBlock;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigEnums;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.ChatFormatting;
@@ -48,7 +49,7 @@ public class KeyMappings {
 	});
 
 	public static final KeyMapping CONFIG = new HandlerKeymapping("config_menu", GLFW.GLFW_KEY_N, () -> {
-		if (MorphUtils.canOpenConfig()) {
+		if (mc.player != null && mc.player.hasPermissions(2) && Config.get().canOperatorModifyConfig.getValue()) {
 			mc.setScreen(new ConfigScreen());
 			return true;
 		}

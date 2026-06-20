@@ -23,8 +23,11 @@ public class HitBoxCalculator {
 	}
 
 	public void recalculatePositions() {
+		InPlayerBlockPos oldMin = this.minPos;
+		InPlayerBlockPos oldMax = this.maxPos;
 		this.minPos = this.findMinPos();
 		this.maxPos = this.findMaxPos();
+		this.pl.getSectionHandler().getPlayerPerBlock().internalBoxChanged(oldMin, oldMax, minPos, maxPos);
 	}
 
 	private AABB centerAABB(AABB original, Vec3 center) {

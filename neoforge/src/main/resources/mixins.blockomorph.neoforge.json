@@ -2,6 +2,7 @@
   "required": true,
   "package": "net.blockomorph.mixins.neoforge",
   "compatibilityLevel": "JAVA_17",
+  "plugin": "net.blockomorph.mixins.neoforge.InterfaceInjectionForgeStarterPlugin",
   "mixins": [
     "FluidEntitySupportMixin",
     "LevelInjectsMixin",

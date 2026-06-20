@@ -34,8 +34,8 @@ public class EventDispatcherMixin {
 
 	@Inject(method = "post", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/gameevent/GameEventListenerRegistry;visitInRangeListeners(Lnet/minecraft/world/level/gameevent/GameEvent;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/gameevent/GameEvent$Context;Lnet/minecraft/world/level/gameevent/GameEventListenerRegistry$ListenerVisitor;)Z"))
 	private void run(GameEvent holder, Vec3 vec3, GameEvent.Context context, CallbackInfo ci, @Local GameEventListenerRegistry.ListenerVisitor visitor, @Local(ordinal = 7) int x, @Local(ordinal = 8) int z, @Local(ordinal = 9) int y) {
-		if (enabled() && this.level instanceof PlayersProvider acc && visitor instanceof PlayersMultiSectionStorage.ListenerVisitorWithHook wrapper) {
-			acc.getStorage$blockomorph().handleEvent(vec3, x, z, y, wrapper);
+		if (enabled() && visitor instanceof PlayersMultiSectionStorage.ListenerVisitorWithHook wrapper) {
+			PlayersProvider.of(this.level).getStorage$blockomorph().handleEvent(vec3, x, z, y, wrapper);
 		}
 	}
 

@@ -6,10 +6,9 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.blockomorph.mixins.main.level.GameEventRegistryAccessor;
 import net.blockomorph.utils.BlockInPlayer2;
-import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.PlayersProvider;
-import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -33,10 +32,15 @@ import java.util.function.Predicate;
 
 @NotThreadSafe
 public class PlayersMultiSectionStorage implements PlayersFinder {
+	private static final PlayersInBlockSet EMPTY = new PlayersInBlockSet();
 	private final Long2ObjectMap<Int2ObjectMap<PlayerSection>> storage = new Long2ObjectOpenHashMap<>();
+	private final Long2ObjectMap<PlayersInBlockSet> playersPerBlock = new Long2ObjectOpenHashMap<>();
 
 	Long2ObjectMap<Int2ObjectMap<PlayerSection>> getMutableStorage() {
 		return this.storage;
+	}
+	Long2ObjectMap<PlayersInBlockSet> getMutablePlayersPerBlock() {
+		return this.playersPerBlock;
 	}
 
 	public static PlayersFinder fromLevel(EntityGetter level) {
@@ -51,24 +55,20 @@ public class PlayersMultiSectionStorage implements PlayersFinder {
 		};
 	}
 
-	public static ObjectOpenHashSet<BlockInPlayer2> getBlockOnPos(Entity self, Level lv, Vec3 pos) {
+	public static PlayersInBlockSet getBlockOnPos(Entity self, Level lv, Vec3 pos) {
+		EMPTY.clear();
 		if (lv instanceof PlayersProvider provider) {
-			var pls = provider.getStorage$blockomorph().getPlayersOnPos(self, pos, EntitySelector.NO_SPECTATORS);
-			ObjectOpenHashSet<BlockInPlayer2> blocks = new ObjectOpenHashSet<>(pls.size());
-			for (Player player : pls) {
-				if (player instanceof PlayerAccessor pl && pl.isFullActive()) {
-					Vec3 realPos = MorphUtils.getRealBlockPos(pl, InPlayerBlockPos.ZERO);
-					Vec3 inPlPos = pos.subtract(realPos);
-					InPlayerBlockPos blockPos = InPlayerBlockPos.get(Mth.floor(inPlPos.x), Mth.floor(inPlPos.y), Mth.floor(inPlPos.z));
-					if (blockPos.isValid()) {
-						BlockInPlayer2 block = pl.getBlocksData2().get(blockPos);
- 						if (block != null) blocks.add(block);
-					}
-				}
+			var pls = provider.getStorage$blockomorph().getPlayersOnPos(BlockPos.asLong(Mth.floor(pos.x), Mth.floor(pos.y), Mth.floor(pos.z)));
+			if (pls == EMPTY) return EMPTY;
+			PlayersInBlockSet blocks = new PlayersInBlockSet(pls.size());
+			for (BlockInPlayer2 block : pls) {
+				if (block.getPlayer() == self) continue;
+				if (!EntitySelector.NO_SPECTATORS.test(block.getPlayer().player())) continue;
+				blocks.add(block);
 			}
 			return blocks;
 		}
-		return ObjectOpenHashSet.of();
+		return EMPTY;
 	}
 
 	public void handleEvent(Vec3 sourcePos, int chunkX, int chunkZ, int sectionY, ListenerVisitorWithHook hookedListener) {
@@ -89,46 +89,44 @@ public class PlayersMultiSectionStorage implements PlayersFinder {
 		}
 	}
 
+	public PlayersInBlockSet getPlayersOnPos(long blockPos) {
+		EMPTY.clear();
+		var blocks = this.playersPerBlock.get(blockPos);
+		if (blocks == null) return EMPTY;
+		return blocks;
+	}
+
 	@Override
 	public ObjectOpenHashSet<Player> find(Entity self, AABB area) {
 		return this.find(self, area, EntitySelector.NO_SPECTATORS);
 	}
 
-	public ObjectOpenHashSet<Player> getPlayersOnPos(Entity self, Vec3 pos, Predicate<Entity> test) {
-		return this.findInternal(self, plHitbox -> plHitbox.contains(pos), test, pos.x, pos.y, pos.z, pos.x, pos.y, pos.z);
-	}
-
 	public ObjectOpenHashSet<Player> find(Entity self, AABB area, Predicate<Entity> test) {
-		return this.findInternal(self, plHitbox -> plHitbox.intersects(area), test, area.minX, area.minY, area.minZ, area.maxX, area.maxY, area.maxZ);
-	}
-
-	public ObjectOpenHashSet<Player> findInternal(Entity self, Predicate<AABB> hitBoxSelector, Predicate<Entity> test,
-		double minXraw, double minYraw, double minZraw, double maxXraw, double maxYraw, double maxZraw) {
-		int minX = SectionPos.blockToSectionCoord(Math.floor(minXraw));
-		int minY = SectionPos.blockToSectionCoord(Math.floor(minYraw));
-		int minZ = SectionPos.blockToSectionCoord(Math.floor(minZraw));
-		int maxX = SectionPos.blockToSectionCoord(Math.floor(maxXraw));
-		int maxY = SectionPos.blockToSectionCoord(Math.floor(maxYraw));
-		int maxZ = SectionPos.blockToSectionCoord(Math.floor(maxZraw));
-		ObjectOpenHashSet<Player> players = new ObjectOpenHashSet<>(8);
-		for (int x = minX; x <= maxX; x++) {
-			for (int z = minZ; z <= maxZ; z++) {
-				long chunkPos = ChunkPos.asLong(x, z);
-				Int2ObjectMap<PlayerSection> chunk = this.storage.get(chunkPos);
-				if (chunk != null) {
-					for (int y = minY; y <= maxY; y++) {
-						PlayerSection section = chunk.get(y);
-						if (section != null) for (int i = 0; i < section.getUnsafe().size(); i++) {
-							Player player = section.getUnsafe().get(i);
-							if (player != self && test.test(player) && hitBoxSelector.test(player.getBoundingBox())) {
-								players.add(player);
+			int minX = SectionPos.blockToSectionCoord(Math.floor(area.minX));
+			int minY = SectionPos.blockToSectionCoord(Math.floor(area.minY));
+			int minZ = SectionPos.blockToSectionCoord(Math.floor(area.minZ));
+			int maxX = SectionPos.blockToSectionCoord(Math.floor(area.maxX));
+			int maxY = SectionPos.blockToSectionCoord(Math.floor(area.maxY));
+			int maxZ = SectionPos.blockToSectionCoord(Math.floor(area.maxZ));
+			ObjectOpenHashSet<Player> players = new ObjectOpenHashSet<>(8);
+			for (int x = minX; x <= maxX; x++) {
+				for (int z = minZ; z <= maxZ; z++) {
+					long chunkPos = ChunkPos.asLong(x, z);
+					Int2ObjectMap<PlayerSection> chunk = this.storage.get(chunkPos);
+					if (chunk != null) {
+						for (int y = minY; y <= maxY; y++) {
+							PlayerSection section = chunk.get(y);
+							if (section != null) for (int i = 0; i < section.getUnsafe().size(); i++) {
+								Player player = section.getUnsafe().get(i);
+								if (player != self && test.test(player) && player.getBoundingBox().intersects(area)) {
+									players.add(player);
+								}
 							}
 						}
 					}
 				}
 			}
-		}
-		return players;
+			return players;
 	}
 
 	public record ListenerVisitorWithHook(GameEventListenerRegistry.ListenerVisitor orig, Set<Player> alreadyUsed) implements GameEventListenerRegistry.ListenerVisitor {
@@ -156,6 +154,14 @@ public class PlayersMultiSectionStorage implements PlayersFinder {
 			if (this.objects.isEmpty()) {
 				this.onEmptyAction.accept(this.sectionY);
 			}
+		}
+	}
+
+	public static class PlayersInBlockSet extends ObjectOpenHashSet<BlockInPlayer2> {
+		public PlayersInBlockSet(int size) { super(size); }
+		public PlayersInBlockSet() { super(); }
+		public Object[] getIterateArray() {
+			return this.key;
 		}
 	}
 }

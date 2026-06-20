@@ -8,6 +8,7 @@ import com.mojang.math.Axis;
 import net.blockomorph.screens.overlay.BlockHeartOverlay;
 import net.blockomorph.screens.overlay.Overlay;
 import net.blockomorph.screens.overlay.PlayerCrackOverlay;
+import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.blockomorph.utils.hit.MorphedPlayerHitResult;
@@ -320,12 +321,12 @@ public class GuiUtils { //Cross-platform wrapper
 			if (MC.player != null && MC.player.getAbilities().instabuild) {
 				return null;
 			}
-			Vec3 position = MorphUtils.getRealBlockPos(hit.getPlayer(), hit.getOffset());
+			Vec3 position = MorphMath.getRealBlockPos(hit.getPlayer(), hit.getOffset());
 			String x = formatCoordinate(position.x);
 			String y = formatCoordinate(position.y);
 			String z = formatCoordinate(position.z);
 			if (fluid == null) return String.format(Locale.ROOT, "%s, %s, %s", x, y, z);
-			return String.format(Locale.ROOT, "Targeted " + (fluid ? "Fluid" : "Block") + "%s, %s, %s", x, y, z);
+			return String.format(Locale.ROOT, "Targeted " + (fluid ? "Fluid" : "Block") + ": %s, %s, %s", x, y, z);
 		}
 		return null;
 	}

@@ -16,11 +16,13 @@ import net.blockomorph.utils.playerSection.PlayerSectionHandler;
 import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.blockomorph.utils.playerSection.SafeIterableStorage;
 import net.blockomorph.utils.MorphedPlayerRenderer;
+import net.blockomorph.utils.blockUpdate.RedstoneUpdateManager;
 import net.blockomorph.utils.tick.InPlayerBlockEntityTickManager;
 import net.blockomorph.utils.tick.PlayersTickManager;
 import net.blockomorph.utils.tick.PlayersTicks;
 import net.blockomorph.utils.tnt.TntHandler;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
@@ -85,6 +87,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 	@Unique private final ObjectLinkedOpenHashSet<InPlayerBlockEventData> blockEvents = new ObjectLinkedOpenHashSet<>();
 	@Unique private final InPlayerBlockEntityTickManager blockEntityTickManager = new InPlayerBlockEntityTickManager(this);
 	@Unique private final PlayerSectionHandler sectionHandler = new PlayerSectionHandler(this);
+	@Unique private final RedstoneUpdateManager redstoneManager = new RedstoneUpdateManager(this);
 	@Unique private SafeIterableStorage<GameEventListener> listenerStorage;
 	@Unique private boolean onLoadingBlocks;
 	@Unique private boolean breakingMode;
@@ -98,8 +101,10 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 			return false;
 		} else if (state.getBlock() == Blocks.AIR) {
 			BlockInPlayer2 block = this.blocksData.get(pos);
-			if (block != null)
+			if (block != null) {
 				block.changeBlockState(state, updateInternal);
+				this.sectionHandler.getPlayerPerBlock().onBlockRemoved(block);
+			}
 			this.blocksData.remove(pos);
 		} else if (blocksData.containsKey(pos)) {
 			this.blocksData.get(pos).changeBlockState(state, updateInternal);
@@ -194,7 +199,10 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 
 	public void loadBlockData(CompoundTag blockomorph, @Nullable ClientBoundMorphUpdatePacket client, boolean first) {
 		if (first) {
-			this.blocksData.values().forEach(BlockInPlayer2::clearBlockEntity);
+			this.blocksData.values().forEach(block -> {
+				block.clearBlockEntity();
+				this.sectionHandler.getPlayerPerBlock().onBlockRemoved(block);
+			});
 			this.blocksData.clear();
 		}
 		for (String key : blockomorph.getAllKeys()) {
@@ -387,7 +395,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 
 	public void getBlocksData2InArea(AABB box, TriConsumer<InPlayerBlockPos, BlockInPlayer2, Vec3> action) {
 		if (action != null && box != null) {
-			Vec3 realPos = MorphUtils.getRealBlockPos(this, InPlayerBlockPos.ZERO);
+			Vec3 realPos = MorphMath.getRealBlockPos(this, InPlayerBlockPos.ZERO);
 			int minX = Mth.floor(box.minX - realPos.x);
 			int minY = Mth.floor(box.minY - realPos.y);
 			int minZ = Mth.floor(box.minZ - realPos.z);
@@ -483,6 +491,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		if (!this.level().isClientSide) {
 			this.runUpdates();
 			this.runUpdatesBlockEvents();
+			this.redstoneManager.tick();
 		}
 		if (this.isFullActive()) {
 			ProfilerFiller profiler = this.level().getProfiler();
@@ -498,6 +507,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		}
 	}
 
+	@Unique
 	private void fluidCollisionUpdate() {
 		BlockState state = this.getBlockState(InPlayerBlockPos.ZERO);
 		if (!this.abilities.flying && state.getBlock() instanceof LiquidBlock block) {
@@ -560,6 +570,8 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		}
 		BlockPos pos = InPlayerBlockPos.ZERO.boundedBlockPos(this.player());
 		if (pos != null) {
+			if (Config.get().dynamicRedstone.getValue())
+				this.level().neighborChanged(pos, Blocks.AIR, pos.relative(Direction.DOWN));
 			state.getBlock().setPlacedBy(this.level(), pos, state, this, new ItemStack(state.getBlock().asItem(), 1));
 		}
 		this.updates.add(InPlayerBlockPos.ZERO);
@@ -593,6 +605,11 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		if (this.listenerStorage == null && this.player() instanceof ServerPlayer)
 			this.listenerStorage = new SafeIterableStorage<>();
 		return this.listenerStorage;
+	}
+
+	@Override
+	public RedstoneUpdateManager getRestoneUpdater() {
+		return this.redstoneManager;
 	}
 
 	@Override
@@ -636,7 +653,7 @@ public abstract class PlayerMixin extends LivingEntity implements PlayerAccessor
 		if (realPos != null) {
 			rl = realPos;
 		} else {
-			rl = MorphUtils.getRealBlockPos(this, offset);
+			rl = MorphMath.getRealBlockPos(this, offset);
 		}
 		return shp.move(rl.x, rl.y, rl.z);
 	}

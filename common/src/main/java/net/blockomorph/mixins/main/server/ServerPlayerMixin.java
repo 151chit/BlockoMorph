@@ -1,10 +1,7 @@
 package net.blockomorph.mixins.main.server;
 
 import com.mojang.authlib.GameProfile;
-import net.blockomorph.utils.BannedBlock;
-import net.blockomorph.utils.DamageHandler;
-import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.utils.*;
 import net.blockomorph.utils.accessors.ForceLevelChanger;
 import net.blockomorph.utils.accessors.ServerPlayerAccessor;
 import net.blockomorph.utils.config.Config;
@@ -50,7 +47,7 @@ public abstract class ServerPlayerMixin extends Player implements ServerPlayerAc
 	private BlockPos modifyBlockPos(BlockPos originalPos) {
 		AtomicReference<BlockPos> newPos = new AtomicReference<>(originalPos);
 		InPlayerBlockPos.check(originalPos, (pl, realPos) -> {
-			newPos.set(BlockPos.containing(MorphUtils.getRealBlockPos(pl, realPos)));
+			newPos.set(BlockPos.containing(MorphMath.getRealBlockPos(pl, realPos)));
 		}, () -> newPos.set(null), this.level());
 		return newPos.get();
 	}

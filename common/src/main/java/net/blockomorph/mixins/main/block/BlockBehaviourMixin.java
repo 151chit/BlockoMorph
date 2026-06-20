@@ -17,12 +17,9 @@ public class BlockBehaviourMixin {
 
 	@Inject(method = "isFaceSturdy(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/block/SupportType;)Z", at = @At("HEAD"), cancellable = true)
 	public void isValid(BlockGetter level, BlockPos pos, Direction dir, SupportType p_60663_, CallbackInfoReturnable<Boolean> cir) {
-		if (level instanceof Level lv && dir == Direction.UP) {
-			InPlayerBlockPos.check(pos.above(), (pl, realPos) -> {
-				if (realPos.getY() == 0) {
-					cir.setReturnValue(true);
-				}
-			}, null, lv);
+		if (dir == Direction.UP) {
+			InPlayerBlockPos morphPos = InPlayerBlockPos.getBlockPosInPlayer(pos);
+			if (morphPos != null && morphPos.getY() == -1) cir.setReturnValue(true);
 		}
 	}
 }
