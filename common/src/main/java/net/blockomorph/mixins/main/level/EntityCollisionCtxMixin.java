@@ -1,5 +1,6 @@
 package net.blockomorph.mixins.main.level;
 
+import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,7 @@ public class EntityCollisionCtxMixin {
 	public void isAbove(VoxelShape voxelShape, BlockPos blockPos, boolean bl, CallbackInfoReturnable<Boolean> cir) {
 		if (this.entity != null) {
 			InPlayerBlockPos.check(blockPos, (pl, realPos) -> {
-				cir.setReturnValue(this.entityBottom > MorphUtils.getRealBlockPos(pl, realPos).y + voxelShape.max(Direction.Axis.Y) - (double) 1.0E-5F);
+				cir.setReturnValue(this.entityBottom > MorphMath.getRealBlockPos(pl, realPos).y + voxelShape.max(Direction.Axis.Y) - (double) 1.0E-5F);
 			}, () -> cir.setReturnValue(false), this.entity.level());
 		}
 	}

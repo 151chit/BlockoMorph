@@ -3,6 +3,7 @@ package net.blockomorph.utils;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.serialization.DataResult;
 import net.blockomorph.network.BlockMorphPacket;
+import net.blockomorph.utils.accessors.PlayersProvider;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigEnums;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
@@ -10,7 +11,6 @@ import net.blockomorph.utils.coords.PlayerMorphedSection;
 import net.blockomorph.utils.platform.CommonPlatformUtils;
 import net.blockomorph.utils.platform.EarlyLoadingPlatformUtils;
 import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
-import net.minecraft.client.Minecraft;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -19,15 +19,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.EntityGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
@@ -153,47 +151,37 @@ public class MorphUtils {
 		};
 	}
 
-	public static Vec3 getRealBlockPos(PlayerAccessor original, InPlayerBlockPos offset) {
-		return getRealBlockPos(original, new Vec3(offset.x, offset.y, offset.z));
-	}
-
-	public static Vec3 getRealBlockPos(PlayerAccessor original, Vec3 offset) {
-		AABB aabb = original.player().getBoundingBox();
-		InPlayerBlockPos minPos = original.minPos();
-
-		double deltaX = offset.x - (double) minPos.getX();
-		double deltaY = offset.y - (double) minPos.getY();
-		double deltaZ = offset.z - (double) minPos.getZ();
-
-		double globalX = aabb.minX + deltaX;
-		double globalY = aabb.minY + deltaY;
-		double globalZ = aabb.minZ + deltaZ;
-
-		return new Vec3(globalX, globalY, globalZ);
-	}
-
-	public static void distanceTo(Vec3 from, Vec3 to, boolean sqr, double offset, DoubleConsumer action) {
-		if ((InPlayerBlockPos.isMorphedPlayerX(from.x) || InPlayerBlockPos.isMorphedPlayerX(to.x)) && action != null) {
-			from = InPlayerBlockPos.checkOnReal(from);
-			to = InPlayerBlockPos.checkOnReal(to);
-			double d0 = from.x + offset - to.x;
-			double d1 = from.y + offset - to.y;
-			double d2 = from.z + offset - to.z;
-			double result = d0 * d0 + d1 * d1 + d2 * d2;
-			if (!sqr)
-				result = Math.sqrt(result);
-			action.accept(result);
+	public static BlockState lockExternalMorphedGetter(BlockState orig, @Nullable LevelReader lv, BlockPos bounded) {
+		PlayerAccessor pl = InPlayerBlockPos.getPlayerByPos(bounded, lv != null ? lv.isClientSide() : null);
+		if (pl != null) {
+			InPlayerBlockPos pos = InPlayerBlockPos.getBlockPosInPlayer(bounded);
+			if (pos != null) return pl.getBlockState(pos);
 		}
+		return orig;
 	}
 
-	public static void executeMorphedBlockShapeUpdate(LevelAccessor level, Direction direction, BlockState state, BlockPos offsetted, BlockPos origin, int flags, int distance, BlockState external) {
-		BlockState blockstate1 = external.updateShape(direction, state, level, offsetted, origin);
-		Block.updateOrDestroy(external, blockstate1, level, offsetted, flags, distance);
+	public static BlockPos normalizeToRealOnOutline(BlockPos orig, LevelReader lv) {
+		if (Config.get().dynamicRedstone.getValue()) {
+			PlayerAccessor pl = InPlayerBlockPos.getPlayerByPos(orig, lv.isClientSide());
+			InPlayerBlockPos pos = InPlayerBlockPos.getBlockPosInPlayer(orig);
+			if (pl != null && pos != null &&
+					!pl.getBlocksData2().containsKey(pos)) return InPlayerBlockPos.checkOnReal(orig);
+		}
+		return orig;
 	}
 
-	public static Vec3 getCetneredRealBlockPos(PlayerAccessor original, InPlayerBlockPos offset) {
-		Vec3 vec = getRealBlockPos(original, offset);
-		return new Vec3(vec.x + 0.5, vec.y + 0.5, vec.z + 0.5);
+	public static void checkMorphs(Level lv, BlockPos target, BlockPos causer, Block causerBlock) {
+		if (Config.get().dynamicRedstone.getValue()) {
+			var pls = PlayersProvider.of(lv).getStorage$blockomorph().getPlayersOnPos(InPlayerBlockPos.checkOnReal(target).asLong());
+			if (!pls.isEmpty()) {
+				for (Object obj : pls.getIterateArray()) {
+					if (obj instanceof BlockInPlayer2 block) {
+						if (!EntitySelector.NO_SPECTATORS.test(block.getPlayer().player())) continue;
+						block.getBlockState().handleNeighborChanged(lv, block.getPos(), causerBlock, causer, false);
+					}
+				}
+			}
+		}
 	}
 
 	public static boolean isAdventureCanBreak(PlayerAccessor pl, Player attacker, InPlayerBlockPos hitPart) {
@@ -263,11 +251,6 @@ public class MorphUtils {
 			return pr != null;
 		}
 		return false;
-	}
-
-	public static boolean canOpenConfig() {
-		Minecraft mc = Minecraft.getInstance();
-		return mc.player != null && mc.player.hasPermissions(2) && Config.get().canOperatorModifyConfig.getValue();
 	}
 
 	public static ConfigEnums.ScreenAccess getScreenAccess(Player player) {

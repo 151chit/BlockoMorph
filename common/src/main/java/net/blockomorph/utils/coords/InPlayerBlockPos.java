@@ -1,6 +1,6 @@
 package net.blockomorph.utils.coords;
 
-import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.PlayerAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
@@ -67,7 +67,7 @@ public class InPlayerBlockPos {
 				double y = vec.y - Y_CHUNK_START;
 				double x = vec.x - pos.x * PlayerMorphedSection.FOR_TWO_CHUNKS - (double) PlayerMorphedSection.MAX_SIZE / 2 - X_CHUNK_START + d0;
 				double z = vec.z - pos.z * PlayerMorphedSection.FOR_TWO_CHUNKS - (double) PlayerMorphedSection.MAX_SIZE / 2 + d0;
-				return MorphUtils.getRealBlockPos(PlayerAccessor.of(player), new Vec3(x, y, z));
+				return MorphMath.getRealBlockPos(PlayerAccessor.of(player), x, y, z);
 			}
 		}
 		return vec;
@@ -102,6 +102,7 @@ public class InPlayerBlockPos {
 	}
 
 	public static BlockPos checkOnReal(BlockPos pos) {
+		if (!isMorphedPlayerX(pos.getX())) return pos;
 		return BlockPos.containing(InPlayerBlockPos.checkOnReal(pos.getCenter()));
 	}
 
@@ -114,14 +115,31 @@ public class InPlayerBlockPos {
 			PlayerMorphedSection pos = BlockPosBounds.getPlayerSectionPos(bounded);
 			Player player = BlockPosBounds.getPlayerByChunkPos(pos, lv);
 			if (player != null) {
-				int y = bounded.getY() - Y_CHUNK_START;
-				int x = bounded.getX() - pos.x * PlayerMorphedSection.FOR_TWO_CHUNKS - PlayerMorphedSection.MAX_SIZE / 2 - X_CHUNK_START;
-				int z = bounded.getZ() - pos.z * PlayerMorphedSection.FOR_TWO_CHUNKS - PlayerMorphedSection.MAX_SIZE / 2;
-				action.accept(PlayerAccessor.of(player), new InPlayerBlockPos(x, y, z));
+				action.accept(PlayerAccessor.of(player), posBySection(bounded, pos));
 			} else if (elseRun != null) {
 				elseRun.run();
 			}
 		}
+	}
+
+	public static PlayerAccessor getPlayerByPos(BlockPos bounded, @Nullable Boolean lv) {
+		if (!isMorphedPlayerX(bounded.getX())) return null;
+		PlayerMorphedSection pos = BlockPosBounds.getPlayerSectionPos(bounded);
+		Player player = BlockPosBounds.getPlayerByChunkPos(pos, lv);
+		return PlayerAccessor.of(player);
+	}
+
+	public static InPlayerBlockPos getBlockPosInPlayer(BlockPos bounded) {
+		if (!isMorphedPlayerX(bounded.getX())) return null;
+		PlayerMorphedSection pos = BlockPosBounds.getPlayerSectionPos(bounded);
+		return posBySection(bounded, pos);
+	}
+
+	private static InPlayerBlockPos posBySection(BlockPos bounded, PlayerMorphedSection pos) {
+		int y = bounded.getY() - Y_CHUNK_START;
+		int x = bounded.getX() - pos.x * PlayerMorphedSection.FOR_TWO_CHUNKS - PlayerMorphedSection.MAX_SIZE / 2 - X_CHUNK_START;
+		int z = bounded.getZ() - pos.z * PlayerMorphedSection.FOR_TWO_CHUNKS - PlayerMorphedSection.MAX_SIZE / 2;
+		return InPlayerBlockPos.get(x, y, z);
 	}
 
 	public static void check(BlockPos bounded, BiConsumer<PlayerAccessor, InPlayerBlockPos> action, Runnable elseRun, LevelReader lv) {

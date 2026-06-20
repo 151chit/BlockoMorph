@@ -11,16 +11,28 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.AABB;
 
 public class PlayerSectionHandler {
+	private final PlayerPerBlockHandler playerPerBlockHandler;
 	public final Player player;
 	private final int[] currentCoords = new int[6];
 	private boolean firstRun = true;
 
 	public PlayerSectionHandler(PlayerAccessor player) {
 		this.player = player.player();
+		this.playerPerBlockHandler = new PlayerPerBlockHandler(this.player);
+	}
+
+	public PlayerPerBlockHandler getPlayerPerBlock() {
+		return this.playerPerBlockHandler;
 	}
 
 	public void onAdd() {
 		this.onMove();
+	}
+
+	public void onRemove() {
+		this.removeFromSection();
+		PlayerAccessor.of(this.player).getRestoneUpdater().stop();
+		this.playerPerBlockHandler.removeAll();
 	}
 
 	public void onHitboxChange() {
@@ -28,54 +40,50 @@ public class PlayerSectionHandler {
 	}
 
 	public void onMove() {
-		if (this.player.level() instanceof PlayersProvider provider) {
-			AABB box = this.player.getBoundingBox();
+		AABB box = this.player.getBoundingBox();
 
-			int minX = SectionPos.blockToSectionCoord(Math.floor(box.minX));
-			int minY = SectionPos.blockToSectionCoord(Math.floor(box.minY));
-			int minZ = SectionPos.blockToSectionCoord(Math.floor(box.minZ));
-			int maxX = SectionPos.blockToSectionCoord(Math.floor(box.maxX));
-			int maxY = SectionPos.blockToSectionCoord(Math.floor(box.maxY));
-			int maxZ = SectionPos.blockToSectionCoord(Math.floor(box.maxZ));
+		int minX = SectionPos.blockToSectionCoord(Math.floor(box.minX));
+		int minY = SectionPos.blockToSectionCoord(Math.floor(box.minY));
+		int minZ = SectionPos.blockToSectionCoord(Math.floor(box.minZ));
+		int maxX = SectionPos.blockToSectionCoord(Math.floor(box.maxX));
+		int maxY = SectionPos.blockToSectionCoord(Math.floor(box.maxY));
+		int maxZ = SectionPos.blockToSectionCoord(Math.floor(box.maxZ));
 
-			if (this.firstRun || this.isChanged(minX, minY, minZ, maxX, maxY, maxZ)) {
-				this.firstRun = false;
-				Long2ObjectMap<Int2ObjectMap<PlayersMultiSectionStorage.PlayerSection>> map = provider.getStorage$blockomorph().getMutableStorage();
-				this.onRemove();
+		if (this.firstRun || this.isChanged(minX, minY, minZ, maxX, maxY, maxZ)) {
+			this.firstRun = false;
+			Long2ObjectMap<Int2ObjectMap<PlayersMultiSectionStorage.PlayerSection>> map = PlayersProvider.of(this.player.level()).getStorage$blockomorph().getMutableStorage();
+			this.removeFromSection();
 
-				this.save(minX, minY, minZ, maxX, maxY, maxZ);
+			this.save(minX, minY, minZ, maxX, maxY, maxZ);
 
-				for (int x = currentCoords[0]; x <= currentCoords[3]; x++) {
-					for (int z = currentCoords[2]; z <= currentCoords[5]; z++) {
-						long chunkKey = ChunkPos.asLong(x, z);
-						var sectionMap = map.computeIfAbsent(chunkKey, l -> new Int2ObjectOpenHashMap<>());
-						for (int y = currentCoords[1]; y <= currentCoords[4]; y++) {
-							int finalY = y;
-							sectionMap.computeIfAbsent(y, l -> new PlayersMultiSectionStorage.PlayerSection(finalY, i -> {
-								sectionMap.remove(i);
-								if (sectionMap.isEmpty()) {
-									map.remove(chunkKey);
-								}
-							})).add(this.player);
-						}
+			for (int x = currentCoords[0]; x <= currentCoords[3]; x++) {
+				for (int z = currentCoords[2]; z <= currentCoords[5]; z++) {
+					long chunkKey = ChunkPos.asLong(x, z);
+					var sectionMap = map.computeIfAbsent(chunkKey, l -> new Int2ObjectOpenHashMap<>());
+					for (int y = currentCoords[1]; y <= currentCoords[4]; y++) {
+						int finalY = y;
+						sectionMap.computeIfAbsent(y, l -> new PlayersMultiSectionStorage.PlayerSection(finalY, i -> {
+							sectionMap.remove(i);
+							if (sectionMap.isEmpty()) {
+								map.remove(chunkKey);
+							}
+						})).add(this.player);
 					}
 				}
 			}
 		}
 	}
 
-	public void onRemove() {
-		if (this.player.level() instanceof PlayersProvider provider) {
-			Long2ObjectMap<Int2ObjectMap<PlayersMultiSectionStorage.PlayerSection>> map = provider.getStorage$blockomorph().getMutableStorage();
-			for (int x = currentCoords[0]; x <= currentCoords[3]; x++) {
-				for (int z = currentCoords[2]; z <= currentCoords[5]; z++) {
-					long chunkKey = ChunkPos.asLong(x, z);
-					var sectionMap = map.get(chunkKey);
-					if (sectionMap != null) {
-						for (int y = currentCoords[1]; y <= currentCoords[4]; y++) {
-							var sectionRegistry = sectionMap.get(y);
-							if (sectionRegistry != null) sectionRegistry.remove(this.player);
-						}
+	private void removeFromSection() {
+		Long2ObjectMap<Int2ObjectMap<PlayersMultiSectionStorage.PlayerSection>> map = PlayersProvider.of(this.player.level()).getStorage$blockomorph().getMutableStorage();
+		for (int x = currentCoords[0]; x <= currentCoords[3]; x++) {
+			for (int z = currentCoords[2]; z <= currentCoords[5]; z++) {
+				long chunkKey = ChunkPos.asLong(x, z);
+				var sectionMap = map.get(chunkKey);
+				if (sectionMap != null) {
+					for (int y = currentCoords[1]; y <= currentCoords[4]; y++) {
+						var sectionRegistry = sectionMap.get(y);
+						if (sectionRegistry != null) sectionRegistry.remove(this.player);
 					}
 				}
 			}

@@ -211,7 +211,7 @@ public class BlockInPlayer2 {
 			}
 		}
 		if (this.blockState.getBlock() == marker) {
-			Vec3 real = MorphUtils.getCetneredRealBlockPos(this.owner, this.offset);
+			Vec3 real = MorphMath.getCenteredRealBlockPos(this.owner, this.offset);
 			this.player.level().addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, this.blockState), real.x, real.y, real.z, 0.0D, 0.0D, 0.0D);
 		}
 	}

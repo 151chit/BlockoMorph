@@ -1,9 +1,10 @@
 package net.blockomorph.mixins.main;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.blockomorph.utils.ChairController;
-import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.accessors.EntityAccessor;
 import net.blockomorph.utils.accessors.ForceLevelChanger;
@@ -62,14 +63,14 @@ public abstract class EntityMixin implements EntityAccessor, ForceLevelChanger {
 		return null;
 	}
 
-	@Inject(method = "distanceToSqr(DDD)D", at = @At(value = "RETURN"), cancellable = true)
-	public void getRealCoordsSqr(double x, double y, double z, CallbackInfoReturnable<Double> cir) {
-		MorphUtils.distanceTo(new Vec3(x, y, z), ((Entity) (Object) this).position(), true, 0, cir::setReturnValue);
+	@ModifyReturnValue(method = "distanceToSqr(DDD)D", at = @At(value = "RETURN"))
+	public double getRealCoordsSqr(double original, double x, double y, double z) {
+		return MorphMath.distanceTo(original, ((Entity) (Object) this).position(), x, y, z, true, 0);
 	}
 
-	@Inject(method = "distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D", at = @At("RETURN"), cancellable = true)
-	public void getRealCoordsVec3(Vec3 pos, CallbackInfoReturnable<Double> cir) {
-		MorphUtils.distanceTo(pos, ((Entity) (Object) this).position(), true, 0, cir::setReturnValue);
+	@ModifyReturnValue(method = "distanceToSqr(Lnet/minecraft/world/phys/Vec3;)D", at = @At("RETURN"))
+	public double getRealCoordsVec3(double original, Vec3 pos) {
+		return MorphMath.distanceTo(original, ((Entity) (Object) this).position(), pos, true, 0);
 	}
 
 	@Inject(method = "isAttackable", at = @At("HEAD"), cancellable = true)

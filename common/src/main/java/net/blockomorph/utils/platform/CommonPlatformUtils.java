@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.blockomorph.network.BlockMorphPacket;
 import net.blockomorph.network.ClientBoundMorphUpdatePacket;
 import net.blockomorph.utils.BlockInPlayer2;
-import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigEnums;
@@ -50,7 +50,7 @@ public interface CommonPlatformUtils {
 		if (!blocks.isEmpty()) {
 			BlockInPlayer2 block = blocks.iterator().next();
 			FluidState fluidState = block.getBlockState().getFluidState();
-			double y = MorphUtils.getRealBlockPos(block.getPlayer(), block.getOffset()).y;
+			double y = MorphMath.getRealBlockPos(block.getPlayer(), block.getOffset()).y;
 			double height = fluidState.getHeight(entity.level(), block.getPos());
 			if (y + height > entity.getEyeY()) {
 				fluidStateConsumer.accept(fluidState);
