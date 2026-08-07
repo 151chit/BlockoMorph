@@ -43,7 +43,7 @@ public class ConfigRenderableList extends AbstractWidget {
 
 	@Override
 	public void extractWidgetRenderState(GuiGraphicsExtractor GuiGraphicsExtractor, int mouseX, int mouseY, float delta) {
-		this.gui.setGuiGraphicsExtractor(GuiGraphicsExtractor, Minecraft.getInstance().font, mouseX, mouseY, delta);
+		this.gui.setGuiGraphics(GuiGraphicsExtractor, Minecraft.getInstance().font, mouseX, mouseY, delta);
 		this.scrollerManager.renderScroller(this.gui);
 		this.renderPlates(false);
 		this.renderPlates(true);

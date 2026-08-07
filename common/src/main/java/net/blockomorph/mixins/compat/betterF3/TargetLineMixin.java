@@ -1,4 +1,4 @@
-package net.blockomorph.mixins.compat.betterF3;
+package net.blockomorph.mixins.compat.betterf3;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.blockomorph.screens.utils.GuiUtils;
@@ -45,7 +45,7 @@ public class TargetLineMixin {
 	@Unique
 	private void doChange(DebugLineAccessor line, HitResult hit) {
 		if (line != null) {
-			String out = GuiUtils.redirectBlockInfo(null, hit);
+			String out = GuiUtils.hideMorphedBlocksKeyPos(null, hit);
 			if (out != null) {
 				line.setValue$blockomorph(out);
 			}

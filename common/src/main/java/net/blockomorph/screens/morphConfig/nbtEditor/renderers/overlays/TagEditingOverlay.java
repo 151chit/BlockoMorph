@@ -51,7 +51,7 @@ public abstract class TagEditingOverlay extends AbstractContainerEventHandler {
 	public final void render(GuiUtils gui) {
 		this.renderBackground(gui);
 		this.widgets.forEach(widget -> {
-			widget.extractRenderState(gui.getGuiGraphicsExtractor(), gui.getMouseX(), gui.getMouseY(), gui.getTick());
+			widget.extractRenderState(gui.getGuiGraphics(), gui.getMouseX(), gui.getMouseY(), gui.getTick());
 		});
 		this.renderInGui(gui);
 	}

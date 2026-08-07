@@ -8,6 +8,7 @@ base.archivesName = "blockomorph-" + minecraft_version + "-neoforge-" + mod_vers
 
 neoForge {
     version = neoforge_loader_version
+    accessTransformers.from file('src/main/resources/META-INF/accesstransformer.cfg')
 
     runs {
         client {
@@ -42,7 +43,7 @@ dependencies {
 
     implementation fileTree(dir: 'run/fabricAdapter', include: ['*.jar'])
 
-    implementation fileTree(dir: 'run/mods', include: ['*.jar'])
+    implementation fileTree(dir: 'run/mods/' + minecraft_version, include: ['*.jar'])
     implementation fileTree(dir: 'run/mods/fabricApi', include: ['*.jar'])
 }
 

@@ -1,17 +1,16 @@
 package net.blockomorph.screens.overlay;
 
-import net.blockomorph.screens.utils.FogLiquidModifier;
+import net.blockomorph.core.render.RenderingPlatformService;
 import net.blockomorph.screens.utils.GuiUtils;
-import net.blockomorph.utils.BlockInPlayer2;
-import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.core.BlockInPlayer2;
+import net.blockomorph.core.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
-import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.block.LiquidBlock;
 import org.jetbrains.annotations.Nullable;
 
 public class BlockHeartOverlay implements Overlay {
@@ -22,7 +21,8 @@ public class BlockHeartOverlay implements Overlay {
 
 	@Override
 	public void render(GuiUtils gui, int screenWidth, int screenHeight) {
-		if (GuiUtils.MC.player instanceof PlayerAccessor player && player.isActive() && GuiUtils.MC.gameMode != null && GuiUtils.MC.gameMode.canHurtPlayer()) {
+		if (GuiUtils.MC.player instanceof PlayerAccessor player && player.isBlockomorphActive() &&
+				GuiUtils.MC.gameMode != null && GuiUtils.MC.gameMode.canHurtPlayer()) {
 			switch (Config.get().hitReaction.getValue()) {
 				case MELEE, PROJECTILES, FULL_PVP -> this.renderBlockHearts(player, gui, screenWidth, screenHeight);
 				case BRAKING -> this.renderBlockSharps(player, gui, screenWidth, screenHeight);
@@ -31,12 +31,12 @@ public class BlockHeartOverlay implements Overlay {
 		}
 	}
 
-	private void renderBlockSharps(PlayerAccessor player, GuiUtils gui, int screenWidth, int screenHeight) {
-		int progress = player.getBiggestProgress();
+	private void renderBlockSharps(PlayerAccessor pl, GuiUtils gui, int screenWidth, int screenHeight) {
+		int progress = pl.getBiggestDestroyProgress();
 		int x = screenWidth / 2 - 90;
 		int y = screenHeight - 38;
 		gui.blit(BAR_IMAGE, x - 1, y - 1, 0, progress == 9 ? 9 : 0, 81, 9, 81, 18);
-		TextureData data = TextureData.get(player);
+		TextureData data = TextureData.get(pl);
 		for (int i = 0; i < 10; i++) {
 			if (i < 9 - progress) {
 				gui.renderFromSpriteClass(data.sprite, x + i * 8, y, 7, 7, data.tint);
@@ -87,23 +87,34 @@ public class BlockHeartOverlay implements Overlay {
 	private void renderOneHeart(GuiUtils gui, int x, int y, TextureAtlasSprite sprite, @Nullable Boolean half, int alphaOverlay, boolean absHeart) {
 		gui.blitMonoImage(HEART_INNER, x, y, 9, 9);
 		if (half != null) {
-			gui.enableScrissors(x + 1, y + 1, x + 8 + (half ? -3 : 0), y + 6);
+			gui.enableScissors(x + 1, y + 1, x + 8 + (half ? -3 : 0), y + 6);
 			gui.renderFromSpriteClass(sprite, x + 1, y + 1, 7, 7, alphaOverlay);
-			gui.disableScrissors();
+			gui.disableScissors();
 
-			gui.enableScrissors(x + 3, y + 6, x + 6 + (half ? -1 : 0), y + 8);
+			gui.enableScissors(x + 3, y + 6, x + 6 + (half ? -1 : 0), y + 8);
 			gui.renderFromSpriteClass(sprite, x + 1, y + 1, 7, 7, alphaOverlay);
-			gui.disableScrissors();
+			gui.disableScissors();
 		}
 		gui.blitMonoImage(absHeart ? HEART_OUT_ABS : HEART_OUT, x, y, 9, 9);
 	}
 
 	private record TextureData(TextureAtlasSprite sprite, int tint) {
-		static TextureData get(PlayerAccessor player) {
-			TextureAtlasSprite sprite = GuiUtils.MC.getModelManager().getBlockStateModelSet().get(player.getBlockState(InPlayerBlockPos.ZERO)).particleMaterial().sprite();
-			BlockInPlayer2 block = player.getBlocksData2().get(InPlayerBlockPos.ZERO);
-			Integer tint = (block != null && block.getBlockState().getBlock() instanceof LiquidBlock) ? FogLiquidModifier.getPlatformFluidTint((BlockAndTintGetter) GuiUtils.MC.player.level(), block.getBlockState(), block.getPos()) : null;
-			return new TextureData(sprite, tint != null ? (0xFF000000 | tint) : -1);
+		static TextureData get(PlayerAccessor pl) {
+			BlockInPlayer2 block = getBlock(pl);
+			var service = RenderingPlatformService.INSTANCE;
+			var level = pl.player().level() instanceof BlockAndTintGetter getter ? getter : BlockAndTintGetter.EMPTY;
+			TextureAtlasSprite particle = service.particleIcon(level, block.getPos(), block.getBlockState());
+			Integer tint = service.tintForBlock(level, block.getPos(), block.getBlockState());
+			return new TextureData(particle, tint != null ? (0xFF000000 | tint) : -1);
+		}
+
+		private static BlockInPlayer2 getBlock(PlayerAccessor pl) {
+			var randomBlock = pl.getBlocksStorage().randomSortedBlockOrThrow();
+			var block = pl.getBlock(InPlayerBlockPos.ZERO);
+			if (block == null) {
+				return randomBlock;
+			}
+			return block;
 		}
 	}
 }

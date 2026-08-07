@@ -43,7 +43,7 @@ public class SpriteImageButton extends Button {
 		if (this.activated != null) {
 			this.active = this.activated.get();
 		}
-		utils.setGuiGraphicsExtractor(GuiGraphicsExtractor, Minecraft.getInstance().font, mouseX, mouseY, delta);
+		utils.setGuiGraphics(GuiGraphicsExtractor, Minecraft.getInstance().font, mouseX, mouseY, delta);
 		int y = 0;
 		if (!this.active) {
 			if (this.useInActive) {

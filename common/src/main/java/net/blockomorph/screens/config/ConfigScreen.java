@@ -39,7 +39,7 @@ public class ConfigScreen extends AbstractScreen {
 		if (!this.path.isEmpty()) {
 			name = name + ": " + this.path.getVisualString();
 		}
-		this.pathExit.extractRenderState(this.gui.getGuiGraphicsExtractor(), this.gui.getMouseX(), this.gui.getMouseY(), this.gui.getTick());
+		this.pathExit.extractRenderState(this.gui.getGuiGraphics(), this.gui.getMouseX(), this.gui.getMouseY(), this.gui.getTick());
 		this.gui.drawString(Component.literal(name), this.leftPos + 8, this.topPos + 6, 4210752, false);
 	}
 

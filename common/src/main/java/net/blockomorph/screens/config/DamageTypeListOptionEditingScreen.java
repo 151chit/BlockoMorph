@@ -7,7 +7,7 @@ import net.blockomorph.screens.utils.ConfigSyncListener;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.screens.utils.ListenerEditBox;
 import net.blockomorph.screens.utils.ScrollerManager;
-import net.blockomorph.utils.DamageHandler;
+import net.blockomorph.core.misc.DamageHandler;
 import net.blockomorph.utils.config.list.DamageTypeIdsConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -104,14 +104,14 @@ public class DamageTypeListOptionEditingScreen extends AbstractScreen implements
 		boolean active = this.blockIdsSetConfig.getValue().containsKey(damageHolder.getKey().identifier());
 		String deathMessage = "death.attack." + damageHolder.getValue().msgId();
 		boolean hasSingle = Language.getInstance().has(deathMessage);
-		boolean hasMany = Language.getInstance().has(deathMessage + ".player");
+		boolean hasMany = Language.getInstance().has(deathMessage + ".playerOwner");
 		List<Component> tooltips = new ArrayList<>();
 		tooltips.add(Component.literal("Id: ").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD)
 				.append(Component.literal(damageHolder.getKey().identifier().toString()).withStyle(active ? ChatFormatting.GREEN : ChatFormatting.RED)));
 		if (hasSingle) tooltips.add(Component.literal("Default: ").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD)
 				.append(Component.translatable(deathMessage, "X", "Y").withStyle(ChatFormatting.GOLD)));
 		if (hasMany) tooltips.add(Component.literal("By entity: ").withStyle(ChatFormatting.AQUA, ChatFormatting.BOLD)
-				.append(Component.translatable(deathMessage + ".player", "X", "Y").withStyle(ChatFormatting.GOLD)));
+				.append(Component.translatable(deathMessage + ".playerOwner", "X", "Y").withStyle(ChatFormatting.GOLD)));
 		this.gui.renderTooltip(tooltips, mouseX, mouseY);
 	}
 

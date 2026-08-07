@@ -50,7 +50,7 @@ public class AbstractScreen extends Screen {
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor GuiGraphicsExtractor, int mouseX, int mouseY, float tick) {
-		this.gui.setGuiGraphicsExtractor(GuiGraphicsExtractor, this.font, mouseX, mouseY, tick);
+		this.gui.setGuiGraphics(GuiGraphicsExtractor, this.font, mouseX, mouseY, tick);
 		super.extractBackground(GuiGraphicsExtractor, mouseX, mouseY, tick);
 		this.renderMenu();
 	}

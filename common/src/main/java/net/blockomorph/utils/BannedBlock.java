@@ -1,7 +1,8 @@
 package net.blockomorph.utils;
 
+import net.blockomorph.core.PlayerAccessor;
 import net.blockomorph.utils.config.Config;
-import net.blockomorph.utils.config.ConfigEnums;
+import net.blockomorph.utils.config.enums.ConfigEnums;
 import net.blockomorph.utils.config.ConfigStorage;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -25,7 +26,7 @@ public record BannedBlock(String reason, Component text) {
 
 	static {
 		TESTS.add(new BanPredicate((state, player, source) -> {
-			if (state.isAir() && (source != Source.NETWORK || (player != null && player.getTnt() == null)))
+			if (state.isAir() && (source != Source.NETWORK || (player != null && player.getActiveMorphTnt() == null)))
 				return ALWAYS_ON;
 			return null;
 		}, (stateSet, player, source) -> {}));
@@ -33,13 +34,13 @@ public record BannedBlock(String reason, Component text) {
 
 		TESTS.add(new BanPredicate((state, player, source) -> {
 			if (player != null && source == Source.NETWORK) {
-				if (player.getTnt() != null) {
+				if (player.getActiveMorphTnt() != null) {
 					return new BannedBlock("No access to morph when TNT is lit!", Component.translatable("blockomorph.bannedBlock.tnt"));
 				}
 			}
 			return null;
 		}, (stateSet, player, source) -> {
-			if (player != null && source == Source.NETWORK && player.getTnt() != null) {
+			if (player != null && source == Source.NETWORK && player.getActiveMorphTnt() != null) {
 				stateSet.clear();
 			}
 		}));

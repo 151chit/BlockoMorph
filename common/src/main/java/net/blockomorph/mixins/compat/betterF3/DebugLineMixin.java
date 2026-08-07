@@ -1,4 +1,4 @@
-package net.blockomorph.mixins.compat.betterF3;
+package net.blockomorph.mixins.compat.betterf3;
 
 import net.blockomorph.utils.accessors.compat.DebugLineAccessor;
 import org.spongepowered.asm.mixin.Final;

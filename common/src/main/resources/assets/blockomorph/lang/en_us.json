@@ -12,6 +12,7 @@
   "blockomorph.gui.damageSelector.need_for_damage": "Dies at:",
   "blockomorph.gui.damageSelector.name": "Select damage type:",
   "blockomorph.gui.damageSelector.damageScale": "The player will die if they are dealt damage equal to this amount",
+  "blockomorph.gui.vanilla.deathScreen.broken": "You were destroyed",
 
   "blockomorph.commands.option_change.default": "Value of option \"%s\" changed to %s.",
   "blockomorph.commands.option_change.list.clear": "List-option \"%s\" has been cleared.",

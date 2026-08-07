@@ -9,7 +9,6 @@ import net.blockomorph.screens.utils.ObjectListRenderer;
 import net.blockomorph.utils.MorphUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.nbt.Tag;
@@ -139,18 +138,18 @@ public class TagAddingOverlay<T extends Tag> extends TagEditingOverlay {
 		TagRenderer<?> renderer = this.currentType.renderer;
 		gui.blitMonoImage(MENU, this.leftPos, this.topPos, this.imageLength, this.imageHeight);
 
-		gui.enableScrissors(this.tagBoxX, this.tagBoxY, this.tagBoxX + 50, this.tagBoxY + 20);
+		gui.enableScissors(this.tagBoxX, this.tagBoxY, this.tagBoxX + 50, this.tagBoxY + 20);
 		renderer.renderPlateWithoutCtx(gui);
-		gui.disableScrissors();
+		gui.disableScissors();
 
 		int x = this.tagBoxX + 50;
-		gui.enableScrissors(x, this.tagBoxY, x + 4, this.tagBoxY + 20);
+		gui.enableScissors(x, this.tagBoxY, x + 4, this.tagBoxY + 20);
 		int plateX = x - (renderer.getBox().getWidth() - 4);
 		int oldX = renderer.getBox().getX();
 		renderer.getBox().setX(plateX);
 		renderer.renderPlateWithoutCtx(gui);
 		renderer.getBox().setX(oldX);
-		gui.disableScrissors();
+		gui.disableScissors();
 
 		gui.blit(NbtEditorScreen.BUTTONS_SPRITE, this.tagBoxX + 4, this.tagBoxY + 4, 0, 32, 46, 11, NbtEditorScreen.BUTTON_SPRITE_LENGTH, NbtEditorScreen.BUTTON_SPRITE_HEIGHT);
 	}

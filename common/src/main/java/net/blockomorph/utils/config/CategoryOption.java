@@ -54,7 +54,7 @@ public class CategoryOption extends ConfigInstance<List<ConfigInstance<?>>> {
 
 	@Override
 	public void parseFromUser(ServerPlayer ctx, String value) {
-		throw new UnsupportedOperationException("You can't change the value of a category property directly, you need to specify the specific property name in the category.");
+		throw new UnsupportedOperationException("You can't change the value ofObj a category property directly, you need to specify the specific property name in the category.");
 	}
 
 	@Override

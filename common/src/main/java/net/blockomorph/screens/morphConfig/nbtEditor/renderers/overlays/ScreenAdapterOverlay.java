@@ -32,7 +32,7 @@ public class ScreenAdapterOverlay<SC extends Screen> extends TagEditingOverlay {
 
 	@Override
 	public void renderInGui(GuiUtils gui) {
-		this.screen.extractRenderStateWithTooltipAndSubtitles(gui.getGuiGraphicsExtractor(), gui.getMouseX(), gui.getMouseY(), gui.getTick());
+		this.screen.extractRenderStateWithTooltipAndSubtitles(gui.getGuiGraphics(), gui.getMouseX(), gui.getMouseY(), gui.getTick());
 	}
 
 	@Override

@@ -16,9 +16,6 @@
     "sources": "https://github.com/151chit/BlockoMorph"
   },
   "entrypoints": {
-    "main": [
-      "net.blockomorph.BlockomorphCommon"
-    ],
     "client": [
       "net.blockomorph.BlockomorphClient"
     ]

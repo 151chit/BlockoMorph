@@ -3,11 +3,12 @@ package net.blockomorph.screens.utils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import net.blockomorph.core.levelFlags.MorphedLevelFeatureFlags;
+import net.blockomorph.core.render.layers.PlayerSectionLayer;
+import net.blockomorph.core.render.renderers.BakedBlocksRenderer;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.accessors.ClientLevelAccessor;
+import net.blockomorph.core.levelFlags.LevelWithFlags;
 import net.blockomorph.utils.accessors.LightningSetter;
-import net.blockomorph.utils.accessors.compat.BlockEntitySpecialRenderer;
-import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -55,10 +56,10 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 		var level = MC.level;
 		if (blockState.getRenderShape() == RenderShape.MODEL && level != null) {
 			BlockStateModel model = MC.getModelManager().getBlockStateModelSet().get(blockState);
-			ClientLevelAccessor acc = ClientLevelAccessor.of(level);
-			acc.setSpecialRenderingMode(true);
+			LevelWithFlags acc = LevelWithFlags.of(level);
+			acc.flags().customLightProvider = MorphedLevelFeatureFlags.LightProvider.ALWAYS_LIGHT;
 			BlockQuadOutput quadOutput = (xOff, yOff, zOff, quad, instance) -> {
-				VertexConsumer builder = bufferSource.getBuffer(ClientPlatformUtils.layerToRenderType(quad.materialInfo().layer()));
+				VertexConsumer builder = bufferSource.getBuffer(BakedBlocksRenderer.layerToRenderType(PlayerSectionLayer.byChunkType(quad.materialInfo().layer())));
 				stack.pushPose();
 				stack.translate(xOff, yOff, zOff);
 				builder.putBakedQuad(stack.last(), quad, instance);
@@ -67,7 +68,7 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 			try {
 				this.blockRenderer.tesselateBlock(quadOutput, 0, 0, 0, level, zeroOrFake, blockState, model, blockState.getSeed(zeroOrFake));
 			} finally {
-				acc.setSpecialRenderingMode(false);
+				acc.flags().customLightProvider = null;
 			}
 		}
 	}
@@ -82,20 +83,20 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 		if (blockEntity != null) {
 			BlockEntityRenderer<T, S> renderer = MC.getBlockEntityRenderDispatcher().getRenderer(blockEntity);
 			if (renderer != null) {
-				ClientLevelAccessor acc = ClientLevelAccessor.of(MC.level);
+				LevelWithFlags acc = LevelWithFlags.of(MC.level);
 				try {
 					Camera cam = MC.gameRenderer.getMainCamera();
-					acc.setSpecialRenderingMode(true);
+					acc.flags().flywheelDisabled = true;
+					acc.flags().customLightProvider = MorphedLevelFeatureFlags.LightProvider.ALWAYS_LIGHT;
 					FeatureRenderDispatcher renderDispatcher = MC.gameRenderer.getFeatureRenderDispatcher();
-					BlockEntitySpecialRenderer.tryRenderWithoutOptimizations(() -> {
-						S state = renderer.createRenderState();
-						renderer.extractRenderState(blockEntity, state, delta, cam.position(), null);
-						state.lightCoords = 15728880;
-						renderer.submit(state, stack, renderDispatcher.getSubmitNodeStorage(), MC.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState);
-					});
+					S state = renderer.createRenderState();
+					renderer.extractRenderState(blockEntity, state, delta, cam.position(), null);
+					state.lightCoords = 15728880;
+					renderer.submit(state, stack, renderDispatcher.getSubmitNodeStorage(), MC.gameRenderer.getGameRenderState().levelRenderState.cameraRenderState);
 					renderDispatcher.renderAllFeatures();
 				} catch (Exception ignored) {} finally {
-					acc.setSpecialRenderingMode(false);
+					acc.flags().flywheelDisabled = false;
+					acc.flags().customLightProvider = null;
 				}
 			}
 		}

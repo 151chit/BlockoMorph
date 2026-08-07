@@ -8,7 +8,7 @@ import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import net.blockomorph.command.FilteredResourceArgument;
+import net.blockomorph.input.command.args.FilteredResourceArgument;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigInstance;
 import net.minecraft.commands.CommandBuildContext;
@@ -150,7 +150,7 @@ public abstract class RegistryMapIdsConfig<VALUE, REG> extends ConfigInstance<Ma
 					args.getSource().sendSuccess(() -> end, true);
 					return 1;
 				}))))
-				.then(Commands.literal("get").then(Commands.argument("key", ResourceArgument.resource(context, this.registryId)).executes(args -> {
+				.then(Commands.literal("getCollector").then(Commands.argument("key", ResourceArgument.resource(context, this.registryId)).executes(args -> {
 					Identifier name = ResourceArgument.getResource(args, "key", this.registryId).key().identifier();
 					VALUE getValue = this.value.get(name);
 					if (getValue != null) {

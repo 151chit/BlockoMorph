@@ -110,7 +110,7 @@ public class ListenerEditBox extends EditBox {
 	@Override
 	public void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float ticks) {
 		if (this.borderTexture != null && this.borderTexture != VANILLA) {
-			this.gui.setGuiGraphicsExtractor(g, this.font, mouseX, mouseY, ticks);
+			this.gui.setGuiGraphics(g, this.font, mouseX, mouseY, ticks);
 			this.gui.blit(this.borderTexture, this.getX(), this.getY(), 0, this.editable ? 0 : this.getHeight(), this.getWidth(), this.getHeight(), this.getWidth(), this.getHeight() * 2);
 		}
 		super.extractWidgetRenderState(g, mouseX, mouseY, ticks);
