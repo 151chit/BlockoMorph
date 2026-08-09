@@ -1,6 +1,6 @@
 package net.blockomorph.mixins.compat.sodium;
 
-import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

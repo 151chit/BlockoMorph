@@ -2,16 +2,17 @@ package net.blockomorph.utils.config;
 
 import com.google.gson.*;
 import net.blockomorph.network.ClientBoundConfigUpdatePacket;
+import net.blockomorph.network.MorphNetwork;
 import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.side.Side;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Config {
+public class Config {//todo: refactor need for remove singleton and bound to level
 	private static final Gson WRITER = new GsonBuilder().setPrettyPrinting().create();
 	private static final File CONFIG_FILE = MorphUtils.getGameDir().resolve("config").resolve("blockomorph.json").toFile();
 	private static volatile ConfigStorage SNAPSHOT;
@@ -68,7 +69,7 @@ public class Config {
 	/*------------------------------- NETWORK BLOCK ---------------------------*/
 	public static void writeAndSend() {
 		write();
-		MorphUtils.sendAll(new ClientBoundConfigUpdatePacket(SNAPSHOT));
+		MorphNetwork.sendAll(Side.serverOrThrow(), new ClientBoundConfigUpdatePacket(SNAPSHOT));
 	}
 
 	public static void receiveOnClient(FriendlyByteBuf byteBuf) {
@@ -101,16 +102,5 @@ public class Config {
 			}
 		}
 		throw new IllegalArgumentException("Option not found: " + name);
-	}
-
-
-	private static MinecraftServer SERVER;
-
-	public static MinecraftServer getServer() {
-		return SERVER;
-	}
-
-	public static void setServer(MinecraftServer sv) {
-		SERVER = sv;
 	}
 }

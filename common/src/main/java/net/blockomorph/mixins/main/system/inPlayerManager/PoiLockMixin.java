@@ -1,0 +1,29 @@
+package net.blockomorph.mixins.main.system.inPlayerManager;
+
+import net.blockomorph.core.coords.InPlayerBlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.world.entity.ai.village.poi.PoiManager;
+import net.minecraft.world.entity.ai.village.poi.PoiRecord;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(PoiManager.class)
+public class PoiLockMixin {//TODO: implement
+
+	@Inject(method = "add", at = @At(value = "HEAD"), cancellable = true)
+	public void reject(BlockPos pos, Holder<PoiType> type, CallbackInfoReturnable<PoiRecord> cir) {
+		if (InPlayerBlockPos.isMorphedPlayerBlockX(pos.getX()))
+			cir.cancel();
+	}
+
+	@Inject(method = "remove", at = @At(value = "HEAD"), cancellable = true)
+	public void reject(BlockPos pos, CallbackInfo ci) {
+		if (InPlayerBlockPos.isMorphedPlayerBlockX(pos.getX()))
+			ci.cancel();
+	}
+}

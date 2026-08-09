@@ -14,8 +14,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 
-import java.util.function.BiFunction;
-
 public abstract class PrimitiveTagRenderer<T extends PrimitiveTag> extends TagRenderer<T> {
 	private static final EditBox.TextFormatter SHADOW_DISABLE = (value, cursorPos) -> {
 		return FormattedCharSequence.forward(value, Style.EMPTY.withShadowColor(0));

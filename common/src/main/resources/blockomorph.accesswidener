@@ -1,6 +1,9 @@
 accessWidener v2 named
 
 accessible class net/minecraft/world/item/CreativeModeTab$TabVisibility
+accessible class net/minecraft/world/entity/EntityFluidInteraction$Tracker
+
+accessible method net/minecraft/world/entity/EntityFluidInteraction$Tracker <init> ()V
 
 accessible field net/minecraft/world/item/CreativeModeTabs OP_BLOCKS Lnet/minecraft/resources/ResourceKey;
 accessible field net/minecraft/world/item/CreativeModeTabs SEARCH Lnet/minecraft/resources/ResourceKey;

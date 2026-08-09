@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.blockomorph.command.FilteredResourceArgument;
+import net.blockomorph.input.command.args.FilteredResourceArgument;
 import net.blockomorph.utils.config.Config;
 import net.blockomorph.utils.config.ConfigInstance;
 import net.minecraft.commands.CommandBuildContext;

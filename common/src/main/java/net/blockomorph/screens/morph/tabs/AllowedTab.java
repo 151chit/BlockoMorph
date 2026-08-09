@@ -3,7 +3,7 @@ package net.blockomorph.screens.morph.tabs;
 import net.blockomorph.screens.morph.TabContentManager;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.BannedBlock;
-import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.core.PlayerAccessor;
 import net.blockomorph.utils.SavedBlock;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;

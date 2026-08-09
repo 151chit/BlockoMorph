@@ -3,19 +3,17 @@
   "package": "net.blockomorph.mixins.neoforge",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "FluidEntitySupportMixin",
     "ForgeEntityExtensionMixin",
-    "LevelInjectsMixin",
-    "ServerPlayerGameModeMixin"
+    "LevelInjectMixin",
+    "deathPrepare.ServerPlayerGameModeMixin",
+    "fluid.FluidInteractionMixin",
+    "fluid.SwimmingEntityMixin"
   ],
   "client": [
     "AttackSupportMixin",
-    "BlockDestroySupportMixin",
-    "BlockModelRendererMixin",
+    "cullFix.BlockModelRendererMixin",
     "GuiRendererMixin",
-    "ModelDataManagerMixin",
-    "MultiPlayerGameModeMixin",
-    "TranslucentSupportMixin"
+    "ModelDataManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

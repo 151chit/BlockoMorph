@@ -2,20 +2,26 @@ package net.blockomorph.screens.utils;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.blockomorph.core.levelFlags.MorphedLevelFeatureFlags;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.accessors.ClientLevelAccessor;
+import net.blockomorph.core.levelFlags.LevelWithFlags;
 import net.blockomorph.utils.accessors.LightningSetter;
-import net.blockomorph.utils.accessors.compat.BlockEntitySpecialRenderer;
-import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
 import net.minecraft.client.gui.render.state.GuiRenderState;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 import static net.blockomorph.screens.utils.GuiUtils.*;
 
@@ -37,11 +43,28 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 			stack.mulPose(Axis.ZP.rotationDegrees(180.0F));
 
 			BlockEntity blockEntity = guiState.getBlockEntity();
-			try { ClientPlatformUtils.INSTANCE.renderBlockInGui(bufferSource, stack, guiState.getState(), blockEntity != null ? blockEntity.getBlockPos() : AIR);
+			try { this.renderBlockInGui(bufferSource, stack, guiState.getState(), blockEntity != null ? blockEntity.getBlockPos() : AIR);
 			} catch (Throwable ignored) {}
 			try { this.renderBlockEntity(guiState.getDeltaTick(), stack, blockEntity);
 			} catch (Throwable ignored) {}
 		}, DIFFUSE_LIGHT_START, DIFFUSE_LIGHT_END);
+	}
+
+	private void renderBlockInGui(MultiBufferSource bufferSource, PoseStack stack, BlockState blockState, BlockPos zeroOrFake) {//todo
+		var level = MC.level;
+		if (blockState.getRenderShape() == RenderShape.MODEL && level != null) {
+			BlockStateModel model = MC.getModelManager().getBlockModelShaper().getBlockModel(blockState);
+			LevelWithFlags acc = LevelWithFlags.of(level);
+			acc.flags().customLightProvider = MorphedLevelFeatureFlags.LightProvider.ALWAYS_LIGHT;
+			try {
+				RandomSource random = RandomSource.create(blockState.getSeed(zeroOrFake));
+				RenderType simplified = ItemBlockRenderTypes.getMovingBlockRenderType(blockState);
+				MC.getBlockRenderer().getModelRenderer().tesselateBlock(MC.level,
+						model.collectParts(random), blockState, zeroOrFake, stack, bufferSource.getBuffer(simplified), false, OverlayTexture.NO_OVERLAY);
+			} finally {
+				acc.flags().customLightProvider = null;
+			}
+		}
 	}
 
 	@Override
@@ -54,21 +77,20 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 		if (blockEntity != null) {
 			BlockEntityRenderer<T, S> renderer = MC.getBlockEntityRenderDispatcher().getRenderer(blockEntity);
 			if (renderer != null) {
-				ClientLevelAccessor acc = ClientLevelAccessor.of(MC.level);
+				LevelWithFlags acc = LevelWithFlags.of(MC.level);
 				try {
 					Camera cam = MC.gameRenderer.getMainCamera();
-					acc.setSpecialRenderingMode(true);
+					acc.flags().flywheelDisabled = true;
+					acc.flags().customLightProvider = MorphedLevelFeatureFlags.LightProvider.ALWAYS_LIGHT;
 					FeatureRenderDispatcher renderDispatcher = MC.gameRenderer.getFeatureRenderDispatcher();
-					BlockEntitySpecialRenderer.tryRenderWithoutOptimizations(() -> {
-						S state = renderer.createRenderState();
-						renderer.extractRenderState(blockEntity, state, delta, cam.position(), null);
-						state.lightCoords = LightTexture.FULL_BRIGHT;
-						renderer.submit(state, stack, renderDispatcher.getSubmitNodeStorage(), MC.gameRenderer.getLevelRenderState().cameraRenderState);
-					});
+					S state = renderer.createRenderState();
+					renderer.extractRenderState(blockEntity, state, delta, cam.position(), null);
+					state.lightCoords = 15728880;
+					renderer.submit(state, stack, renderDispatcher.getSubmitNodeStorage(), MC.gameRenderer.getLevelRenderState().cameraRenderState);
 					renderDispatcher.renderAllFeatures();
-				} catch (Exception ignored) {
-				} finally {
-					acc.setSpecialRenderingMode(false);
+				} catch (Exception ignored) {} finally {
+					acc.flags().flywheelDisabled = false;
+					acc.flags().customLightProvider = null;
 				}
 			}
 		}

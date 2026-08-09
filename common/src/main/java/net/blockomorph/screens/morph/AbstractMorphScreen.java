@@ -21,7 +21,6 @@ import java.util.function.Consumer;
 public abstract class AbstractMorphScreen extends AbstractScreen implements ConfigSyncListener {
 	private static final Identifier SEARCH_BAR = GuiUtils.res("textures/screens/searchbar.png");
 	protected final TabManager tabManager;
-	private boolean ignoreSearchBoxInput;
 
 	protected AbstractMorphScreen() {
 		super("morph_screen", null);
@@ -97,17 +96,9 @@ public abstract class AbstractMorphScreen extends AbstractScreen implements Conf
 		return super.mouseScrolled(x, y, yScrolled);
 	}
 
-	public AbstractMorphScreen ignoreInitInput() {
-		this.ignoreSearchBoxInput = true;
-		return this;
-	}
-
 	@Override
 	public boolean charTyped(CharacterEvent characterEvent) {
-		if (this.ignoreSearchBoxInput) {
-			this.ignoreSearchBoxInput = false;
-			return false;
-		} else if (this.tabManager.getSearchBox().charTyped(characterEvent)) {
+		if (this.tabManager.getSearchBox().charTyped(characterEvent)) {
 			return true;
 		}
 		return super.charTyped(characterEvent);
