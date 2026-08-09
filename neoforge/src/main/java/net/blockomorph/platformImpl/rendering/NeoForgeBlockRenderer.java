@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.block.BlockQuadOutput;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.neoforged.neoforge.client.fluid.CustomFluidRenderer;
@@ -31,9 +30,7 @@ public class NeoForgeBlockRenderer implements PlatformBlockTesselator {
 
 	@Override
 	public void tessellateBlock(BlockStateModel model, InPlayerBlockAndTintGetter getter, BlockPos keyPos, BlockState state) {
-		this.renderer.tesselateBlock(this.output,
-				getter.getAxisOffset(Direction.Axis.X, keyPos), getter.getAxisOffset(Direction.Axis.Y, keyPos), getter.getAxisOffset(Direction.Axis.Z, keyPos),
-				getter, keyPos, state, model, state.getSeed(keyPos));
+		this.renderer.tesselateBlock(this.output, 0, 0, 0, getter, keyPos, state, model, state.getSeed(keyPos));
 	}
 
 	@Override
