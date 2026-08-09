@@ -41,7 +41,7 @@ public class BakedSupportLevelRendererMixin implements PlayersAsyncBakersManager
 	@WrapOperation(method = "lambda$addMainPass$0", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V"))
 	private void render(ChunkSectionsToRender instance, ChunkSectionLayerGroup group, GpuSampler sampler, Operation<Void> original) {
 		original.call(instance, group, sampler);
-		this.asyncBakersManager.drawOnGpu(this.level, PlayerSectionLayerGroup.byChunkType(group), this.minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false));
+		this.asyncBakersManager.drawOnGpu(this.level, PlayerSectionLayerGroup.byChunkType(group), this.minecraft.getDeltaTracker().getGameTimeDeltaPartialTick(false), this.minecraft.gameRenderer.getMainCamera().getCullFrustum());
 	}
 
 	@Inject(method = "cullTerrain", at = @At("HEAD"))

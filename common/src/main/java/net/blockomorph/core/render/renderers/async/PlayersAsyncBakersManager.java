@@ -6,6 +6,7 @@ import net.blockomorph.core.render.layers.PlayerSectionLayerGroup;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.MorphUtils;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -45,7 +46,7 @@ public class PlayersAsyncBakersManager implements AutoCloseable {
 		if (renderer != null) renderer.destroy();
 	}
 
-	public void drawOnGpu(ClientLevel level, PlayerSectionLayerGroup layers, float deltaTick) {
+	public void drawOnGpu(ClientLevel level, PlayerSectionLayerGroup layers, float deltaTick, Frustum frustum) {
 		if (level == null) return;
 		var players = level.players();
 		//noinspection ForLoopReplaceableByForEach
@@ -53,7 +54,7 @@ public class PlayersAsyncBakersManager implements AutoCloseable {
 			Player player = players.get(i);
 			if (player.isRemoved()) continue;
 			var renderer = this.renderers.get(player.getUUID());
-			if (renderer != null) renderer.drawOnGpu(layers, this.cameraPos.get(), deltaTick);
+			if (renderer != null) renderer.drawOnGpu(layers, this.cameraPos.get(), deltaTick, frustum);
 		}
 	}
 

@@ -95,6 +95,10 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 		this.stopWithClean = false;
 		this.bakeAsyncCorrupted = RebakeReason.NO;
 		this.currentRebakeTask = RebakeReason.NO;
+		this.releaseUploadingWaited();
+	}
+
+	private void releaseUploadingWaited() {
 		for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
 			this.renderLayers.get(layer).releaseTemp();
 		}
@@ -106,6 +110,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 			this.state = AsyncState.BAKING;
 			this.bakeTask = rebakeReason == RebakeReason.REBUILD ? this.formRebuildTask(renderer) : this.formResortTask();
 			this.bakeSorter();
+			this.releaseUploadingWaited();
 			PlayersAsyncBakersManager.Provider.getFromVanilla().scheduleCompileTask(this.bakeTask);
 		} else {
 			this.stopAsyncWithTask(rebakeReason);
@@ -133,8 +138,11 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 		var blocksSnapshot = renderer.makeSnapshot(this.pos);
 		this.currentRebakeTask = RebakeReason.REBUILD;
 		return new PlayerSectionCompileQueue.PlayerCompileTask(this, () -> {
-			this.renderBlocks(blocksSnapshot);
-			this.onEnd(true);
+			try {
+				this.renderBlocks(blocksSnapshot);
+			} finally {
+				this.onEnd(true);
+			}
 		});
 	}
 
@@ -158,11 +166,9 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 	private void checkBuffers() {
 		if (this.state == AsyncState.UPLOADING_WAIT) {
 			if (!this.stopWithClean) {
-				for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
-					if (this.bakeAsyncCorrupted.needRebake()) {
-						this.renderLayers.get(layer).releaseTemp();
-						continue;
-					}
+				if (this.bakeAsyncCorrupted.needRebake()) {
+					this.releaseUploadingWaited();
+				} else for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
 					if (this.currentRebakeTask == RebakeReason.REBUILD) {
 						this.renderLayers.get(layer).uploadMesh();
 					} else if (this.currentRebakeTask == RebakeReason.RESORT) {
@@ -254,7 +260,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 
 	private void stopAsyncWithTask(RebakeReason rebakeReason) {
 		this.bakeTask.cancel();
-		this.bakeAsyncCorrupted = rebakeReason.compare(this.bakeAsyncCorrupted);
+		this.bakeAsyncCorrupted = rebakeReason.compareAndUp(this.bakeAsyncCorrupted);
 	}
 
 	protected void destroyAll() {
@@ -271,8 +277,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 
 	private void destroy() {
 		if (this.destroying.compareAndSet(false, true)) {
-			for (PlayerSectionLayer layer : PlayerSectionLayer.values())
-				this.renderLayers.get(layer).releaseTemp();
+			this.releaseUploadingWaited();
 		}
 	}
 
@@ -291,7 +296,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 			return this != NO;
 		}
 
-		RebakeReason compare(RebakeReason oldReason) {
+		RebakeReason compareAndUp(RebakeReason oldReason) {
 			if (oldReason == null) return this;
 			if (this.ordinal() >= oldReason.ordinal()) return this;
 			return oldReason;

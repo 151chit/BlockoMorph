@@ -8,6 +8,7 @@ import net.blockomorph.core.render.layers.PlayerSectionLayer;
 import net.blockomorph.core.render.layers.PlayerSectionLayerGroup;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.util.Mth;
@@ -43,9 +44,9 @@ public class AsyncRenderersStorage {
 		return this.renderers[sectionIndex].checkAsyncAndGetWorkStatus(dispatcher);
 	}
 
-	protected void drawOnGpu(PlayerSectionLayerGroup layers, Vec3 camPos, float deltaTick) {
+	protected void drawOnGpu(PlayerSectionLayerGroup layers, Vec3 camPos, float deltaTick, Frustum frustum) {
 		if (this.player != null && this.player.player().isRemoved()) this.player = null;
-		if (!this.shouldRender()) return;
+		if (!this.shouldRender(frustum)) return;
 		AsyncBlocksRenderer[] forRender = this.renderers;
 		for (PlayerSectionLayer layer : layers.layers()) {
 			if (layer.isTranslucent()) {
@@ -63,15 +64,15 @@ public class AsyncRenderersStorage {
 		}
 	}
 
-	private boolean shouldRender() {
+	private boolean shouldRender(Frustum frustum) {
 		var localPlayer = GuiUtils.MC.player;
 		var camera = GuiUtils.MC.gameRenderer.getMainCamera();
 		var entityRenderer = GuiUtils.MC.getEntityRenderDispatcher();
 
 		if (this.player == null || localPlayer == null) return false;
 
-		boolean base = entityRenderer.shouldRender(
-				this.player.player(), camera.getCullFrustum(), camera.position().x, camera.position().y, camera.position().z) ||
+		boolean base = frustum == null || entityRenderer.shouldRender(
+				this.player.player(), frustum, camera.position().x, camera.position().y, camera.position().z) ||
 				this.player.player().hasIndirectPassenger(localPlayer);
 		if (!base) return false;
 

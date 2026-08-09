@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.state.StateHolder;
 import java.util.UUID;
 
 public abstract class BakedBlocksRenderer {
-	private final VertexDelegate adapter = new VertexDelegate() {
+	private final VertexDelegate fluidAdapter = new VertexDelegate() {
 		@Override
 		public VertexConsumer addVertex(float x, float y, float z) {
 			float xOffset = (float) (currentPos.getX() & 15);
@@ -36,13 +36,30 @@ public abstract class BakedBlocksRenderer {
 					z - zOffset + currentGetter.getAxisOffset(Direction.Axis.Z, currentPos));
 		}
 	};
-	private final FluidRenderer.Output fluidOutput = layer -> {
-		this.adapter.setDelegate(this.checkedGetOutput(PlayerSectionLayer.byChunkType(layer)));
-		return this.adapter;
+	private final VertexDelegate blockAdapter = new VertexDelegate() {
+		@Override
+		public VertexConsumer addVertex(float x, float y, float z) {
+			return super.addVertex(
+					x + currentGetter.getAxisOffset(Direction.Axis.X, currentPos),
+					y + currentGetter.getAxisOffset(Direction.Axis.Y, currentPos),
+					z + currentGetter.getAxisOffset(Direction.Axis.Z, currentPos));
+		}
+	};
+	private final BufferSource bufferSource = new BufferSource() {
+		@Override
+		public VertexConsumer getForBlock(PlayerSectionLayer layer) {
+			blockAdapter.setDelegate(checkedGetOutput(layer));
+			return blockAdapter;
+		}
+
+		@Override
+		public VertexConsumer getForFluid(PlayerSectionLayer layer) {
+			fluidAdapter.setDelegate(getOutput(layer));
+			return fluidAdapter;
+		}
 	};
 	private final PlatformBlockTesselator dependModule = RenderingPlatformService.INSTANCE.createBlockTessellator();
 	protected final UUID ownerId;
-	private FluidRenderer fluidRenderer;
 	private boolean cutOutLeaves;
 	private BlockStateModelSet blockModels;
 	private BlockStateModel currentModel;
@@ -72,7 +89,8 @@ public abstract class BakedBlocksRenderer {
 			return !this.isInterrupted();
 		});
 		this.currentGetter = null;
-		this.adapter.setDelegate(null);
+		this.blockAdapter.setDelegate(null);
+		this.fluidAdapter.setDelegate(null);
 	}
 
 	private void error(Exception e, String typeName, StateHolder<?, ?> type) {
@@ -81,10 +99,9 @@ public abstract class BakedBlocksRenderer {
 	}
 
 	private void checkRenderers() {
-		this.fluidRenderer = new FluidRenderer(GuiUtils.MC.getModelManager().getFluidStateModelSet());
 		this.blockModels = GuiUtils.MC.getModelManager().getBlockStateModelSet();
 		this.cutOutLeaves = GuiUtils.MC.options.cutoutLeaves().get();
-		this.dependModule.initRenderer(GuiUtils.MC.options.ambientOcclusion().get(), GuiUtils.MC.getBlockColors(), this::checkedGetOutput);
+		this.dependModule.initRenderer(this.bufferSource);
 	}
 
 	private void renderBlock() {
@@ -131,7 +148,7 @@ public abstract class BakedBlocksRenderer {
 		this.activateSprites();
 		this.currentGetter.noExternal(true);
 		try {
-			this.dependModule.tessellateFluid(this.fluidRenderer, this.fluidOutput, this.currentGetter, this.currentPos, this.currentState);
+			this.dependModule.tessellateFluid(this.currentGetter, this.currentPos, this.currentState);
 		} finally {
 			this.currentGetter.noExternal(false);
 		}
@@ -144,6 +161,11 @@ public abstract class BakedBlocksRenderer {
 				runner.activate$bm();
 			}
 		}
+	}
+
+	public interface BufferSource {
+		VertexConsumer getForBlock(PlayerSectionLayer layer);
+		VertexConsumer getForFluid(PlayerSectionLayer layer);
 	}
 
 	private static class VertexDelegate implements VertexConsumer {

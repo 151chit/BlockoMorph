@@ -300,11 +300,11 @@ public class InPlayerManager implements PlayerBlocksEditor {
 		if (block != null && tag != null) {
 			List<String> errs = block.loadFullTag(tag);
 			if (errs != null) {
-				serverPlayer.connection.send(ClientBoundServerBlockEntityTagPacket.createForError(errs, true).toVanillaServerBound());
+				serverPlayer.connection.send(ClientBoundServerBlockEntityTagPacket.createForError(errs, true).toVanillaClientbound());
 			} else {
 				CompoundTag newTag = this.owner.getTag(InPlayerBlockPos.ZERO);
 				if (newTag != null && !newTag.equals(tag)) {
-					serverPlayer.connection.send(ClientBoundServerBlockEntityTagPacket.createForError(List.of(), false).toVanillaServerBound());
+					serverPlayer.connection.send(ClientBoundServerBlockEntityTagPacket.createForError(List.of(), false).toVanillaClientbound());
 				}
 			}
 		}

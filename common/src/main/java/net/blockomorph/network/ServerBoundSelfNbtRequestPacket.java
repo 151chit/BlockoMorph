@@ -23,7 +23,7 @@ public final class ServerBoundSelfNbtRequestPacket implements BlockMorphPacket {
 		if (player instanceof PlayerAccessor pl && pl.isBlockomorphFullActive() && pl instanceof ServerPlayer serverPlayer) {
 			CompoundTag tag = pl.getTag(InPlayerBlockPos.ZERO);
 			if (tag == null) tag = new CompoundTag();
-			serverPlayer.connection.send(ClientBoundServerBlockEntityTagPacket.createForTag(tag).toVanillaServerBound());
+			serverPlayer.connection.send(ClientBoundServerBlockEntityTagPacket.createForTag(tag).toVanillaClientbound());
 		}
 	}
 }

@@ -5,11 +5,10 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(Level.class) @Debug(export = true)
+@Mixin(Level.class)
 public class LevelBoundsMixin {
 
 	@ModifyReturnValue(method = "isInWorldBoundsHorizontal", at = @At(value = "RETURN"))
