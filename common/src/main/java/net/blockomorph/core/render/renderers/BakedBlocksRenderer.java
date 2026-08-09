@@ -48,7 +48,7 @@ public abstract class BakedBlocksRenderer {
 	private final BufferSource bufferSource = new BufferSource() {
 		@Override
 		public VertexConsumer getForBlock(PlayerSectionLayer layer) {
-			blockAdapter.setDelegate(checkedGetOutput(layer));
+			blockAdapter.setDelegate(getOutput(checkRenderType(layer)));
 			return blockAdapter;
 		}
 
@@ -110,10 +110,6 @@ public abstract class BakedBlocksRenderer {
 
 	protected boolean isInterrupted() {
 		return false;
-	}
-
-	private VertexConsumer checkedGetOutput(PlayerSectionLayer layer) {
-		return this.getOutput(checkRenderType(layer));
 	}
 
 	protected abstract VertexConsumer getOutput(PlayerSectionLayer layer);
