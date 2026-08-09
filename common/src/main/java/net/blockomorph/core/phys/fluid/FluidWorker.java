@@ -11,18 +11,18 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-public abstract class FluidWorker {
-	private Object lastKey;
+public abstract class FluidWorker<FLUID_KEY> {
+	private FLUID_KEY lastKey;
 	private FluidTracker lastTracker;
 
-	protected abstract Object keyForBlock(BlockInPlayer2 block);
-	protected abstract FluidTracker trackerForBlock(BlockInPlayer2 block);
-
-	protected FluidState blockToFluidState(BlockInPlayer2 block) {
+	protected abstract FLUID_KEY keyForBlock(FluidState fluid);
+	protected abstract FluidTracker trackerForBlock(FluidState fluid);
+	protected boolean isPushedByFluid(FluidState fluid) { return true; }
+	private FluidState blockToFluid(BlockInPlayer2 block) {
 		return block.getBlockState().getFluidState();
 	}
 
-	public void handleFluid(Entity self, AABB fluidCollisionBox, boolean ignoreCurrent) {
+	public void handleFluid(Entity self, AABB fluidCollisionBox, boolean doNotPush) {
 		PlayersStorage storage = PlayersStorage.ofLevel(self.level());
 		try (storage) {
 			for (Player player : storage.findMorphedPlayers(self, fluidCollisionBox)) {
@@ -32,35 +32,43 @@ public abstract class FluidWorker {
 						if (block.shouldDoFluidAction()) {
 							FluidState fluidState = block.getBlockState().getFluidState();
 							if (!fluidState.isEmpty()) {
-								handleBlock(self, fluidCollisionBox, block, ignoreCurrent);
+								handleBlock(self, fluidCollisionBox, block, doNotPush);
 							}
 						}
 					}
 				}
 			}
 		}
+		this.resetCache();
 	}
 
-	private void handleBlock(Entity self, AABB collideBox, BlockInPlayer2 block, boolean ignoreCurrent) {
+	private void resetCache() {
+		this.lastKey = null;
+		this.lastTracker = null;
+	}
+
+	private void handleBlock(Entity self, AABB collideBox, BlockInPlayer2 block, boolean doNotPush) {
 		FluidState fluidState = block.getBlockState().getFluidState();
 		double fluidBottom = MorphMath.getRealBlockPosAxis(Direction.Axis.Y, block);
 		double fluidTop = fluidBottom + fluidState.getHeight(self.level(), block.getPos());
 		if (!(fluidTop < collideBox.minY)) {
 			this.cacheTracker(block);
 			if (this.lastTracker != null) {
-				this.lastTracker.doAdditional$bm();
+				this.lastTracker.onFluidTouched$bm();
 				this.handleEyeInside(block, self, fluidBottom, fluidTop);
 				this.lastTracker.setFluidHeight$bm(Math.max(fluidTop - self.getBoundingBox().minY, this.lastTracker.getFluidHeight$bm()));
-				if (!ignoreCurrent) this.applyMovement(self, block);
+				if (!doNotPush && this.isPushedByFluid(this.blockToFluid(block))) this.applyMovement(self, block);
 			}
 		}
 	}
 
 	private void cacheTracker(BlockInPlayer2 block) {
-		Object idKey = this.keyForBlock(block);
-		if (this.lastKey != idKey) {
+		FLUID_KEY idKey = this.keyForBlock(this.blockToFluid(block));
+		if (idKey == null) {
+			this.resetCache();
+		} else if (this.lastKey != idKey) {
 			this.lastKey = idKey;
-			this.lastTracker = this.trackerForBlock(block);
+			this.lastTracker = this.trackerForBlock(this.blockToFluid(block));
 		}
 	}
 

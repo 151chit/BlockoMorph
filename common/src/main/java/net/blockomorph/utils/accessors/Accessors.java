@@ -1,11 +1,9 @@
 package net.blockomorph.utils.accessors;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
-import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.commands.arguments.blocks.BlockInput;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -50,13 +48,6 @@ public enum Accessors {;
 		double getCoords$bm(Direction.Axis axis);
 		static ParticleAccessor of(Particle particle) {
 			return (ParticleAccessor) particle;
-		}
-	}
-
-	public interface SpriteAccessor {
-		NativeImage getImage$bm();
-		static SpriteAccessor of(SpriteContents contents) {
-			return (SpriteAccessor) contents;
 		}
 	}
 

@@ -4,6 +4,8 @@ import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.CardinalLighting;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -70,6 +72,26 @@ public interface InPlayerBlockAndTintGetter extends BlockAndTintGetter {
 	@Override
 	default FluidState getFluidState(BlockPos pos) {
 		return this.getBlockState(pos).getFluidState();
+	}
+
+	@Override
+	default int getBlockTint(BlockPos pos, ColorResolver color) {
+		return this.getRealWorld().getBlockTint(this.translateToReal(pos), color);
+	}
+
+	@Override
+	default int getHeight() {
+		return this.getRealWorld().getHeight();
+	}
+
+	@Override
+	default int getMinY() {
+		return this.getRealWorld().getMinY();
+	}
+
+	@Override
+	default CardinalLighting cardinalLighting() {
+		return this.getRealWorld().cardinalLighting();
 	}
 
 	@SuppressWarnings("BooleanMethodIsAlwaysInverted")

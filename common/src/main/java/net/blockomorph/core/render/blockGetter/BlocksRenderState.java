@@ -9,8 +9,6 @@ import net.blockomorph.utils.side.MinecraftThreadLocal;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.level.CardinalLighting;
-import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -161,16 +159,6 @@ public abstract class BlocksRenderState implements InPlayerBlockAndTintGetter {
 	}
 
 	@Override
-	public CardinalLighting cardinalLighting() {
-		return this.asyncWorldAccess.cardinalLighting();
-	}
-
-	@Override
-	public int getBlockTint(BlockPos pos, ColorResolver color) {
-		return this.getRealWorld().getBlockTint(this.translateToReal(pos), color);
-	}
-
-	@Override
 	public LevelLightEngine getLightEngine() {
 		return this.lightEngine;
 	}
@@ -199,15 +187,5 @@ public abstract class BlocksRenderState implements InPlayerBlockAndTintGetter {
 		BlockInfo data = this.renderBlocks.get(i);
 		if (data == null || (data.external && this.noExternal.get())) return Blocks.AIR.defaultBlockState();
 		return data.blockState;
-	}
-
-	@Override
-	public int getHeight() {
-		return this.asyncWorldAccess.getHeight();
-	}
-
-	@Override
-	public int getMinY() {
-		return this.asyncWorldAccess.getMinY();
 	}
 }

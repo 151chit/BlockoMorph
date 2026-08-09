@@ -7,7 +7,7 @@ public interface FluidTracker {
 	void setFluidHeight$bm(double height);
 	double getFluidHeight$bm();
 	void accumulateCurrent$bm(Vec3 vec);
-	default void doAdditional$bm() {}
+	default void onFluidTouched$bm() {}
 
 	static FluidTracker of(Object tr) {
 		return (FluidTracker) tr;

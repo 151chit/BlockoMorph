@@ -159,7 +159,6 @@
     "main.LEGACY.LightningMixin",
     "main.rawAccessors.GuiGraphicsAcc",
     "main.rawAccessors.ParticleAcc",
-    "main.rawAccessors.SpriteContentsAcc",
     "main.register.network.ClientListener",
     "main.suppressVanilla.deathAnim.LocalPlayerMixin",
     "main.suppressVanilla.render.HitboxesMixin",

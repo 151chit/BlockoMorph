@@ -11,8 +11,6 @@ import net.blockomorph.utils.MorphUtils;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.level.CardinalLighting;
-import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -210,27 +208,7 @@ public abstract class ProxyPlayerBlockGetter implements InPlayerBlockAndTintGett
 	}
 
 	@Override
-	public CardinalLighting cardinalLighting() {
-		return this.getRealWorld().cardinalLighting();
-	}
-
-	@Override
 	public LevelLightEngine getLightEngine() {
 		return this.lightEngine;
-	}
-
-	@Override
-	public int getBlockTint(BlockPos pos, ColorResolver color) {
-		return this.getRealWorld().getBlockTint(this.translateToReal(pos), color);
-	}
-
-	@Override
-	public int getHeight() {
-		return this.getRealWorld().getHeight();
-	}
-
-	@Override
-	public int getMinY() {
-		return this.getRealWorld().getMinY();
 	}
 }
