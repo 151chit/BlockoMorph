@@ -8,7 +8,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityFluidInteraction;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
-import net.neoforged.neoforge.common.extensions.IEntityExtension;
 import net.neoforged.neoforge.fluids.FluidType;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Map;
 
 @Mixin(EntityFluidInteraction.class)
-public abstract class FluidInteractionMixin implements IEntityExtension {
+public abstract class FluidInteractionMixin {
 	@Shadow @Final private Map<FluidType, FluidTracker> trackerByFluid;
 	@Unique
 	private final FluidWorker<?> worker = new FluidWorker<>() {
@@ -35,7 +34,7 @@ public abstract class FluidInteractionMixin implements IEntityExtension {
 
 		@Override
 		protected boolean isPushedByFluid(FluidState fluid) {
-			return FluidInteractionMixin.this.isPushedByFluid(fluid.getFluidType());
+			return currentEntity.isPushedByFluid(fluid.getFluidType());
 		}
 
 		@Override
@@ -43,10 +42,13 @@ public abstract class FluidInteractionMixin implements IEntityExtension {
 			return getTracker(fluid);
 		}
 	};
+	@Unique private Entity currentEntity;
 
 	@Inject(method = "update", at = @At("TAIL"))
 	private void handle(Entity entity, boolean ignoreCurrent, CallbackInfo ci) {
+		this.currentEntity = entity;
 		this.worker.handleFluid(entity, entity.getFluidInteractionBox(), ignoreCurrent);
+		this.currentEntity = null;
 	}
 
 
