@@ -1,4 +1,4 @@
-package net.blockomorph.mixins.main.system.inPlayerManager.render;
+package net.blockomorph.mixins.main.system.inPlayerManager.render.baker;
 
 import net.blockomorph.core.ClientInPlayerManager;
 import net.blockomorph.core.PlayerAccessor;

@@ -58,10 +58,14 @@ public class PlayersAsyncBakersManager implements AutoCloseable {
 		}
 	}
 
-	@Override
-	public void close() {
+	public void clearAllPlayers() {
 		this.renderers.values().forEach(AsyncRenderersStorage::destroy);
 		this.renderers.clear();
+	}
+
+	@Override
+	public void close() {
+		this.clearAllPlayers();
 		if (this.needShutdownExecutor)
 			this.closePool();
 	}

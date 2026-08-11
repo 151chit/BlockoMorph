@@ -1,9 +1,9 @@
-package net.blockomorph.mixins.main.system.inPlayerManager.render;
+package net.blockomorph.mixins.main.system.inPlayerManager.render.state;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.blockomorph.core.ClientInPlayerManager;
 import net.blockomorph.core.PlayerAccessor;
-import net.blockomorph.core.render.SubmitNodeCollectorWrapper;
+import net.blockomorph.core.render.utils.SubmitNodeCollectorWrapper;
 import net.blockomorph.core.render.dispatch.MorphedPlayerRenderState;
 import net.blockomorph.utils.mixin.FastInject;
 import net.minecraft.client.renderer.SubmitNodeCollector;

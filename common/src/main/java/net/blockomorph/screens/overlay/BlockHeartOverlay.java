@@ -1,6 +1,6 @@
 package net.blockomorph.screens.overlay;
 
-import net.blockomorph.core.render.RenderingPlatformService;
+import net.blockomorph.core.render.utils.RenderingPlatformService;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.core.BlockInPlayer2;
 import net.blockomorph.core.PlayerAccessor;

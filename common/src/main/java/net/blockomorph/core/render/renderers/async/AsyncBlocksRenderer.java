@@ -8,15 +8,18 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.vertex.*;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.blockomorph.core.PlayerAccessor;
 import net.blockomorph.core.coords.math.MorphMath;
 import net.blockomorph.core.render.layers.PlayerSectionLayer;
 import net.blockomorph.core.render.layers.PlayerSectionLayerGroup;
 import net.blockomorph.core.render.renderers.BakedBlocksRenderer;
+import net.blockomorph.core.storage.BlocksInPlayerStorage;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.MorphUtils;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -32,11 +35,12 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 	private static final Matrix4f TEXTURE_MATRIX = new Matrix4f();
 	private final Vector3f playerPosOffset = new Vector3f();
 	private final EnumMap<PlayerSectionLayer, PlayerRenderLayer> renderLayers = new EnumMap<>(PlayerSectionLayer.class);
+	private final Set<TextureAtlasSprite> animatedSprites = new ObjectOpenHashSet<>(BlocksInPlayerStorage.ONE_AXIS);
 	private final AsyncRenderersStorage rootStorage;
 	private final SectionPos pos;
 	private VertexSorting sorter;
 	private volatile AsyncState state = AsyncState.OFF;
-	private volatile PlayerSectionCompileQueue.PlayerCompileTask bakeTask;
+	private PlayerSectionCompileQueue.PlayerCompileTask bakeTask;
 	private RebakeReason currentRebakeTask = RebakeReason.NO;
 	private RebakeReason bakeAsyncCorrupted = RebakeReason.NO;
 	private boolean hasOld, stopWithClean;
@@ -81,9 +85,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 			}
 			case YES -> {
 				if (this.bakeAsyncCorrupted.needRebake()) {
-					RebakeReason info = this.bakeAsyncCorrupted;
-					this.bakeAsyncCorrupted = RebakeReason.NO;
-					yield this.rebake(renderer, info);
+					yield this.rebake(renderer, this.bakeAsyncCorrupted);
 				}
 				yield this.hasOld ? ImmediateRenderState.DISABLED : ImmediateRenderState.FREEZE;
 			}
@@ -92,6 +94,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 
 	private void resetState() {
 		this.state = AsyncState.OFF;
+		this.bakeTask = null;
 		this.stopWithClean = false;
 		this.bakeAsyncCorrupted = RebakeReason.NO;
 		this.currentRebakeTask = RebakeReason.NO;
@@ -106,8 +109,10 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 
 	private ImmediateRenderState rebake(AsyncDispatcher renderer, RebakeReason rebakeReason) {
 		if (!rebakeReason.needRebake()) throw new IllegalStateException(rebakeReason.name());
+		rebakeReason = rebakeReason.compareAndUp(this.currentRebakeTask);
 		if (this.state.stable()) {
 			this.state = AsyncState.BAKING;
+			this.bakeAsyncCorrupted = RebakeReason.NO;
 			this.bakeTask = rebakeReason == RebakeReason.REBUILD ? this.formRebuildTask(renderer) : this.formResortTask();
 			this.bakeSorter();
 			this.releaseUploadingWaited();
@@ -137,6 +142,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 	private PlayerSectionCompileQueue.PlayerCompileTask formRebuildTask(AsyncDispatcher renderer) {
 		var blocksSnapshot = renderer.makeSnapshot(this.pos);
 		this.currentRebakeTask = RebakeReason.REBUILD;
+		this.initOnMainThread();
 		return new PlayerSectionCompileQueue.PlayerCompileTask(this, () -> {
 			try {
 				this.renderBlocks(blocksSnapshot);
@@ -168,16 +174,21 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 			if (!this.stopWithClean) {
 				if (this.bakeAsyncCorrupted.needRebake()) {
 					this.releaseUploadingWaited();
-				} else for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
-					if (this.currentRebakeTask == RebakeReason.REBUILD) {
-						this.renderLayers.get(layer).uploadMesh();
-					} else if (this.currentRebakeTask == RebakeReason.RESORT) {
-						this.renderLayers.get(layer).uploadResortBuffer();
-					} else throw new IllegalStateException();
+				} else {
+					for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
+						if (this.currentRebakeTask == RebakeReason.REBUILD) {
+							this.renderLayers.get(layer).uploadMesh();
+						} else if (this.currentRebakeTask == RebakeReason.RESORT) {
+							this.renderLayers.get(layer).uploadResortBuffer();
+						} else throw new IllegalStateException();
+					}
+					this.animatedSprites.clear();
+					this.animatedSprites.addAll(this.getCollectedAnimatedSprites());
+					this.currentRebakeTask = RebakeReason.NO;
+					this.hasOld = true;
 				}
-				this.currentRebakeTask = RebakeReason.NO;
-				this.hasOld = true;
 				this.state = AsyncState.ON;
+				this.bakeTask = null;
 			} else {
 				this.resetState();
 			}
@@ -186,6 +197,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 
 	private void drawInternal(PlayerSectionLayerGroup group) {
 		if (this.hasOld && this.state != AsyncState.OFF) {
+			this.animatedSprites.forEach(this::activateSprite);
 			RenderTarget texture = group.chunkType().outputTarget();
 			GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
 					.writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, this.playerPosOffset, TEXTURE_MATRIX);
@@ -241,7 +253,6 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 		if (needUploadMesh) for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
 			this.renderLayers.get(layer).terminateBuilderAndTrySaveMesh();
 		}
-		this.bakeTask = null;
 		this.state = AsyncState.UPLOADING_WAIT;
 		if (this.finallyTerminate) {
 			this.destroy();
@@ -339,7 +350,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 		BufferBuilder makeOrGetBuilder() {
 			var meshBuilder = this.currentBuilder;
 			if (meshBuilder == null) {
-				this.currentBuilder = meshBuilder = new BufferBuilder(this.allocator, VertexFormat.Mode.QUADS, this.layer.chunkType().vertexFormat());
+				this.currentBuilder = meshBuilder = new BufferBuilder(this.allocator, VertexFormat.Mode.QUADS, this.layer.chunkType().pipeline().getVertexFormat());
 			}
 			return meshBuilder;
 		}

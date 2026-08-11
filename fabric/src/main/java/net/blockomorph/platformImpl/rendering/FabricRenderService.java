@@ -1,7 +1,7 @@
 package net.blockomorph.platformImpl.rendering;
 
 import net.blockomorph.core.InPlayerManager;
-import net.blockomorph.core.render.RenderingPlatformService;
+import net.blockomorph.core.render.utils.RenderingPlatformService;
 import net.blockomorph.core.render.blockGetter.BlocksRenderState;
 import net.blockomorph.core.render.blockGetter.ProxyPlayerBlockGetter;
 import net.blockomorph.core.render.renderers.PlatformBlockTesselator;
