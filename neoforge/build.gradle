@@ -8,8 +8,6 @@ base.archivesName = "blockomorph-" + minecraft_version + "-neoforge-" + mod_vers
 
 neoForge {
     version = neoforge_loader_version
-    accessTransformers.from file('src/main/resources/META-INF/accesstransformer.cfg')
-
     runs {
         client {
             client()
