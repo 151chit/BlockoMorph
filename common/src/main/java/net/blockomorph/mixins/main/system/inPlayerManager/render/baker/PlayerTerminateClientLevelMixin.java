@@ -1,4 +1,4 @@
-package net.blockomorph.mixins.main.system.inPlayerManager.render;
+package net.blockomorph.mixins.main.system.inPlayerManager.render.baker;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.blockomorph.core.render.renderers.async.PlayersAsyncBakersManager;

@@ -1,7 +1,7 @@
 package net.blockomorph.core.render.renderers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.blockomorph.core.render.SortedRenderOutput;
+import net.blockomorph.core.render.utils.SortedRenderOutput;
 import net.blockomorph.core.render.dispatch.MorphedPlayerRenderState;
 
 public interface MorphedRenderer {

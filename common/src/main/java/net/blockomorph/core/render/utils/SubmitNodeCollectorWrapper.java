@@ -1,4 +1,4 @@
-package net.blockomorph.core.render;
+package net.blockomorph.core.render.utils;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
@@ -53,8 +53,9 @@ public class SubmitNodeCollectorWrapper implements SortedRenderOutput {
 	public void appendBreaks(PoseStack poseStack, BlockState block, long seed, int progress) {
 		BlockStateModel model = GuiUtils.MC.getModelManager().getBlockModelShaper().getBlockModel(block);
 		var renderType = ModelBakery.DESTROY_TYPES.get(progress);
-		this.submitNodeCollector.get().submitCustomGeometry(poseStack, renderType, (pose, consumer) -> {
-			VertexConsumer vertexConsumer = new SheetedDecalTextureGenerator(consumer, pose, 1);
+		this.submitNodeCollector.get().submitCustomGeometry(poseStack, renderType, (pose, ignore) -> {
+			var buf = GuiUtils.MC.renderBuffers().crumblingBufferSource();
+			VertexConsumer vertexConsumer = new SheetedDecalTextureGenerator(buf.getBuffer(renderType), pose, 1);
 			ModelBlockRenderer.renderModel(pose, vertexConsumer, model, 1.0F, 1.0F, 1.0F, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
 		});
 	}

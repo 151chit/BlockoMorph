@@ -1,4 +1,4 @@
-package net.blockomorph.core.render;
+package net.blockomorph.core.render.utils;
 
 import net.blockomorph.core.InPlayerManager;
 import net.blockomorph.core.render.blockGetter.BlocksRenderState;

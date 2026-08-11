@@ -1,13 +1,16 @@
 package net.blockomorph.core.render.renderers;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.blockomorph.core.coords.InPlayerBlockPos;
-import net.blockomorph.core.render.RenderingPlatformService;
+import net.blockomorph.core.render.utils.RenderingPlatformService;
 import net.blockomorph.core.render.blockGetter.InPlayerBlockAndTintGetter;
 import net.blockomorph.core.render.layers.PlayerSectionLayer;
+import net.blockomorph.core.storage.BlocksInPlayerStorage;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.accessors.CompatAccessors;
+import net.blockomorph.utils.compat.AtlasSpriteFinder;
+import net.blockomorph.utils.compat.CompatAccessors;
 import net.minecraft.client.renderer.block.*;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.rendertype.RenderType;
@@ -15,36 +18,28 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.data.AtlasIds;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateHolder;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 public abstract class BakedBlocksRenderer {
-	private final VertexDelegate fluidAdapter = new VertexDelegate() {
+	private final PlayerTransofrmerVertexConsumer fluidAdapter = new PlayerTransofrmerVertexConsumer() {
 		@Override
 		public VertexConsumer addVertex(float x, float y, float z) {
 			float xOffset = (float) (currentPos.getX() & 15);
 			float yOffset = (float) (currentPos.getY() & 15);
 			float zOffset = (float) (currentPos.getZ() & 15);
-			return super.addVertex(
-					x - xOffset + currentGetter.getAxisOffset(Direction.Axis.X, currentPos),
-					y - yOffset + currentGetter.getAxisOffset(Direction.Axis.Y, currentPos),
-					z - zOffset + currentGetter.getAxisOffset(Direction.Axis.Z, currentPos));
+			return super.addVertex(x - xOffset, y - yOffset, z - zOffset);
 		}
 	};
-	private final VertexDelegate blockAdapter = new VertexDelegate() {
-		@Override
-		public VertexConsumer addVertex(float x, float y, float z) {
-			return super.addVertex(
-					x + currentGetter.getAxisOffset(Direction.Axis.X, currentPos),
-					y + currentGetter.getAxisOffset(Direction.Axis.Y, currentPos),
-					z + currentGetter.getAxisOffset(Direction.Axis.Z, currentPos));
-		}
-	};
+	private final PlayerTransofrmerVertexConsumer blockAdapter = new PlayerTransofrmerVertexConsumer();
 	private final BufferSource bufferSource = new BufferSource() {
 		@Override
 		public VertexConsumer getForBlock(PlayerSectionLayer layer) {
@@ -59,6 +54,8 @@ public abstract class BakedBlocksRenderer {
 		}
 	};
 	private final PlatformBlockTesselator dependModule = RenderingPlatformService.INSTANCE.createBlockTessellator();
+	private final Set<TextureAtlasSprite> collectedAnimatedSprites = new ObjectOpenHashSet<>(BlocksInPlayerStorage.ONE_AXIS);
+	private final Set<TextureAtlasSprite> exportedCollectedSprites = Collections.unmodifiableSet(this.collectedAnimatedSprites);
 	protected final UUID ownerId;
 	private boolean cutOutLeaves;
 	private BlockModelShaper blockModels;
@@ -72,6 +69,7 @@ public abstract class BakedBlocksRenderer {
 	}
 
 	protected void renderBlocks(InPlayerBlockAndTintGetter inPlayerWorld) {
+		this.collectedAnimatedSprites.clear();
 		this.checkRenderers();
 		this.currentGetter = inPlayerWorld;
 		this.currentGetter.forEachRenderBlocks((keyPos, blockState, renderFluid) -> {
@@ -91,6 +89,21 @@ public abstract class BakedBlocksRenderer {
 		this.currentGetter = null;
 		this.blockAdapter.setDelegate(null);
 		this.fluidAdapter.setDelegate(null);
+	}
+
+	protected Set<TextureAtlasSprite> getCollectedAnimatedSprites() {
+		return this.exportedCollectedSprites;
+	}
+
+	protected void activateSprite(TextureAtlasSprite sprite) {
+		if (sprite.contents() instanceof CompatAccessors.SodiumSpriteActivator activator) {
+			activator.activate$bm();
+		}
+	}
+
+	protected void initOnMainThread() {
+		this.blockAdapter.init();
+		this.fluidAdapter.init();
 	}
 
 	private void error(Exception e, String typeName, StateHolder<?, ?> type) {
@@ -120,6 +133,8 @@ public abstract class BakedBlocksRenderer {
 		}
 		this.currentState = state;
 		this.currentPos = pos;
+		this.blockAdapter.resetUv();
+		this.fluidAdapter.resetUv();
 	}
 
 	public static RenderType layerToRenderType(PlayerSectionLayer layer) {
@@ -153,9 +168,13 @@ public abstract class BakedBlocksRenderer {
 	private void activateSprites() {
 		var sprites = RenderingPlatformService.INSTANCE.spritesForFluid(this.currentGetter, this.currentPos, this.currentState);
 		for (TextureAtlasSprite sprite : sprites) {
-			if (sprite != null && sprite.contents() instanceof CompatAccessors.SodiumSpriteActivator runner) {
-				runner.activate$bm();
-			}
+			this.addSpriteForTick(sprite);
+		}
+	}
+
+	private void addSpriteForTick(TextureAtlasSprite sprite) {
+		if (sprite != null && sprite.contents() instanceof CompatAccessors.SodiumSpriteActivator activator && activator.hasAnim$bm()) {
+			this.collectedAnimatedSprites.add(sprite);
 		}
 	}
 
@@ -164,21 +183,60 @@ public abstract class BakedBlocksRenderer {
 		VertexConsumer getForFluid(PlayerSectionLayer layer);
 	}
 
-	private static class VertexDelegate implements VertexConsumer {
+	private class PlayerTransofrmerVertexConsumer implements VertexConsumer {
+		volatile AtlasSpriteFinder finder;
+		int vertexCount;
+		float u, v;
 		VertexConsumer original;
 
 		void setDelegate(VertexConsumer consumer) {
 			this.original = consumer;
 		}
 
-		void ensureNotEmpty() {
+		void init() {
+			if (GuiUtils.MC.getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS) instanceof AtlasSpriteFinder.Holder finderHolder) {
+				this.finder = finderHolder.getOrMake();
+				return;
+			}
+			this.finder = null;
+		}
+
+		void resetUv() {
+			this.vertexCount = 0;
+			this.u = 0;
+			this.v = 0;
+		}
+
+		private void ensureNotEmpty() {
 			if (this.original == null) throw new IllegalStateException("NotActive");
 		}
 
-		@Override public VertexConsumer addVertex(float x, float y, float z) { this.ensureNotEmpty(); this.original.addVertex(x, y, z); return this; }
+		@Override
+		public VertexConsumer addVertex(float x, float y, float z) {
+			this.ensureNotEmpty();
+			this.original.addVertex(x + currentGetter.getAxisOffset(Direction.Axis.X, currentPos),
+					y + currentGetter.getAxisOffset(Direction.Axis.Y, currentPos),
+					z + currentGetter.getAxisOffset(Direction.Axis.Z, currentPos));
+			return this;
+		}
+
+		@Override
+		public VertexConsumer setUv(float u, float v) {
+			this.ensureNotEmpty();
+			this.original.setUv(u, v);
+			this.u += u;
+			this.v += v;
+			this.vertexCount++;
+			if (this.vertexCount == 4) {
+				this.resetUv();
+				if (this.finder != null)
+					addSpriteForTick(this.finder.find(this.u * 0.25f, this.v * 0.25f));
+			}
+			return this;
+		}
+
 		@Override public VertexConsumer setColor(int r, int g, int b, int a) { this.ensureNotEmpty(); this.original.setColor(r, g, b, a); return this; }
 		@Override public VertexConsumer setColor(int color) { this.ensureNotEmpty(); this.original.setColor(color); return this; }
-		@Override public VertexConsumer setUv(float u, float v) { this.ensureNotEmpty(); this.original.setUv(u, v); return this; }
 		@Override public VertexConsumer setUv1(int u, int v) { this.ensureNotEmpty(); this.original.setUv1(u, v); return this; }
 		@Override public VertexConsumer setUv2(int u, int v) { this.ensureNotEmpty(); this.original.setUv2(u, v); return this; }
 		@Override public VertexConsumer setNormal(float x, float y, float z) { this.ensureNotEmpty(); this.original.setNormal(x, y, z); return this; }

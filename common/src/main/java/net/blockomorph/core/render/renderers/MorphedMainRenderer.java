@@ -3,7 +3,7 @@ package net.blockomorph.core.render.renderers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.blockomorph.core.*;
 import net.blockomorph.core.coords.InPlayerBlockPos;
-import net.blockomorph.core.render.SortedRenderOutput;
+import net.blockomorph.core.render.utils.SortedRenderOutput;
 import net.blockomorph.core.render.dispatch.MorphedPlayerRenderState;
 import net.blockomorph.core.render.dispatch.MorphedRenderStateExtractor;
 import net.blockomorph.core.render.renderers.async.AsyncRenderersStorage;

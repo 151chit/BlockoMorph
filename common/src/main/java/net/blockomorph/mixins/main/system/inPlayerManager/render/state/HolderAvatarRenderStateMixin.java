@@ -1,4 +1,4 @@
-package net.blockomorph.mixins.main.system.inPlayerManager.render;
+package net.blockomorph.mixins.main.system.inPlayerManager.render.state;
 
 import net.blockomorph.core.render.dispatch.MorphedPlayerRenderState;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;

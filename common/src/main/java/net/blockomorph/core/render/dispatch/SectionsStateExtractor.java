@@ -7,7 +7,7 @@ import net.blockomorph.core.BlockInPlayer2;
 import net.blockomorph.core.ClientInPlayerManager;
 import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.blockomorph.core.coords.math.MorphMath;
-import net.blockomorph.core.render.RenderingPlatformService;
+import net.blockomorph.core.render.utils.RenderingPlatformService;
 import net.blockomorph.core.render.blockGetter.BlocksRenderState;
 import net.blockomorph.core.render.blockGetter.InPlayerBlockAndTintGetter;
 import net.blockomorph.core.render.blockGetter.ProxyPlayerBlockGetter;

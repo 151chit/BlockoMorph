@@ -3,7 +3,7 @@ package net.blockomorph.core.render.renderers;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.blockomorph.core.render.SortedRenderOutput;
+import net.blockomorph.core.render.utils.SortedRenderOutput;
 import net.blockomorph.core.render.dispatch.MorphedPlayerRenderState;
 import net.blockomorph.core.render.layers.PlayerSectionLayer;
 import org.joml.Vector3f;
@@ -27,6 +27,7 @@ public class DirectBlocksRenderer extends BakedBlocksRenderer {
 		this.currentStack = stack;
 		var blocksData = bm.immediateBlocksData;
 		if (blocksData == null) return;
+		this.initOnMainThread();
 		for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
 			this.buffers.put(layer, new VertexRecorder() {
 				@Override
@@ -48,6 +49,7 @@ public class DirectBlocksRenderer extends BakedBlocksRenderer {
 			collector.appendChunkMovingBlocks(stack, layer, (ignored, buffer) ->
 					recorder.replay(buffer));
 		}
+		this.getCollectedAnimatedSprites().forEach(this::activateSprite);
 		this.buffers.clear();
 		this.currentStack = null;
 	}
