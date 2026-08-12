@@ -150,8 +150,6 @@
     "compat.betterf3.TargetLineMixin",
     "compat.create.BeltHandlerMixin",
     "compat.flywheel.Flywheel_BM_BackendMixin",
-    "compat.sodium.BlockOcclusionCacheMixin",
-    "compat.sodium.SmoothPipelineMixin",
     "compat.sodium.SpriteContentsAcc",
     "compat.sodium.TextureAtlasMixin",
     "main.gui.GuiOverlayMixin",
