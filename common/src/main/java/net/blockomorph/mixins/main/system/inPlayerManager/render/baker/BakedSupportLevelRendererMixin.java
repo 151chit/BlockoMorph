@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(LevelRenderer.class) @Debug(export = true)
+@Mixin(LevelRenderer.class)
 public class BakedSupportLevelRendererMixin implements PlayersAsyncBakersManager.Provider {
 	@Shadow private @Nullable ClientLevel level;
 	@Shadow @Final private Minecraft minecraft;
