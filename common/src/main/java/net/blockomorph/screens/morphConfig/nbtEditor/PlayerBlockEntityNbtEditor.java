@@ -7,9 +7,9 @@ import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.screens.utils.SpriteImageButton;
 import net.blockomorph.utils.BannedBlock;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.PlayerAccessor;
-import net.blockomorph.utils.config.ConfigEnums;
-import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.core.PlayerAccessor;
+import net.blockomorph.utils.config.enums.ConfigEnums;
+import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
@@ -50,12 +50,12 @@ public class PlayerBlockEntityNbtEditor extends NbtEditorScreen implements Confi
 	protected void init() {
 		super.init();
 		if (!this.init) {
-			MorphUtils.sendServer(new ServerBoundSelfNbtRequestPacket());
+			MorphUtils.sendServer(ServerBoundSelfNbtRequestPacket.INSTANCE);
 			this.init = true;
 		}
 
 		SpriteImageButton refreshButton = new SpriteImageButton(this.leftPos + 156, this.topPos + 6, 16, 16, BUTTON_REFRESH, b -> {
-			MorphUtils.sendServer(new ServerBoundSelfNbtRequestPacket());
+			MorphUtils.sendServer(ServerBoundSelfNbtRequestPacket.INSTANCE);
 			this.setNewTag(null);
 		}, null, false);
 		refreshButton.setTooltip(Tooltip.create(Component.translatable("blockomorph.gui.nbtEditor.blockEntity.button.refresh.tooltip")));

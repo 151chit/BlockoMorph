@@ -1,8 +1,8 @@
 plugins {
     id 'eclipse'
     id 'java'
-    id 'net.neoforged.moddev' version '2.0.137' apply false
-    id 'fabric-loom' version '1.16-SNAPSHOT' apply false
+    id 'net.neoforged.moddev' apply false
+    id 'fabric-loom' apply false
 }
 
 subprojects {

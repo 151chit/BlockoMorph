@@ -1,8 +1,8 @@
 package net.blockomorph.screens.morph.tabs;
 
+import net.blockomorph.screens.PlatformGuiService;
 import net.blockomorph.screens.morph.TabContentManager;
 import net.blockomorph.utils.SavedBlock;
-import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
@@ -32,7 +32,7 @@ public abstract class CreativeModeBlockTab {
 	}
 
 	public boolean hasSearchBar() {
-		return ClientPlatformUtils.INSTANCE.hasSearchBarInTab(this.realTab);
+		return PlatformGuiService.INSTANCE.hasSearchBarInTab(this.realTab);
 	}
 
 	public boolean needShow() {

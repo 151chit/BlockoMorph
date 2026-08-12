@@ -4,7 +4,7 @@ import net.blockomorph.screens.morph.AbstractMorphScreen;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.screens.utils.ListenerEditBox;
 import net.blockomorph.screens.utils.ScrollerManager;
-import net.blockomorph.utils.MorphedBlockEntityProblemReporter;
+import net.blockomorph.utils.MorphedBlockProblemReporter;
 import net.blockomorph.utils.SavedBlock;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -110,7 +110,7 @@ public class TabManager {
 			blockEntity.setLevel(GuiUtils.MC.level);
 			blockEntity.setBlockState(block.getState());
 			if (block.getTag() != null) {
-				ValueInput tagValueInput = TagValueInput.create(new MorphedBlockEntityProblemReporter(0, null), GuiUtils.MC.level.registryAccess(), block.getTag());
+				ValueInput tagValueInput = TagValueInput.create(new MorphedBlockProblemReporter(0, null), GuiUtils.MC.level.registryAccess(), block.getTag());
 				blockEntity.loadWithComponents(tagValueInput);
 			}
 		}

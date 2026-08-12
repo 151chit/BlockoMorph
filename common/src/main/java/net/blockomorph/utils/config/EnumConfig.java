@@ -3,7 +3,7 @@ package net.blockomorph.utils.config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.blockomorph.command.EnumArgument;
+import net.blockomorph.input.command.args.EnumArgument;
 import net.blockomorph.screens.config.ConfigRenderer;
 import net.blockomorph.screens.config.renderers.EnumConfigRenderer;
 import net.minecraft.commands.CommandBuildContext;
@@ -12,10 +12,7 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class EnumConfig<T extends Enum<T>> extends ConfigInstance<T> {
 	private static EnumConfigRenderer RENDERER;
