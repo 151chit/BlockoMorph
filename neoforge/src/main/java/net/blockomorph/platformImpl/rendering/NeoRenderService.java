@@ -13,7 +13,6 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
-import net.neoforged.neoforge.client.textures.FluidSpriteCache;
 import net.neoforged.neoforge.model.data.ModelData;
 
 public class NeoRenderService implements RenderingPlatformService {
@@ -71,11 +70,6 @@ public class NeoRenderService implements RenderingPlatformService {
 			return tint;
 		}
 		return RenderingPlatformService.super.tintForBlock(level, pos, state);
-	}
-
-	@Override
-	public TextureAtlasSprite[] spritesForFluid(BlockAndTintGetter level, BlockPos pos, BlockState state) {
-		return FluidSpriteCache.getFluidSprites(level, pos, state.getFluidState());
 	}
 
 	@Override

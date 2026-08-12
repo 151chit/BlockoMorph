@@ -65,13 +65,6 @@ public class FabricRenderService implements RenderingPlatformService {
 	}
 
 	@Override
-	public TextureAtlasSprite[] spritesForFluid(BlockAndTintGetter level, BlockPos pos, BlockState state) {
-		var handler = FluidRenderHandlerRegistry.INSTANCE.get(state.getFluidState().getType());
-		if (handler == null) return new TextureAtlasSprite[3];
-		return handler.getFluidSprites(level, pos, state.getFluidState());
-	}
-
-	@Override
 	public TextureAtlasSprite particleIcon(BlockAndTintGetter level, BlockPos pos, BlockState state) {
 		var model = GuiUtils.MC.getModelManager().getBlockModelShaper().getBlockModel(state);
 		return model.particleSprite(level, pos, state);

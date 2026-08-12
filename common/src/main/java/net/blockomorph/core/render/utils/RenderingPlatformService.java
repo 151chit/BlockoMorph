@@ -24,5 +24,4 @@ public interface RenderingPlatformService {
 	default Integer tintForBlock(BlockAndTintGetter level, BlockPos pos, BlockState state) {
 		return GuiUtils.MC.getBlockColors().getColor(state, level, pos, 0);
 	}
-	TextureAtlasSprite[] spritesForFluid(BlockAndTintGetter level, BlockPos pos, BlockState state);
 }

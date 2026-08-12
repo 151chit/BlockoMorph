@@ -150,19 +150,11 @@ public abstract class BakedBlocksRenderer {
 	}
 
 	private void renderFluid() {
-		this.activateSprites();
 		this.currentGetter.noExternal(true);
 		try {
 			this.dependModule.tessellateFluid(this.currentGetter, this.currentPos, this.currentState);
 		} finally {
 			this.currentGetter.noExternal(false);
-		}
-	}
-
-	private void activateSprites() {
-		var sprites = RenderingPlatformService.INSTANCE.spritesForFluid(this.currentGetter, this.currentPos, this.currentState);
-		for (TextureAtlasSprite sprite : sprites) {
-			this.addSpriteForTick(sprite);
 		}
 	}
 
@@ -222,9 +214,9 @@ public abstract class BakedBlocksRenderer {
 			this.v += v;
 			this.vertexCount++;
 			if (this.vertexCount == 4) {
-				this.resetUv();
 				if (this.finder != null)
 					addSpriteForTick(this.finder.find(this.u * 0.25f, this.v * 0.25f));
+				this.resetUv();
 			}
 			return this;
 		}
