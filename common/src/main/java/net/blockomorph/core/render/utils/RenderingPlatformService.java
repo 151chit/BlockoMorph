@@ -7,7 +7,6 @@ import net.blockomorph.core.render.renderers.PlatformBlockTesselator;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -28,18 +27,5 @@ public interface RenderingPlatformService {
 			return tint.colorInWorld(state, level, pos);
 		}
 		return null;
-	}
-
-	@SuppressWarnings("unused") default TextureAtlasSprite[] spritesForFluid(BlockAndTintGetter level, BlockPos pos, BlockState state) {
-		var model = GuiUtils.MC.getModelManager().getFluidStateModelSet().get(state.getFluidState());
-		var sprite = new TextureAtlasSprite[3];
-		sprite[0] = this.checkForSprite(model.stillMaterial());
-		sprite[1] = this.checkForSprite(model.flowingMaterial());
-		sprite[2] = this.checkForSprite(model.overlayMaterial());
-		return sprite;
-	}
-
-	private TextureAtlasSprite checkForSprite(Material.Baked material) {
-		return material != null ? material.sprite() : null;
 	}
 }
