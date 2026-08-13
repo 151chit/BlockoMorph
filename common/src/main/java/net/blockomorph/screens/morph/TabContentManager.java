@@ -1,12 +1,12 @@
 package net.blockomorph.screens.morph;
 
+import net.blockomorph.screens.PlatformGuiService;
 import net.blockomorph.screens.morph.tabs.ContentCreativeModeTab;
 import net.blockomorph.screens.morph.tabs.SavedBlocksTab;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.SavedBlock;
-import net.blockomorph.utils.accessors.CategoryTab;
-import net.blockomorph.utils.platform.ClientPlatformUtils;
+import net.blockomorph.utils.accessors.Accessors;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
@@ -68,7 +68,7 @@ public class TabContentManager {
 			ResourceKey<CreativeModeTab> key = entry.getKey();
 			CreativeModeTab tab = entry.getValue();
 			ArrayList<SavedBlock> blocks = new ArrayList<>();
-			if (tab.getType() == CreativeModeTab.Type.CATEGORY && tab instanceof CategoryTab acc) {
+			if (tab.getType() == CreativeModeTab.Type.CATEGORY && tab instanceof Accessors.CategoryTabAccessor acc) {
 				preparePlatformDependEvent(tab, key, parameters, (itemStack, tabVisibility) -> {
 					if (tabVisibility != CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY) {
 						if (itemStack.getItem() instanceof BlockItem blockItem) {
@@ -79,7 +79,7 @@ public class TabContentManager {
 							}
 						}
 					}
-				}, acc.getItemsFormer());
+				}, acc.getItemsFormer$bm());
 			}
 			content.put(key, Collections.unmodifiableList(blocks));
 		});
@@ -102,11 +102,11 @@ public class TabContentManager {
 		content.put(CreativeModeTabs.OP_BLOCKS, Collections.unmodifiableList(unsortable));
 	}
 
-	private static void preparePlatformDependEvent(CreativeModeTab tab, ResourceKey<CreativeModeTab> key, CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output, CreativeModeTab.DisplayItemsGenerator orig) {
+	private static void preparePlatformDependEvent(CreativeModeTab tab, ResourceKey<CreativeModeTab> key, CreativeModeTab.ItemDisplayParameters parameters, PlatformGuiService.ItemsOutputAccess modReceiver, CreativeModeTab.DisplayItemsGenerator origContent) {
 		try {
-			ClientPlatformUtils.INSTANCE.collectItemsFromAllTabs(tab, key, parameters, output, orig);
+			PlatformGuiService.INSTANCE.collectItemsFromAllTabs(tab, key, parameters, modReceiver, origContent);
 		} catch (Throwable e) {
-			orig.accept(parameters, output);
+			PlatformGuiService.INSTANCE.fallbackVanillaTabContent(parameters, modReceiver, origContent);
 			MorphUtils.LOGGER.error("Error when collect tabs for external mods with event!", e);
 		}
 	}

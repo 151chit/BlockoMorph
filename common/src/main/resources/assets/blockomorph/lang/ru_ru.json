@@ -12,6 +12,7 @@
   "blockomorph.gui.damageSelector.need_for_damage": "Гибнет при:",
   "blockomorph.gui.damageSelector.name": "Выберите тип урона:",
   "blockomorph.gui.damageSelector.damageScale": "Игрок погибнет, если ему будет нанесен урон, равный этой величине",
+  "blockomorph.gui.vanilla.deathScreen.broken": "Вы были разрушены",
 
   "blockomorph.commands.option_change.default": "Значение параметра \"%s\" изменено на %s.",
   "blockomorph.commands.option_change.list.clear": "Список параметров \"%s\" очищен.",

@@ -1,37 +1,40 @@
 package net.blockomorph.network;
 
-import net.blockomorph.utils.PlayerAccessor;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.nbt.CompoundTag;
+import io.netty.handler.codec.DecoderException;
+import net.blockomorph.core.coords.InPlayerBlockPos;
+import net.blockomorph.core.serialization.BlockPalette;
+import net.blockomorph.core.PlayerAccessor;
+import net.blockomorph.core.storage.BlocksInPlayerStorage;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class ClientBoundMorphUpdatePacket implements BlockMorphPacket {
+import java.util.ArrayList;
+
+public record ClientBoundMorphUpdatePacket(BlockPalette palette, int ownerId) implements BlockMorphPacket {
 	public static final String ID = "client_bound_morph_update_packet";
 
-	CompoundTag tag;
-	int id;
-	boolean first;
-
-	public ClientBoundMorphUpdatePacket(FriendlyByteBuf buf) {
-		this.tag = buf.readNbt();
-		this.id = buf.readInt();
-		this.first = buf.readBoolean();
+	public ClientBoundMorphUpdatePacket(BlockPalette palette, PlayerAccessor pl) {
+		this(palette, pl.player().getId());
 	}
 
-	public ClientBoundMorphUpdatePacket(PlayerAccessor player, CompoundTag payload, boolean first) {
-		this.tag = payload;
-		this.id = player.player().getId();
-		this.first = first;
+	ClientBoundMorphUpdatePacket(FriendlyByteBuf buffer) {
+		this(new BlockPalette(buffer.readCollection(i -> {
+			if (i > BlocksInPlayerStorage.SIZE) throw new DecoderException("Palette ids to large: " + i);
+			return new ArrayList<>(i);
+		}, (buf) -> Block.stateById(buf.readVarInt())),
+			buffer.readVarIntArray(BlocksInPlayerStorage.SIZE),
+			buffer.readVarIntArray(BlocksInPlayerStorage.SIZE)),
+		buffer.readVarInt());
 	}
 
 	@Override
 	public void write(FriendlyByteBuf buffer) {
-		buffer.writeNbt(this.tag);
-		buffer.writeInt(this.id);
-		buffer.writeBoolean(this.first);
+		buffer.writeCollection(this.palette.ids(), (buf, state) -> buf.writeVarInt(Block.getId(state)));
+		buffer.writeVarIntArray(this.palette.poses());
+		buffer.writeVarIntArray(this.palette.types());
+		buffer.writeVarInt(this.ownerId);
 	}
 
 	@Override
@@ -41,12 +44,21 @@ public class ClientBoundMorphUpdatePacket implements BlockMorphPacket {
 
 	@Override
 	public void handle(Player player) {
-		Entity ent = Minecraft.getInstance().level.getEntity(this.id);
-		if (ent instanceof PlayerAccessor pl)
-			pl.loadBlockData(this.tag, this, this.first);
-	}
-
-	public ClientPacketListener getListener() {
-		return Minecraft.getInstance().getConnection();
+		if (this.clientPlayerById(this.ownerId) instanceof PlayerAccessor pl) {
+			if (this.palette.poses().length != this.palette.types().length)
+				throw new IllegalArgumentException("other length");
+			for (int i = 0; i < this.palette.poses().length; i++) {
+				int pos = this.palette.poses()[i];
+				int type = this.palette.types()[i];
+				if (!InPlayerBlockPos.isValid(pos))
+					throw new IllegalArgumentException("pos invalid");
+				if (type < 0 || type >= this.palette.ids().size())
+					throw new IllegalArgumentException("type invalid");
+				BlockState blockState = this.palette.ids().get(type);
+				pl.getManager().setBlock(pos, blockState, 19, 2);
+			}
+			pl.getManager().getHitBoxCalculator().refreshPositions();
+			pl.player().refreshDimensions();
+		}
 	}
 }
