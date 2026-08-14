@@ -2,7 +2,6 @@ package net.blockomorph.core.render.renderers.async;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -17,7 +16,6 @@ import net.blockomorph.core.render.renderers.BakedBlocksRenderer;
 import net.blockomorph.core.storage.BlocksInPlayerStorage;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.MorphUtils;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.SectionPos;
@@ -198,18 +196,17 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 	private void drawInternal(PlayerSectionLayerGroup group) {
 		if (this.hasOld && this.state != AsyncState.OFF) {
 			this.animatedSprites.forEach(this::activateSprite);
-			RenderTarget texture = group.chunkType().outputTarget();
+			RenderTarget texture = group.getOutputTarget();
 			GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
 					.writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, this.playerPosOffset, TEXTURE_MATRIX);
 			try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder()
 					.createRenderPass(() -> "Player section layers: " + group.name() + " for playerOwner: " + this.ownerId + " for pos: " + this.pos,
-							Objects.requireNonNull(texture.getColorTextureView()), OptionalInt.empty(),
-							texture.getDepthTextureView(), OptionalDouble.empty())) {
+							Objects.requireNonNull(texture.getColorTextureView()), OptionalInt.empty(), texture.getDepthTextureView(), OptionalDouble.empty())) {
 				for (PlayerSectionLayer layer : group.layers()) {
 					var playerLayer = this.renderLayers.get(layer);
 					if (!playerLayer.isReady()) continue;
 					MeshData.DrawState drawState = playerLayer.buildResultInfo;
-					renderPass.setPipeline(selectPipeline(layer));
+					renderPass.setPipeline(layer.pipeline());
 					RenderSystem.bindDefaultUniforms(renderPass);
 					renderPass.setUniform("DynamicTransforms", dynamicTransforms);
 					var blockAtlas = GuiUtils.MC.getTextureManager().getTexture(Sheets.BLOCKS_MAPPER.sheet());
@@ -235,14 +232,6 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 		if (pl == null) return false;
 		MorphMath.playerPosForRender(pl, deltaTick, camPos, this.playerPosOffset::set);
 		return true;
-	}
-
-	private static RenderPipeline selectPipeline(PlayerSectionLayer layer) {
-		return switch (layer) {
-			case SOLID -> RenderPipelines.SOLID_BLOCK;
-			case CUTOUT -> RenderPipelines.CUTOUT_BLOCK;
-			case TRANSLUCENT -> RenderPipelines.TRANSLUCENT_BLOCK;
-		};
 	}
 
 	private void onEnd(boolean needUploadMesh) {
@@ -350,7 +339,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 		BufferBuilder makeOrGetBuilder() {
 			var meshBuilder = this.currentBuilder;
 			if (meshBuilder == null) {
-				this.currentBuilder = meshBuilder = new BufferBuilder(this.allocator, VertexFormat.Mode.QUADS, this.layer.chunkType().pipeline().getVertexFormat());
+				this.currentBuilder = meshBuilder = new BufferBuilder(this.allocator, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
 			}
 			return meshBuilder;
 		}

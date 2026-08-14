@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.blockomorph.core.levelFlags.MorphedLevelFeatureFlags;
 import net.blockomorph.core.render.layers.PlayerSectionLayer;
-import net.blockomorph.core.render.renderers.BakedBlocksRenderer;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.core.levelFlags.LevelWithFlags;
 import net.blockomorph.utils.accessors.LightningSetter;
@@ -59,7 +58,7 @@ public class GuiBlockRenderer extends PictureInPictureRenderer<GuiBlockRenderSta
 			LevelWithFlags acc = LevelWithFlags.of(level);
 			acc.flags().customLightProvider = MorphedLevelFeatureFlags.LightProvider.ALWAYS_LIGHT;
 			BlockQuadOutput quadOutput = (xOff, yOff, zOff, quad, instance) -> {
-				VertexConsumer builder = bufferSource.getBuffer(BakedBlocksRenderer.layerToRenderType(PlayerSectionLayer.byChunkType(quad.materialInfo().layer())));
+				VertexConsumer builder = bufferSource.getBuffer(PlayerSectionLayer.byChunkType(quad.materialInfo().layer()).renderType());
 				stack.pushPose();
 				stack.translate(xOff, yOff, zOff);
 				builder.putBakedQuad(stack.last(), quad, instance);
