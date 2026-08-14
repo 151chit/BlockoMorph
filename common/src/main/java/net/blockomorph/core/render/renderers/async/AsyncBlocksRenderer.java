@@ -196,7 +196,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 	private void drawInternal(PlayerSectionLayerGroup group) {
 		if (this.hasOld && this.state != AsyncState.OFF) {
 			this.animatedSprites.forEach(this::activateSprite);
-			RenderTarget texture = group.chunkType().outputTarget();
+			RenderTarget texture = group.getOutputTarget();
 			GpuBufferSlice dynamicTransforms = RenderSystem.getDynamicUniforms()
 					.writeTransform(RenderSystem.getModelViewMatrix(), COLOR_MODULATOR, this.playerPosOffset, TEXTURE_MATRIX);
 			try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder()
