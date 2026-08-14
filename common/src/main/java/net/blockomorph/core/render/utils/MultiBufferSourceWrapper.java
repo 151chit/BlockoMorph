@@ -7,7 +7,6 @@ import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import net.blockomorph.core.levelFlags.LevelWithFlags;
 import net.blockomorph.core.render.dispatch.ContextDependStateExtractor;
 import net.blockomorph.core.render.layers.PlayerSectionLayer;
-import net.blockomorph.core.render.renderers.BakedBlocksRenderer;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -45,7 +44,7 @@ public class MultiBufferSourceWrapper implements SortedRenderOutput {//todo sort
 
 	@Override
 	public void appendChunkMovingBlocks(PoseStack stack, PlayerSectionLayer layer, BiConsumer<PoseStack.Pose, VertexConsumer> vertexAcceptor) {
-		var consumer = this.multiBufferSource.get().getBuffer(BakedBlocksRenderer.layerToRenderType(layer));
+		var consumer = this.multiBufferSource.get().getBuffer(layer.renderType());
 		vertexAcceptor.accept(stack.last(), consumer);
 	}
 

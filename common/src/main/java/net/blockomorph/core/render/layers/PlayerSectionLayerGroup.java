@@ -1,5 +1,7 @@
 package net.blockomorph.core.render.layers;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import net.blockomorph.screens.utils.GuiUtils;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 
 public enum PlayerSectionLayerGroup {
@@ -16,10 +18,11 @@ public enum PlayerSectionLayerGroup {
 		return this.layers;
 	}
 
-	public ChunkSectionLayerGroup chunkType() {
+	public RenderTarget getOutputTarget() {
+		var translucentTarget = GuiUtils.MC.levelRenderer.getTranslucentTarget();
 		return switch (this) {
-			case OPAQUE -> ChunkSectionLayerGroup.OPAQUE;
-			case TRANSLUCENT -> ChunkSectionLayerGroup.TRANSLUCENT;
+			case OPAQUE -> GuiUtils.MC.getMainRenderTarget();
+			case TRANSLUCENT -> translucentTarget != null ? translucentTarget : OPAQUE.getOutputTarget();
 		};
 	}
 
