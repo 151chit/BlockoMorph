@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+    id 'java-library'
+}
+
+repositories {
+    maven { url = "https://maven.fabricmc.net/" }
+    mavenCentral()
+}
+
+dependencies {
+    def rootProperties = new Properties()
+    def propertiesFile = new File(project.rootDir, '../gradle.properties')
+    if (propertiesFile.exists()) {
+        propertiesFile.withInputStream { rootProperties.load(it) }
+    }
+    implementation "net.fabricmc:fabric-loom:" + rootProperties.getProperty('fabric_loom')
+    compileOnly "net.fabricmc:tiny-remapper:0.13.0"
+    compileOnly "org.ow2.asm:asm:9.6"
+    compileOnly "org.ow2.asm:asm-tree:9.6"
+
+    implementation "javax.inject:javax.inject:1"
+    implementation "org.jspecify:jspecify:0.3.0"
+}

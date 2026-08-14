@@ -2,6 +2,7 @@ package net.blockomorph.utils.config;
 
 import net.blockomorph.screens.morphConfig.nbtEditor.NbtPath;
 import net.blockomorph.utils.MorphUtils;
+import net.blockomorph.utils.config.enums.*;
 import net.blockomorph.utils.config.list.BlockIdsSetConfig;
 import net.blockomorph.utils.config.list.DamageTypeIdsConfig;
 import net.blockomorph.utils.config.list.RegistryIdsSetConfig;
@@ -21,8 +22,8 @@ public class ConfigStorage {
 	public final CategoryOption access = (CategoryOption) new CategoryOption("access", List.of(listMode, allowedBlocks, bannedBlocks, solidBlocksOnly, offUnbreakableBlocks, screenAccess), null, false)
 			.boundDataFixer(new CategoryOption.MovingFixer(new NbtPath.RootNbtPath()));
 
-	public final EnumConfig<ConfigEnums.UseMode> useMode = new EnumConfig<>("useMode", ConfigEnums.UseMode.ALL, true, null);
-	public final EnumConfig<ConfigEnums.PlaceMode> placeMode = new EnumConfig<>("placeMode", ConfigEnums.PlaceMode.OUT, true, null);
+	public final EnumConfig<UseMode> useMode = new EnumConfig<>("useMode", UseMode.ALL, true, null);
+	public final EnumConfig<PlaceMode> placeMode = new EnumConfig<>("placeMode", PlaceMode.OUT, true, null);
 	public final EnumConfig<ConfigEnums.HitReaction> hitReaction = new EnumConfig<>("hitReaction", ConfigEnums.HitReaction.BRAKING, true, null);
 	public final BooleanConfig entityInside = new BooleanConfig("entityInside", true, true, Component.translatable("blockomorph.config_option.entityInside.tooltip"));
 	public final DamageTypeIdsConfig allowedDamages = new DamageTypeIdsConfig("allowedDamages", new HashMap<>(
@@ -31,13 +32,16 @@ public class ConfigStorage {
 					DamageTypes.BAD_RESPAWN_POINT.location(), -1)),
 			true, null);
 	public final BooleanConfig canBeSeenByMobs = new BooleanConfig("seenByMobs", false, true, Component.translatable("blockomorph.config_option.seenByMobs.tooltip"));
+	public final BooleanConfig dieAfterTntExplode = new BooleanConfig("dieAfterTntExplode", false, true, null);
+	public final BooleanConfig fallingBlockEffects = new BooleanConfig("fallingBlockEffects", true, true, null);
 	public final BooleanConfig liquidsInBlocks = new BooleanConfig("liquidsInBlocks", false, true, Component.translatable("blockomorph.config_option.liquidsInBlocks.tooltip"));
 	public final BooleanConfig blockClientParticles = new BooleanConfig("blockClientParticles", true, true, null);
 	public final BooleanConfig gameEvents = new BooleanConfig("gameEvents", true, true, null);
-	public final CategoryOption blockBehaviour = (CategoryOption) new CategoryOption("blockBehaviour", List.of(useMode, placeMode, hitReaction, entityInside, allowedDamages, canBeSeenByMobs, liquidsInBlocks, blockClientParticles, gameEvents), null, false)
+	public final CategoryOption blockBehaviour = (CategoryOption) new CategoryOption("blockBehaviour", List.of(useMode, placeMode, hitReaction, entityInside, allowedDamages, canBeSeenByMobs, dieAfterTntExplode, fallingBlockEffects, liquidsInBlocks, blockClientParticles, gameEvents), null, false)
 			.boundDataFixer(new CategoryOption.MovingFixer(new NbtPath.RootNbtPath()));
 
 	public final BooleanConfig playerDieAfterDestroy = new BooleanConfig("playerDieAfterDestroy", true, true, null);
+	public final BooleanConfig autoRespawn = new BooleanConfig("autoRespawn", false, true, null);
 	public final BooleanConfig canOperatorModifyConfig = new BooleanConfig("canOperatorModifyConfig", true, false, null);
 
 
