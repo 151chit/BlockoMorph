@@ -103,7 +103,7 @@ public class PlayersAsyncBakersManager implements AutoCloseable {
 		} else {
 			AtomicInteger number = new AtomicInteger(1);
 			executor = new ForkJoinPool(threads, pool -> {
-				ForkJoinWorkerThread thread = new ForkJoinWorkerThread(pool) {
+				ForkJoinWorkerThread thread = new MorphBakerThread(pool) {
 					@Override
 					protected void onTermination(Throwable exception) {
 						error(this, exception);
@@ -114,6 +114,12 @@ public class PlayersAsyncBakersManager implements AutoCloseable {
 			}, PlayersAsyncBakersManager::error, true);
 		}
 		return executor;
+	}
+
+	public static class MorphBakerThread extends ForkJoinWorkerThread {//for detect for FRAPI
+		private MorphBakerThread(ForkJoinPool pool) {
+			super(pool);
+		}
 	}
 
 	private static void error(Thread thread, Throwable exception) {
