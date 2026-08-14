@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 
 public class DirectBlocksRenderer extends BakedBlocksRenderer {
 	private final EnumMap<PlayerSectionLayer, VertexRecorder> buffers = new EnumMap<>(PlayerSectionLayer.class);
+	public static boolean RENDER_PASS;
 	private final Vector3f mutableVec = new Vector3f();
 	private PoseStack currentStack;
 
@@ -43,7 +44,12 @@ public class DirectBlocksRenderer extends BakedBlocksRenderer {
 				}
 			});
 		}
-		this.renderBlocks(blocksData);
+		RENDER_PASS = true;
+		try {
+			this.renderBlocks(blocksData);
+		} finally {
+			RENDER_PASS = false;
+		}
 		for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
 			VertexRecorder recorder = this.buffers.get(layer);
 			collector.appendChunkMovingBlocks(stack, layer, (ignored, buffer) ->

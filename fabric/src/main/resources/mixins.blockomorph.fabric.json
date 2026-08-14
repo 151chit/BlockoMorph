@@ -10,7 +10,8 @@
     "fluid.SwimmingEntityMixin"
   ],
   "client": [
-    "AttackSupportMixin"
+    "AttackSupportMixin",
+    "indigoFix.VanillaEmitterMixin"
   ],
   "injectors": {
     "defaultRequire": 1

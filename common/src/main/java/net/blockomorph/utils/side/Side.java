@@ -28,10 +28,14 @@ public enum Side {
 		return this.instance;
 	}
 
+	public boolean isThisSide(Thread thread) {
+		return this.currThread == thread;
+	}
+
 	public static Side get() {
 		Thread thread = Thread.currentThread();
-		if (thread == CLIENT.currThread) return CLIENT;
-		if (thread == SERVER.currThread) return SERVER;
+		if (CLIENT.isThisSide(thread)) return CLIENT;
+		if (SERVER.isThisSide(thread)) return SERVER;
 		return UNKNOWN;
 	}
 
