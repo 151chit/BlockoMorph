@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.blockomorph.core.render.layers.PlayerSectionLayer;
-import net.blockomorph.core.render.renderers.BakedBlocksRenderer;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.side.MinecraftThreadLocal;
 import net.minecraft.client.renderer.LightTexture;
@@ -46,7 +45,7 @@ public class SubmitNodeCollectorWrapper implements SortedRenderOutput {
 
 	@Override
 	public void appendChunkMovingBlocks(PoseStack stack, PlayerSectionLayer layer, BiConsumer<PoseStack.Pose, VertexConsumer> vertexAcceptor) {
-		this.submitNodeCollector.get().order(layer.ordinal()).submitCustomGeometry(stack, BakedBlocksRenderer.layerToRenderType(layer), vertexAcceptor::accept);
+		this.submitNodeCollector.get().order(layer.ordinal()).submitCustomGeometry(stack, layer.renderType(), vertexAcceptor::accept);
 	}
 
 	@Override
