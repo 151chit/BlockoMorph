@@ -11,7 +11,6 @@ import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.compat.AtlasSpriteFinder;
 import net.blockomorph.utils.compat.CompatAccessors;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.*;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -131,14 +130,6 @@ public abstract class BakedBlocksRenderer {
 		this.currentPos = pos;
 		this.blockAdapter.resetUv();
 		this.fluidAdapter.resetUv();
-	}
-
-	public static RenderType layerToRenderType(PlayerSectionLayer layer) {
-		return switch (layer) {
-			case SOLID -> RenderType.solid();
-			case CUTOUT -> RenderType.cutout();
-			case TRANSLUCENT -> RenderType.translucentMovingBlock();
-		};
 	}
 
 	private PlayerSectionLayer checkRenderType(PlayerSectionLayer orig) {
