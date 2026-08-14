@@ -346,8 +346,8 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 
 		void terminateBuilderAndTrySaveMesh() {
 			if (this.currentBuilder != null) {
-				this.tempBuilderResult = this.currentBuilder.buildOrThrow();
-				if (this.layer.isTranslucent()) {
+				this.tempBuilderResult = this.currentBuilder.build();
+				if (this.tempBuilderResult != null && this.layer.isTranslucent()) {
 					this.tempSortState = this.tempBuilderResult.sortQuads(this.allocator, sorter);
 				} else this.tempSortState = null;
 				this.currentBuilder = null;
