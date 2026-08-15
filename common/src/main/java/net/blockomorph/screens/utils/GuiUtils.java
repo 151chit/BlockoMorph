@@ -201,7 +201,8 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 			Lighting.setupForFlatItems();
 		}
 
-		this.scratchItemStackRenderState.render(stack, MC.renderBuffers().bufferSource(), 15728880, OverlayTexture.NO_OVERLAY);
+		this.guiGraphics.drawSpecial(buffer ->
+				this.scratchItemStackRenderState.render(stack, buffer, 15728880, OverlayTexture.NO_OVERLAY));
 		this.guiGraphics.flush();
 		if (bl) {
 			Lighting.setupFor3DItems();
@@ -222,7 +223,9 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 
 		Throwable reason = null;
 		try {
-			this.renderBlockInGui(MC.renderBuffers().bufferSource(), stack, blockState, blockEntity != null ? blockEntity.getBlockPos() : AIR);
+			this.guiGraphics.drawSpecial(buffer ->
+				this.renderBlockInGui(buffer, stack, blockState, blockEntity != null ? blockEntity.getBlockPos() : AIR)
+			);
 		} catch (Throwable e) {
 			reason = e;
 		}
@@ -300,7 +303,9 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 				try {
 					Camera cam = Minecraft.getInstance().getBlockEntityRenderDispatcher().camera;
 					level.flags().flywheelDisabled = true;
-					renderer.render(blockEntity, this.tick, stack, GuiUtils.MC.renderBuffers().bufferSource(), LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY, cam.getPosition());//TODO
+					this.guiGraphics.drawSpecial(buffer ->
+							renderer.render(blockEntity, this.tick, stack, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY, cam.getPosition())
+					);//TODO
 				} catch (Exception ignored) {} finally {
 					level.flags().flywheelDisabled = false;
 				}
