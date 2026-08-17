@@ -147,7 +147,7 @@ public class BlockEntityAndEntityIO implements ProblemReporter {
 	}
 
 	private void handleMainError(Throwable e) {
-		this.report(() -> e.getMessage() != null ? e.getMessage() : e.getClass().getName());
+		this.recordLog(e.getMessage() != null ? e.getMessage() : e.getClass().getName());
 	}
 
 	private void setReporterActive(boolean yes) {
