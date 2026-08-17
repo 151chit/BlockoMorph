@@ -1,12 +1,7 @@
 package net.blockomorph.core.render.renderers.async;
 
-import com.mojang.blaze3d.buffers.BufferType;
-import com.mojang.blaze3d.buffers.BufferUsage;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.RenderPass;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.blockomorph.core.PlayerAccessor;
 import net.blockomorph.core.coords.math.MorphMath;
@@ -15,21 +10,18 @@ import net.blockomorph.core.render.layers.PlayerSectionLayerGroup;
 import net.blockomorph.core.render.renderers.BakedBlocksRenderer;
 import net.blockomorph.core.storage.BlocksInPlayerStorage;
 import net.blockomorph.screens.utils.GuiUtils;
-import net.blockomorph.utils.MorphUtils;
-import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 	private final Vector3f playerPosOffset = new Vector3f();
 	private final EnumMap<PlayerSectionLayer, PlayerRenderLayer> renderLayers = new EnumMap<>(PlayerSectionLayer.class);
+	private final List<PlayerSectionMeshBuffer> buffersForRender = new ObjectArrayList<>(PlayerSectionLayer.values().length);
 	private final Set<TextureAtlasSprite> animatedSprites = new ObjectOpenHashSet<>(BlocksInPlayerStorage.ONE_AXIS);
 	private final AsyncRenderersStorage rootStorage;
 	private final SectionPos pos;
@@ -120,16 +112,11 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 	}
 
 	private PlayerSectionCompileQueue.PlayerCompileTask formResortTask() {
-		EnumMap<PlayerSectionLayer, MeshData.SortState> stateEnumMap = new EnumMap<>(PlayerSectionLayer.class);
-		for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
-			var playerLayer = this.renderLayers.get(layer);
-			if (playerLayer.translucentSortInfo != null) {
-				stateEnumMap.put(layer, playerLayer.translucentSortInfo);
-			}
-		}
 		this.currentRebakeTask = RebakeReason.RESORT;
 		return new PlayerSectionCompileQueue.PlayerCompileTask(this, () -> {
-			stateEnumMap.forEach((layer, sortState) -> this.renderLayers.get(layer).resortIndexes(sortState));
+			for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
+				this.renderLayers.get(layer).resortIndexes();
+			}
 			this.onEnd(false);
 		});
 	}
@@ -193,34 +180,13 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 	private void drawInternal(PlayerSectionLayerGroup group) {
 		if (this.hasOld && this.state != AsyncState.OFF) {
 			this.animatedSprites.forEach(this::activateSprite);
-			RenderTarget texture = group.getOutputTarget();
-			try (RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder()
-					.createRenderPass(Objects.requireNonNull(texture.getColorTexture()), OptionalInt.empty(), texture.getDepthTexture(), OptionalDouble.empty())) {
-				for (PlayerSectionLayer layer : group.layers()) {
-					var playerLayer = this.renderLayers.get(layer);
-					if (!playerLayer.isReady()) continue;
-					MeshData.DrawState drawState = playerLayer.buildResultInfo;
-					layer.pipeline().setupRenderState();
-					renderPass.setPipeline(layer.pipeline().getRenderPipeline());
-					Matrix4f old = new Matrix4f(RenderSystem.getModelViewMatrix());
-					RenderSystem.getModelViewMatrix().translate(this.playerPosOffset);
-					var blockAtlas = GuiUtils.MC.getTextureManager().getTexture(Sheets.BLOCKS_MAPPER.sheet());
-					renderPass.bindSampler("Sampler0", blockAtlas.getTexture());
-					renderPass.bindSampler("Sampler2", GuiUtils.MC.gameRenderer.lightTexture().getTarget());
-					renderPass.setVertexBuffer(0, playerLayer.vertexBuffer.buffer);
-					GpuBuffer indexBuf = playerLayer.indexBuffer.buffer;
-					VertexFormat.IndexType indexType = drawState.indexType();
-					if (!playerLayer.supportIndexes) {
-						RenderSystem.AutoStorageIndexBuffer autoIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
-						indexBuf = autoIndices.getBuffer(drawState.indexCount());
-						indexType = autoIndices.type();
-					}
-					renderPass.setIndexBuffer(indexBuf, indexType);
-					renderPass.drawIndexed(0, drawState.indexCount());
-					layer.pipeline().clearRenderState();
-					RenderSystem.getModelViewMatrix().set(old);
-				}
+			for (PlayerSectionLayer layer : group.layers()) {
+				var playerLayer = this.renderLayers.get(layer);
+				this.buffersForRender.add(playerLayer.meshBuffer);
 			}
+			PlayerSectionMeshBuffer.drawOnGpu(this.buffersForRender, group.getOutputTarget(), this.playerPosOffset, () ->
+					"Player section layers: " + group.name() + " for playerOwner: " + this.ownerId + " for pos: " + this.pos);
+			this.buffersForRender.clear();
 		}
 	}
 
@@ -237,7 +203,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 			return;
 		}
 		if (needUploadMesh) for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
-			this.renderLayers.get(layer).terminateBuilderAndTrySaveMesh();
+			this.renderLayers.get(layer).saveMesh();
 		}
 		this.state = AsyncState.UPLOADING_WAIT;
 		if (this.finallyTerminate) {
@@ -267,8 +233,7 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 			this.destroy();
 		}
 		for (PlayerSectionLayer layer : PlayerSectionLayer.values()) {
-			this.renderLayers.get(layer).vertexBuffer.close();
-			this.renderLayers.get(layer).indexBuffer.close();
+			this.renderLayers.get(layer).meshBuffer.close();
 		}
 	}
 
@@ -317,20 +282,23 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 
 		final ByteBufferBuilder allocator;
 		BufferBuilder currentBuilder;
-		volatile MeshData tempBuilderResult;
-		volatile MeshData.SortState tempSortState;
-		volatile ByteBufferBuilder.Result tempResortInfo;
+		volatile MeshData tempMeshData;
+		volatile ByteBufferBuilder.Result tempResortBuffer;
+		volatile MeshData.SortState tempPrimarySortState;
 
-		final AutoResizeGpuBuffer vertexBuffer;
-		final AutoResizeGpuBuffer indexBuffer; boolean supportIndexes;
-		MeshData.DrawState buildResultInfo;
-		MeshData.SortState translucentSortInfo;
+		final PlayerSectionMeshBuffer meshBuffer;
+		MeshData.SortState sortState;
 
 		PlayerRenderLayer(PlayerSectionLayer layer) {
 			this.layer = layer;
 			this.allocator = new ByteBufferBuilder(layer.baseBufferSize());
-			this.vertexBuffer = new AutoResizeGpuBuffer(BufferType.VERTICES, layer);
-			this.indexBuffer = new AutoResizeGpuBuffer(BufferType.INDICES, layer);
+			this.meshBuffer = new PlayerSectionMeshBuffer(layer, usage ->
+					"Player render layer. Player id: " + ownerId + " Usage: " + usage + " Layer: " + this.layer + " Pos: " + pos,
+					size -> {
+						PlayerAccessor pl = rootStorage.playerOwner();
+						return "Resizing player's section VBO for " + (pl != null ? pl : ownerId) + " Layer: " +
+								this.layer + " For size: " + size + " For section: " + pos.toShortString();
+			});
 		}
 
 		BufferBuilder makeOrGetBuilder() {
@@ -341,91 +309,49 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 			return meshBuilder;
 		}
 
-		void terminateBuilderAndTrySaveMesh() {
+		void saveMesh() {
 			if (this.currentBuilder != null) {
-				this.tempBuilderResult = this.currentBuilder.build();
-				if (this.tempBuilderResult != null && this.layer.isTranslucent()) {
-					this.tempSortState = this.tempBuilderResult.sortQuads(this.allocator, sorter);
-				} else this.tempSortState = null;
+				this.tempMeshData = this.currentBuilder.build();
+				if (this.tempMeshData != null && this.layer.isTranslucent()) {
+					this.tempPrimarySortState = this.tempMeshData.sortQuads(this.allocator, sorter);
+				} else this.tempPrimarySortState = null;
 				this.currentBuilder = null;
 			}
 		}
 
-		void resortIndexes(MeshData.SortState oldState) {
-			this.tempResortInfo = oldState.buildSortedIndexBuffer(this.allocator, sorter);
+		void resortIndexes() {
+			if (this.sortState == null) return;
+			this.tempResortBuffer = this.sortState.buildSortedIndexBuffer(this.allocator, sorter);
 		}
 
-		void releaseTemp() {
-			if (this.tempResortInfo != null) {
-				this.tempResortInfo.close();
-				this.tempResortInfo = null;
-			}
-			if (this.tempBuilderResult != null) {
-				this.tempBuilderResult.close();
-				this.tempBuilderResult = null;
-			}
-			this.tempSortState = null;
-			this.allocator.discard();
-		}
-
+		//main thread   \/
 		void uploadResortBuffer() {
-			if (this.tempResortInfo != null) {
-				this.indexBuffer.uploadMeshDataPart(this.tempResortInfo.byteBuffer());
-				this.releaseTemp();
-			}
-		}
-
-		void uploadMesh() {
-			if (this.tempBuilderResult != null) {
-				this.translucentSortInfo = this.tempSortState;
-				this.vertexBuffer.uploadMeshDataPart(this.tempBuilderResult.vertexBuffer());
-				var index = this.tempBuilderResult.indexBuffer();
-				this.supportIndexes = index != null;
-				if (this.supportIndexes)
-					this.indexBuffer.uploadMeshDataPart(index);
-				this.buildResultInfo = this.tempBuilderResult.drawState();
-			} else {
-				this.buildResultInfo = null;
-				this.translucentSortInfo = null;
+			if (this.tempResortBuffer != null) {
+				this.meshBuffer.loadIndexes(this.tempResortBuffer);
 			}
 			this.releaseTemp();
 		}
 
-		boolean isReady() {
-			return this.buildResultInfo != null;
-		}
-	}
-
-	class AutoResizeGpuBuffer {
-		final PlayerSectionLayer layer;
-		final BufferType usage;
-		GpuBuffer buffer;
-
-		AutoResizeGpuBuffer(BufferType usage, PlayerSectionLayer layer) {
-			this.usage = usage;
-			this.layer = layer;
-			this.createBuffer(this.layer.baseBufferSize());
-		}
-
-		void createBuffer(int capacity) {
-			if (this.buffer != null) this.buffer.close();
-			this.buffer = RenderSystem.getDevice().createBuffer(
-					() -> "Player render layer. Player id: " + ownerId + " Layer: " + this.layer + " Usage: " + this.usage + " Pos: " + pos,
-					this.usage, BufferUsage.DYNAMIC_WRITE, capacity);
-		}
-
-		void uploadMeshDataPart(ByteBuffer buffer) {
-			if (this.buffer.size() <= buffer.remaining()) {
-				PlayerAccessor pl = rootStorage.playerOwner();
-				MorphUtils.LOGGER.info("Resizing player's section VBO for {} Layer: {} For size: {} For section: {}",
-						pl != null ? pl : ownerId, this.layer, buffer.remaining(), pos.toShortString());
-				this.createBuffer(buffer.remaining() + 32);
+		void uploadMesh() {
+			if (this.meshBuffer.loadMeshData(this.tempMeshData)) {
+				this.sortState = this.tempPrimarySortState;
+			} else {
+				this.sortState = null;
 			}
-			RenderSystem.getDevice().createCommandEncoder().writeToBuffer(this.buffer, buffer, 0);
+			this.releaseTemp();
 		}
 
-		void close() {
-			this.buffer.close();
+		void releaseTemp() {
+			if (this.tempMeshData != null) {
+				this.tempMeshData.close();
+				this.tempMeshData = null;
+			}
+			if (this.tempResortBuffer != null) {
+				this.tempResortBuffer.close();
+				this.tempResortBuffer = null;
+			}
+			this.tempPrimarySortState = null;
+			this.allocator.discard();
 		}
 	}
 }

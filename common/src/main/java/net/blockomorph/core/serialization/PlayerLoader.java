@@ -2,6 +2,7 @@ package net.blockomorph.core.serialization;
 
 import net.blockomorph.core.BlockInPlayer2;
 import net.blockomorph.core.coords.InPlayerBlockPos;
+import net.blockomorph.core.serialization.io.BlockEntityAndEntityIO;
 import net.blockomorph.utils.MorphUtils;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
@@ -13,9 +14,6 @@ import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -25,6 +23,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.ticks.LevelChunkTicks;
 import net.minecraft.world.ticks.SavedTick;
 import net.minecraft.world.ticks.TickPriority;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -34,6 +33,7 @@ import java.util.Optional;
 
 @SuppressWarnings("unchecked")
 public class PlayerLoader implements DataWorker {
+	private final BlockEntityAndEntityIO loader = new BlockEntityAndEntityIO();
 	private final PlayerWorldSerializer serializer;
 	private volatile boolean working;
 	private volatile boolean done;
@@ -43,8 +43,8 @@ public class PlayerLoader implements DataWorker {
 	private BlockState[] palette;
 	private int[] poses;
 	private int[] types;
-	private CompoundTag blockEntityTags;
-	private CompoundTag tntTag;
+	@Nullable private CompoundTag blockEntityTags;
+	@Nullable private CompoundTag tntTag;
 	private final MinecraftServer mainExecutor;
 
 	protected PlayerLoader(PlayerWorldSerializer serializer) {
@@ -94,19 +94,25 @@ public class PlayerLoader implements DataWorker {
 			MorphUtils.LOGGER.error("Failed to load empty block with pos: {} in player: {}", pos, this.serializer.playerId);
 			return;
 		}
-		CompoundTag beTag = this.blockEntityTags.getCompound(intPos + "").orElse(null);
+		CompoundTag beTag = DataWorker.getTagFrom(this.blockEntityTags, intPos + "", CompoundTag.TYPE).orElse(null);
 		BlockEntityType<?> beType = null;
 		if (beTag != null) {
-			String id = beTag.getString("id").orElse(null);
+			StringTag id = DataWorker.getTagFrom(beTag, "id", StringTag.TYPE).orElse(null);
 			if (id != null) {
-				var key = ResourceLocation.tryParse(id);
+				var key = ResourceLocation.tryParse(id.value());
 				beType = key != null ? BuiltInRegistries.BLOCK_ENTITY_TYPE.getValue(key) : null;
 			}
 		}
 		this.readyForLoadBlock = true;
 		BlockInPlayer2 block = this.serializer.manager.directLoadOrOverrideBlock(this, pos, state, beType);
 		this.readyForLoadBlock = false;
-		if (beTag != null) beTag.getCompound("data").ifPresent(block::loadFullTag);
+		if (beTag != null && block.getBlockEntity() != null) {
+			CompoundTag data = DataWorker.getTagFrom(beTag, "data", CompoundTag.TYPE).orElse(null);
+			if (data != null) {
+				var result = this.loader.loadInBlockEntity(block.getBlockEntity(), this.serializer.manager.level().registryAccess(), data);
+				BlockEntityAndEntityIO.log(result, "load blockentity for playerOwner " + this.serializer.playerId + " in: " + pos);
+			}
+		}
 		this.serializer.manager.getNetworkManager().enqueueBlockNetworkUpdate(block.getOffset().asInt());
 	}
 
@@ -122,16 +128,17 @@ public class PlayerLoader implements DataWorker {
 	}
 
 	private boolean runLoad(CompoundTag blockStates, CompoundTag blockEntityTags, LevelChunkTicks<Block>[] blockTicks, LevelChunkTicks<Fluid>[] fluidTicks, long lifetime, CompoundTag tntTag) {
-		ListTag palette = blockStates.getList("palette").orElse(null);
-		int[] poses = blockStates.getIntArray("poses").orElse(null);
-		int[] types = blockStates.getIntArray("types").orElse(null);
+		if (blockStates == null) return false;
+		ListTag palette = DataWorker.getTagFrom(blockStates, "palette", ListTag.TYPE).orElse(null);
+		int[] poses = DataWorker.getTagFrom(blockStates, "poses", IntArrayTag.TYPE).map(IntArrayTag::getAsIntArray).orElse(null);
+		int[] types = DataWorker.getTagFrom(blockStates, "types", IntArrayTag.TYPE).map(IntArrayTag::getAsIntArray).orElse(null);
 		if (palette == null || poses == null || types == null) return false;
 		if (palette.isEmpty() || poses.length == 0 || types.length == 0) return false;
 		if (poses.length != types.length) return false;
 		BlockState[] palletArr = new BlockState[palette.size()];
 		var reg = this.serializer.manager.level().holderLookup(Registries.BLOCK);
 		for (int i = 0; i < palette.size(); i++) {
-			CompoundTag block = palette.getCompound(i).orElse(null);
+			CompoundTag block = DataWorker.getTagFrom(palette, i, CompoundTag.TYPE).orElse(null);
 			if (block == null) return false;
 			palletArr[i] = NbtUtils.readBlockState(reg, block);
 		}
@@ -150,15 +157,15 @@ public class PlayerLoader implements DataWorker {
 	private void runLoadTask(Path path, String uuid, HolderLookup<Block> blockRegistry, HolderLookup<Fluid> fluidRegistry) {
 		CompoundTag morphTag = this.readMorphFile(path, uuid, ".dat").or(() -> this.readMorphFile(path, uuid, ".dat_old")).orElse(null);
 		if (morphTag != null && !morphTag.isEmpty()) {
-			long lifetime = morphTag.getLongOr("lifetime", 0L);
-			CompoundTag ticks = morphTag.getCompound(PlayerWorldSerializer.TICK_TAG).orElse(null);
-			LevelChunkTicks<Block>[] blockTicks = this.readTicks(uuid, ticks != null ?
-					ticks.getList("blocks").orElse(null) : null, blockRegistry, Registries.BLOCK);
-			LevelChunkTicks<Fluid>[] fluidTicks = this.readTicks(uuid, ticks != null ?
-					ticks.getList("fluids").orElse(null) : null, fluidRegistry, Registries.FLUID);
-			CompoundTag blockStates = morphTag.getCompoundOrEmpty(PlayerWorldSerializer.STATE_TAG);
-			CompoundTag blockEntityTags = morphTag.getCompoundOrEmpty(PlayerWorldSerializer.BE_TAG);
-			CompoundTag tntTag = morphTag.getCompound("tnt").orElse(null);
+			long lifetime = DataWorker.getTagFrom(morphTag, "lifetime", LongTag.TYPE).map(LongTag::value).orElse(0L);
+			CompoundTag ticks = DataWorker.getTagFrom(morphTag, PlayerWorldSerializer.TICK_TAG, CompoundTag.TYPE).orElse(null);
+			LevelChunkTicks<Block>[] blockTicks = this.readTicks(uuid,
+					DataWorker.getTagFrom(ticks, "blocks", ListTag.TYPE).orElse(null), blockRegistry, Registries.BLOCK);
+			LevelChunkTicks<Fluid>[] fluidTicks = this.readTicks(uuid,
+					DataWorker.getTagFrom(ticks, "fluids", ListTag.TYPE).orElse(null), fluidRegistry, Registries.FLUID);
+			CompoundTag blockStates = DataWorker.getTagFrom(morphTag, PlayerWorldSerializer.STATE_TAG, CompoundTag.TYPE).orElse(null);
+			CompoundTag blockEntityTags = DataWorker.getTagFrom(morphTag, PlayerWorldSerializer.BE_TAG, CompoundTag.TYPE).orElse(null);
+			CompoundTag tntTag = DataWorker.getTagFrom(morphTag, "tnt", CompoundTag.TYPE).orElse(null);
 			this.mainExecutor.execute(() -> {
 				if (!this.runLoad(blockStates, blockEntityTags, blockTicks, fluidTicks, lifetime, tntTag)) {
 					this.terminateEmptyOrFailed();
@@ -182,16 +189,16 @@ public class PlayerLoader implements DataWorker {
 	private <T> LevelChunkTicks<T>[] readTicks(String uuid, ListTag ticks, HolderLookup<T> registry, ResourceKey<? extends Registry<T>> registryKey) {
 		LevelChunkTicks<T>[] ticksBoxes = new LevelChunkTicks[4];
 		for (int i = 0; i < 4; i++) {
-			ListTag boxTag;
-			if (ticks != null && (boxTag = ticks.getList(i).orElse(null)) != null) {
+			ListTag boxTag = DataWorker.getTagFrom(ticks, i, ListTag.TYPE).orElse(null);
+			if (boxTag != null) {
 				List<SavedTick<T>> savedTicks = new ArrayList<>();
 				for (int n = 0; n < boxTag.size(); n++) {
-					CompoundTag tg = boxTag.getCompound(n).orElse(null);
+					CompoundTag tg = DataWorker.getTagFrom(boxTag, n, CompoundTag.TYPE).orElse(null);
 					if (tg != null) {
-						T type = this.readElement(registry, registryKey, tg.getString("i").orElse(null));
-						Long pos = tg.getLong("p").orElse(null);
-						Integer delay = tg.getInt("t").orElse(null);
-						Integer priority = tg.getInt("q").orElse(null);
+						T type = this.readElement(registry, registryKey, DataWorker.getTagFrom(tg, "i", StringTag.TYPE).orElse(null));
+						Long pos = DataWorker.getTagFrom(tg, "p", LongTag.TYPE).map(LongTag::value).orElse(null);
+						Integer delay = DataWorker.getTagFrom(tg, "t", IntTag.TYPE).map(IntTag::value).orElse(null);
+						Integer priority = DataWorker.getTagFrom(tg, "q", IntTag.TYPE).map(IntTag::value).orElse(null);
 						if (type != null && pos != null && delay != null && priority != null) {
 							BlockPos blockPos = BlockPos.of(pos);
 							if (InPlayerBlockPos.isValid(blockPos.getX(), blockPos.getY(), blockPos.getZ())) {
@@ -208,9 +215,9 @@ public class PlayerLoader implements DataWorker {
 		return ticksBoxes;
 	}
 
-	private <T> T readElement(HolderLookup<T> lookup, ResourceKey<? extends Registry<T>> registry, String el) {
+	private <T> T readElement(HolderLookup<T> lookup, ResourceKey<? extends Registry<T>> registry, StringTag el) {
 		if (el == null) return null;
-		var id = ResourceLocation.tryParse(el);
+		var id = ResourceLocation.tryParse(el.value());
 		if (id == null) return null;
 		var wrapper = lookup.get(ResourceKey.create(registry, id));
 		if (wrapper.isPresent()) {
@@ -222,9 +229,9 @@ public class PlayerLoader implements DataWorker {
 
 	private void loadTnt(CompoundTag tntTag) {
 		if (tntTag != null) {
-			Optional<Entity> entity = EntityType.create(tntTag, this.serializer.manager.level(), EntitySpawnReason.LOAD);
-			if (entity.isPresent() && entity.get() instanceof PrimedTnt tnt) {
-				tnt.load(tntTag);
+			var resultEntity = this.loader.makeEntityFromTag(this.serializer.manager.level(), tntTag);
+			BlockEntityAndEntityIO.log(resultEntity.errors(), "load tnt from disk for" + this.serializer.playerId);
+			if (resultEntity.result() instanceof PrimedTnt tnt) {
 				this.serializer.manager.getTntHandler().putTntDirectFromDisk(tnt);
 			}
 		}

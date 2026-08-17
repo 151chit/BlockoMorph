@@ -4,7 +4,6 @@ import net.blockomorph.core.coords.*;
 import net.blockomorph.core.storage.BlocksFastStorage;
 import net.blockomorph.utils.config.Config;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.Blocks;
@@ -16,7 +15,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEventListener;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
@@ -94,18 +92,6 @@ public class BlockInPlayer2 implements BlocksFastStorage.InPlayerBlockPosed {
 
 	public boolean shouldDoFluidAction() {
 		return this.blockState.getBlock() instanceof LiquidBlock || (!this.blockState.getFluidState().isEmpty() && this.shouldShowFluidState());
-	}
-
-	@Nullable
-	public String loadFullTag(CompoundTag tg) {
-		if (this.blockEntity != null) {
-			try {
-				this.blockEntity.loadWithComponents(tg, this.manager.level().registryAccess());
-			} catch (Throwable e) {
-				return Objects.requireNonNullElse(e.getMessage(), e.getClass().getName());
-			}
-		}
-		return null;
 	}
 
 	protected void onPlace(BlockState newState, BlockState oldState, int flags) {

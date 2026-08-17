@@ -3,6 +3,7 @@ package net.blockomorph.core;
 import net.blockomorph.network.ClientBoundSyncTntFusePacket;
 import net.blockomorph.network.ClientBoundSyncTntNbtPacket;
 import net.blockomorph.core.misc.DamageHandler;
+import net.blockomorph.core.serialization.io.BlockEntityAndEntityIO;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.side.Side;
 import net.blockomorph.utils.accessors.Accessors;
@@ -28,6 +29,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.UUID;
 
 public class TntHandler {
+	private final BlockEntityAndEntityIO ioWorker = new BlockEntityAndEntityIO();
 	private static UUID TICKING_THIS_TICK;
 	private final InPlayerManager manager;
 	private PrimedTnt primedTnt;
@@ -115,7 +117,7 @@ public class TntHandler {
 	public void syncForNetwork(ServerPlayer client) {
 		if (this.isActive() && this.manager.isServer()) {
 			client.connection.send(new ClientboundAddEntityPacket(this.primedTnt, 0, this.manager.getZeroKey()));
-			client.connection.send(new ClientBoundSyncTntNbtPacket(this.saveFullTag(this.primedTnt), this.manager).toVanillaClientbound());
+			client.connection.send(new ClientBoundSyncTntNbtPacket(this.saveFullTag(), this.manager).toVanillaClientbound());
 		}
 	}
 
@@ -133,14 +135,14 @@ public class TntHandler {
 	public boolean putTntFromLevel(PrimedTnt tnt) {
 		if (this.isActive()) this.stop();
 		if (!this.isValidForEnterTntMode(tnt)) return false;
-		tnt.discard();
-		Accessors.EntityAccessor.of(tnt).unmarkRemoved$bm();
-		tnt.setLevelCallback(EntityInLevelCallback.NULL);
-		if (this.manager.isServer()) {
-			this.send(new ClientboundAddEntityPacket(tnt, 0, this.manager.getZeroKey()));
-			this.send(new ClientBoundSyncTntNbtPacket(this.saveFullTag(tnt), this.manager).toVanillaClientbound());
-		}
 		this.primedTnt = tnt;
+		this.primedTnt.discard();
+		Accessors.EntityAccessor.of(this.primedTnt).unmarkRemoved$bm();
+		this.primedTnt.setLevelCallback(EntityInLevelCallback.NULL);
+		if (this.manager.isServer()) {
+			this.send(new ClientboundAddEntityPacket(this.primedTnt, 0, this.manager.getZeroKey()));
+			this.send(new ClientBoundSyncTntNbtPacket(this.saveFullTag(), this.manager).toVanillaClientbound());
+		}
 		this.syncTntEntityForPlayerEntity();
 		if (this.manager.isServer()) {
 			double d0 = this.manager.level().getRandom().nextDouble() * (double) ((float) Math.PI * 2F);
@@ -162,7 +164,11 @@ public class TntHandler {
 
 	public void loadFullTag(CompoundTag tg) {
 		if (this.isActive()) {
-			this.primedTnt.load(tg);
+			var result = this.ioWorker.loadInEntity(this.primedTnt, this.manager.level().registryAccess(), tg);
+			BlockEntityAndEntityIO.log(result, "load tnt data for playerOwner " + this.player());
+			if (this.manager.isServer()) {
+				this.send(new ClientBoundSyncTntNbtPacket(tg, this.manager).toVanillaClientbound());
+			}
 		}
 	}
 
@@ -195,10 +201,9 @@ public class TntHandler {
 		this.primedTnt.setOnGround(this.player().onGround());
 	}
 
-	private CompoundTag saveFullTag(PrimedTnt tnt) {
-		CompoundTag input = new CompoundTag();
-		tnt.save(input);
-		return input;
+	private CompoundTag saveFullTag() {
+		var result = this.ioWorker.saveEntity(this.primedTnt, this.manager.level().registryAccess());
+		BlockEntityAndEntityIO.log(result.errors(), "save tnt data for playerOwner " + this.player());
+		return result.result();
 	}
-
 }

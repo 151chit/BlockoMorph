@@ -2,6 +2,7 @@ package net.blockomorph.core.serialization;
 
 import net.blockomorph.core.TntHandler;
 import net.blockomorph.core.coords.InPlayerBlockPos;
+import net.blockomorph.core.serialization.io.BlockEntityAndEntityIO;
 import net.blockomorph.utils.MorphUtils;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
@@ -22,6 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 
 public class PlayerSaver implements DataWorker {
+	private final BlockEntityAndEntityIO saver = new BlockEntityAndEntityIO();
 	private final PlayerWorldSerializer serializer;
 	private List<SavedTick<Block>>[] blockTicks;
 	private List<SavedTick<Fluid>>[] fluidTicks;
@@ -117,9 +119,9 @@ public class PlayerSaver implements DataWorker {
 		TntHandler tntHandler = this.serializer.manager.getTntHandler();
 		PrimedTnt tnt = tntHandler.getActiveTnt();
 		if (tnt != null) {
-			CompoundTag tntTag = new CompoundTag();
-			tnt.save(tntTag);
-			this.tntTag = tntTag;
+			var result = this.saver.saveEntity(tnt, this.serializer.manager.level().registryAccess());
+			BlockEntityAndEntityIO.log(result.errors(), "save tnt data from playerOwner: " + this.serializer.playerId);
+			this.tntTag = result.result();
 		}
 	}
 
@@ -145,13 +147,15 @@ public class PlayerSaver implements DataWorker {
 	}
 
 	private CompoundTag saveBE(BlockEntity blockEntity) {
-		CompoundTag output = blockEntity.saveWithoutMetadata(this.serializer.manager.level().registryAccess());
+		var result = this.saver.saveBlockEntity(blockEntity, this.serializer.manager.level().registryAccess());
+		BlockEntityAndEntityIO.log(result.errors(), "save blockentity for playerOwner " + this.serializer.playerId + " in: " +
+				blockEntity.getBlockPos().subtract(this.serializer.manager.getZeroKey()).toShortString());
 
 		CompoundTag blockEntityRoot = new CompoundTag();
 		ResourceLocation blockEntityTypeId = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType());
 		if (blockEntityTypeId != null)
-			blockEntityRoot.put("id", StringTag.valueOf(blockEntityTypeId.toString()));
-		blockEntityRoot.put("data", output);
+			blockEntityRoot.putString("id", blockEntityTypeId.toString());
+		blockEntityRoot.put("data", result.result());
 		return blockEntityRoot;
 	}
 

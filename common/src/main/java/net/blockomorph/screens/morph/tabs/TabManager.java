@@ -1,5 +1,6 @@
 package net.blockomorph.screens.morph.tabs;
 
+import net.blockomorph.core.serialization.io.BlockEntityAndEntityIO;
 import net.blockomorph.screens.morph.AbstractMorphScreen;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.screens.utils.ListenerEditBox;
@@ -24,6 +25,7 @@ import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 
 public class TabManager {
+	private static final BlockEntityAndEntityIO LOADER = new BlockEntityAndEntityIO(0, 0);
 	private static final ResourceLocation TABS_SPRITE = GuiUtils.res("textures/screens/block_selector_tabs.png");
 	private static final ResourceLocation ERROR_FRAME = GuiUtils.res("textures/screens/sel_err.png");
 	public static final int BLOCK_FRAME_SIZE = 36;
@@ -120,7 +122,7 @@ public class TabManager {
 			blockEntity.setLevel(GuiUtils.MC.level);
 			blockEntity.setBlockState(block.getState());
 			if (block.getTag() != null) {
-				blockEntity.loadWithComponents(block.getTag(), GuiUtils.MC.level.registryAccess());
+				LOADER.loadInBlockEntity(blockEntity, GuiUtils.MC.level.registryAccess(), block.getTag());//todo
 			}
 		}
 		return blockEntity;
