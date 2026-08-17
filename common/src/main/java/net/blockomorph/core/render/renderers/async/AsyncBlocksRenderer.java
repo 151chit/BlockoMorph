@@ -1,6 +1,8 @@
 package net.blockomorph.core.render.renderers.async;
 
+import com.google.common.primitives.Floats;
 import com.mojang.blaze3d.vertex.*;
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.blockomorph.core.PlayerAccessor;
@@ -141,7 +143,19 @@ public class AsyncBlocksRenderer extends BakedBlocksRenderer {
 		float localX = (float) (camPos.x - sectionOrigin.x);
 		float localY = (float) (camPos.y - sectionOrigin.y);
 		float localZ = (float) (camPos.z - sectionOrigin.z);
-		this.sorter = VertexSorting.byDistance(localX, localY, localZ);
+		var vec = new Vector3f(localX, localY, localZ);//todo remove
+		this.sorter = (compactVectorArray) -> {//on 1.21.10 sodium sorting algorithm may be broken
+			Vector3f vector3f = new Vector3f();
+			float[] fs = new float[compactVectorArray.size()];
+			int[] is = new int[compactVectorArray.size()];
+
+			for(int i = 0; i < compactVectorArray.size(); is[i] = i++) {
+				fs[i] = compactVectorArray.get(i, vector3f).distanceSquared(vec);
+			}
+
+			IntArrays.mergeSort(is, (ix, j) -> Floats.compare(fs[j], fs[ix]));
+			return is;
+		};
 	}
 
 	protected void draw(PlayerSectionLayerGroup group, Vec3 camPos, float deltaTick) {
