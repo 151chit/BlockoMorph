@@ -8,6 +8,7 @@ import net.blockomorph.utils.config.enums.ConfigEnums;
 import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +25,7 @@ public final class ServerBoundBlockMorphPacket implements BlockMorphPacket {
 	}
 
 	ServerBoundBlockMorphPacket(FriendlyByteBuf buffer) {
-		this.tag = buffer.readNbt();
+		this.tag = buffer.readNbt(NbtAccounter.create(FriendlyByteBuf.DEFAULT_NBT_QUOTA));
 	}
 
 	@Override
