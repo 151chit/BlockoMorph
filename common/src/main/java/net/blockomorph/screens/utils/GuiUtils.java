@@ -1,18 +1,14 @@
 package net.blockomorph.screens.utils;
 
 import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.blockomorph.screens.overlay.BlockHeartOverlay;
-import net.blockomorph.screens.overlay.Overlay;
-import net.blockomorph.screens.overlay.PlayerCrackOverlay;
+import net.blockomorph.core.coords.math.MorphMath;
+import net.blockomorph.core.levelFlags.LevelWithFlags;
+import net.blockomorph.core.levelFlags.MorphedLevelFeatureFlags;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.accessors.ClientLevelAccessor;
-import net.blockomorph.utils.accessors.GuiGraphicsAccessor;
-import net.blockomorph.utils.hit.MorphedPlayerHitResult;
-import net.blockomorph.utils.platform.ClientPlatformUtils;
+import net.blockomorph.core.phys.hit.MorphedPlayerHitResult;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,14 +17,17 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -42,7 +41,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -54,12 +52,10 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 	private static final HashMap<Block, Boolean> BE_WITH_RENDERERS = new HashMap<>();
 	public static final BlockPos AIR = new BlockPos(0, 500, 0);
 	public static final Minecraft MC = Minecraft.getInstance();
-	public static final List<Overlay> OVERLAYS = new ArrayList<>();
-	private static final Vector3f DIFFUSE_LIGHT_START;
-	private static final Vector3f DIFFUSE_LIGHT_END;
+	public static final Vector3f DIFFUSE_LIGHT_START;
+	public static final Vector3f DIFFUSE_LIGHT_END;
 	private ItemStackRenderState scratchItemStackRenderState;
-	private GuiGraphics GUI;
-	private GuiGraphicsAccessor GUI_INTERNAL;
+	private GuiGraphics guiGraphics;
 	private int mouseX;
 	private int mouseY;
 	private float tick;
@@ -69,8 +65,6 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 		Matrix4f matrix4f = (new Matrix4f()).scaling(1.0F, -1.0F, 1.0F).rotateYXZ(1.0821041F, 3.2375858F, 0.0F).rotateYXZ((-(float) Math.PI / 1.3F), 2.3561945F, 0.0F);
 		DIFFUSE_LIGHT_START = matrix4f.transformDirection((new Vector3f(0.2F, 1.0F, -0.7F)).normalize(), new Vector3f());
 		DIFFUSE_LIGHT_END = matrix4f.transformDirection((new Vector3f(-0.2F, 1.0F, 0.7F)).normalize(), new Vector3f());
-		OVERLAYS.add(new PlayerCrackOverlay());
-		OVERLAYS.add(new BlockHeartOverlay());
 	}
 
 	public static ResourceLocation res(String path) {
@@ -82,17 +76,16 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 	}
 
 	public void setGuiGraphics(GuiGraphics gui, Font font, int mouseX, int mouseY, float tick) {
-		GUI = gui;
-		GUI_INTERNAL = GuiGraphicsAccessor.of(gui);
+		this.guiGraphics = gui;
 		this.font = font;
 		this.mouseX = mouseX;
 		this.mouseY = mouseY;
 		this.tick = tick;
-		this.scratchItemStackRenderState = GUI_INTERNAL.getItemStackRenderState$blockomorph();
+		this.scratchItemStackRenderState = new ItemStackRenderState();
 	}
 
 	public GuiGraphics getGuiGraphics() {
-		return GUI;
+		return this.guiGraphics;
 	}
 
 	public Font getFont() {
@@ -114,19 +107,19 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 	/* HINT:
 		X - up left corner
 		Y - up left corner
-		u - start of texture X (left up corner)
-		y - start of texture Y (left up corner)
-		uvMaxX - length of start of UV
-		uvMaxY - length of start of UV
+		u - start ofObj texture X (left up corner)
+		y - start ofObj texture Y (left up corner)
+		uvMaxX - length ofObj start ofObj UV
+		uvMaxY - length ofObj start ofObj UV
 		max X - length \
 		max Y - height /   - size on screen
 	*/
 	public void blit(ResourceLocation texture, int x, int y, float u, float v, int uvMaxX, int uvMaxY, int maxX, int maxY) {
-		GUI.blit(RenderType::guiTextured, texture, x, y, u, v, uvMaxX, uvMaxY, maxX, maxY);
+		this.guiGraphics.blit(RenderType::guiTextured, texture, x, y, u, v, uvMaxX, uvMaxY, maxX, maxY);
 	}
 
-	public void blitMonoImage(ResourceLocation resourceLocation, int x, int y, int maxSizeX, int maxSizeY) {
-		this.blit(resourceLocation, x, y, 0, 0, maxSizeX, maxSizeY, maxSizeX, maxSizeY);
+	public void blitMonoImage(ResourceLocation ResourceLocation, int x, int y, int maxSizeX, int maxSizeY) {
+		this.blit(ResourceLocation, x, y, 0, 0, maxSizeX, maxSizeY, maxSizeX, maxSizeY);
 	}
 
 	public void renderTooltip(Component text, int mouseX, int mouseY) {
@@ -134,19 +127,19 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 	}
 
 	public void renderTooltip(List<Component> texts, int mouseX, int mouseY) {
-		GUI.renderComponentTooltip(this.font, texts, mouseX, mouseY);
+		this.guiGraphics.renderComponentTooltip(this.font, texts, mouseX, mouseY);
 	}
 
 	public void renderSprite(ResourceLocation resourceLocation, int x, int y, int maxSizeX, int maxSizeY) {
-		GUI.blitSprite(RenderType::guiTextured, resourceLocation, x, y, maxSizeX, maxSizeY);
+		this.guiGraphics.blitSprite(RenderType::guiTextured, resourceLocation, x, y, maxSizeX, maxSizeY);
 	}
 
 	public void renderFromSpriteClass(TextureAtlasSprite sprite, int x, int y, int maxSizeX, int maxSizeY, int color) {
-		GUI.blitSprite(RenderType::guiTextured, sprite, x, y, maxSizeX, maxSizeY, color);
+		this.guiGraphics.blitSprite(RenderType::guiTextured, sprite, x, y, maxSizeX, maxSizeY, color);
 	}
 
 	public void drawString(Component text, int x, int y, int color, boolean useShadow) {
-		GUI.drawString(this.font, text, x, y, color, useShadow);
+		this.guiGraphics.drawString(this.font, text, x, y, color, useShadow);
 	}
 
 	public void drawCenteredString(Component text, int xCenter, int y, int color, boolean useShadow) {
@@ -162,25 +155,25 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 	}
 
 	public void fill(int x, int y, int endX, int endY, int color) {
-		GUI.fill(x, y, endX, endY, color);
+		this.guiGraphics.fill(x, y, endX, endY, color);
 	}
 
 	public void blurScreen(int width, int height, int alpha) {
 		this.fill(0, 0, width, height, ARGB.color(alpha, 77, 77, 77));
 	}
 
-	public void enableScrissors(int x, int y, int endX, int endY) {
-		GUI.enableScissor(x, y, endX, endY);
+	public void enableScissors(int x, int y, int endX, int endY) {
+		this.guiGraphics.enableScissor(x, y, endX, endY);
 	}
 
-	public void disableScrissors() {
-		GUI.disableScissor();
+	public void disableScissors() {
+		this.guiGraphics.disableScissor();
 	}
 
 	//HINT:   XY - upper left corner of item
 	public void renderItem(ItemStack item, float x, float y, float scale, float zDepth) {
 		if (scale == 1) scale = 16f;
-		PoseStack pose = GUI.pose();
+		PoseStack pose = this.guiGraphics.pose();
 		pose.pushPose();
 
 		MC.getItemModelResolver().updateForTopItem(this.scratchItemStackRenderState, item, ItemDisplayContext.GUI, false, MC.level, MC.player, 0);
@@ -193,31 +186,23 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 	}
 
 	public void renderInDepthIfNeededAfterBlockRendering(Runnable rendering) {
-		PoseStack stack = GUI.pose();
+		PoseStack stack = this.guiGraphics.pose();
 		stack.pushPose();
 		stack.translate(0, 0, 300);
 		rendering.run();
 		stack.popPose();
 	}
 
-	public static void renderOverlay(GuiGraphics gui, float delta) {
-		GuiUtils guiUtils = new GuiUtils();
-		guiUtils.setGuiGraphics(gui, MC.font, -100, -100, delta);
-		Window window = Minecraft.getInstance().getWindow();
-		if (MC.level != null) {
-			OVERLAYS.forEach(overlay -> overlay.render(guiUtils, window.getGuiScaledWidth(), window.getGuiScaledHeight()));
-		}
-	}
-
 	private void doMainRenderingItem(PoseStack stack) {
 		boolean bl = !this.scratchItemStackRenderState.usesBlockLight();
 		if (bl) {
-			GUI.flush();
+			this.guiGraphics.flush();
 			Lighting.setupForFlatItems();
 		}
 
-		this.scratchItemStackRenderState.render(stack, GUI_INTERNAL.getBuffer$blockomorph(), 15728880, OverlayTexture.NO_OVERLAY);
-		GUI.flush();
+		this.guiGraphics.drawSpecial(buffer ->
+			this.scratchItemStackRenderState.render(stack, buffer, 15728880, OverlayTexture.NO_OVERLAY));
+		this.guiGraphics.flush();
 		if (bl) {
 			Lighting.setupFor3DItems();
 		}
@@ -225,7 +210,7 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 
 	//HINT:   XY - down corner of block
 	public Throwable renderBlockInGui(BlockState blockState, @Nullable BlockEntity blockEntity, float x, float y, float scale) {
-		PoseStack stack = GUI.pose();
+		PoseStack stack = this.guiGraphics.pose();
 
 		stack.pushPose();
 
@@ -237,7 +222,9 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 
 		Throwable reason = null;
 		try {
-			ClientPlatformUtils.INSTANCE.renderBlockInGui(GUI_INTERNAL.getBuffer$blockomorph(), stack, blockState, blockEntity != null ? blockEntity.getBlockPos() : AIR);
+			this.guiGraphics.drawSpecial(buffer ->
+				this.renderBlockInGui(buffer, stack, blockState, blockEntity != null ? blockEntity.getBlockPos() : AIR)
+			);
 		} catch (Throwable e) {
 			reason = e;
 		}
@@ -250,6 +237,23 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 
 		stack.popPose();
 		return reason;
+	}
+
+	private void renderBlockInGui(MultiBufferSource bufferSource, PoseStack stack, BlockState blockState, BlockPos zeroOrFake) {//todo
+		var level = MC.level;
+		if (blockState.getRenderShape() == RenderShape.MODEL && level != null) {
+			BakedModel model = MC.getModelManager().getBlockModelShaper().getBlockModel(blockState);
+			LevelWithFlags acc = LevelWithFlags.of(level);
+			acc.flags().customLightProvider = MorphedLevelFeatureFlags.LightProvider.ALWAYS_LIGHT;
+			try {
+				RandomSource random = RandomSource.create(blockState.getSeed(zeroOrFake));
+				RenderType simplified = ItemBlockRenderTypes.getMovingBlockRenderType(blockState);
+				MC.getBlockRenderer().getModelRenderer().tesselateBlock(MC.level,
+						model, blockState, zeroOrFake, stack, bufferSource.getBuffer(simplified), false, random, blockState.getSeed(zeroOrFake), OverlayTexture.NO_OVERLAY);
+			} finally {
+				acc.flags().customLightProvider = null;
+			}
+		}
 	}
 
 	private Boolean skipCheckOrContainsRenderer(BlockState state) {
@@ -294,30 +298,27 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 		if (blockEntity != null) {
 			BlockEntityRenderer<T> renderer = MC.getBlockEntityRenderDispatcher().getRenderer(blockEntity);
 			if (renderer != null) {
-				ClientLevelAccessor acc = ClientLevelAccessor.of(MC.level);
+				LevelWithFlags level = LevelWithFlags.of(MC.level);
 				try {
-					acc.setSpecialRenderingMode(true);
-					renderer.render(blockEntity, this.tick, stack, GUI_INTERNAL.getBuffer$blockomorph(), LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY);
-				} catch (Exception ignored) {
-				} finally {
-					acc.setSpecialRenderingMode(false);
+					level.flags().flywheelDisabled = true;
+					this.guiGraphics.drawSpecial(buffer ->
+						renderer.render(blockEntity, this.tick, stack, buffer, LightTexture.pack(15, 15), OverlayTexture.NO_OVERLAY));//TODO
+				} catch (Exception ignored) {} finally {
+					level.flags().flywheelDisabled = false;
 				}
 			}
 		}
 	}
 
 	@Nullable
-	public static String redirectBlockInfo(@Nullable Boolean fluid, HitResult hitResult) {
+	public static String hideMorphedBlocksKeyPos(@Nullable Boolean fluid, HitResult hitResult) {
 		if (hitResult instanceof MorphedPlayerHitResult hit) {
-			if (MC.player != null && MC.player.getAbilities().instabuild) {
-				return null;
-			}
-			Vec3 position = MorphUtils.getRealBlockPos(hit.getPlayer(), hit.getOffset());
-			String x = formatCoordinate(position.x);
-			String y = formatCoordinate(position.y);
-			String z = formatCoordinate(position.z);
+			if (MC.player != null && MC.player.getAbilities().instabuild) return null;
+			String x = formatCoordinate(MorphMath.getRealBlockPosAxis(Direction.Axis.X, hit.getBlock()));
+			String y = formatCoordinate(MorphMath.getRealBlockPosAxis(Direction.Axis.Y, hit.getBlock()));
+			String z = formatCoordinate(MorphMath.getRealBlockPosAxis(Direction.Axis.Z, hit.getBlock()));
 			if (fluid == null) return String.format(Locale.ROOT, "%s, %s, %s", x, y, z);
-			return String.format(Locale.ROOT, "Targeted " + (fluid ? "Fluid" : "Block") + "%s, %s, %s", x, y, z);
+			return String.format(Locale.ROOT, "Targeted " + (fluid ? "Fluid" : "Block") + ": %s, %s, %s", x, y, z);
 		}
 		return null;
 	}
@@ -344,10 +345,5 @@ public class GuiUtils { //Cross-platform wrapper 	/\
 
 	public static SoundInstance getClickSound() {
 		return SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1f);
-	}
-
-	public static void pushHotbarMessage(Component text) {
-		MC.gui.setOverlayMessage(text, false);
-		MC.getNarrator().sayNow(text);
 	}
 }

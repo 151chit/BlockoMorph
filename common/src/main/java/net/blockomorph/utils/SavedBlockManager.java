@@ -1,5 +1,6 @@
 package net.blockomorph.utils;
 
+import net.blockomorph.core.serialization.DataWorker;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 
@@ -21,8 +22,8 @@ public class SavedBlockManager {
 			try {
 				CompoundTag tag = NbtIo.read(this.gameDir);
 				if (tag != null) {
-					for (String key : tag.getAllKeys()) {
-						this.blocks.put(key, SavedBlock.fromTag(tag.getCompound(key), key));
+					for (String key : DataWorker.keysCompound(tag)) {
+						this.blocks.put(key, SavedBlock.fromTag(DataWorker.getTagFrom(tag, key, CompoundTag.TYPE).orElse(null), key));
 					}
 				}
 				init = true;

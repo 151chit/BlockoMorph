@@ -1,29 +1,31 @@
 package net.blockomorph.network;
 
+import net.blockomorph.core.serialization.DataWorker;
 import net.blockomorph.utils.BannedBlock;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.PlayerAccessor;
-import net.blockomorph.utils.config.Config;
-import net.blockomorph.utils.config.ConfigEnums;
-import net.blockomorph.utils.coords.InPlayerBlockPos;
-import net.minecraft.core.registries.Registries;
+import net.blockomorph.core.PlayerAccessor;
+import net.blockomorph.utils.config.enums.ConfigEnums;
+import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.IntTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class ServerBoundBlockMorphPacket implements BlockMorphPacket {
+public final class ServerBoundBlockMorphPacket implements BlockMorphPacket {
 	public static final String ID = "server_bound_block_morph_packet";
-	CompoundTag tag;
+	private final Tag tag;
 
 	private ServerBoundBlockMorphPacket(CompoundTag nbt) {
 		this.tag = nbt;
 	}
 
-	public ServerBoundBlockMorphPacket(FriendlyByteBuf buf) {
-		this.tag = buf.readNbt();
+	ServerBoundBlockMorphPacket(FriendlyByteBuf buffer) {
+		this.tag = buffer.readNbt(NbtAccounter.create(FriendlyByteBuf.DEFAULT_NBT_QUOTA));
 	}
 
 	@Override
@@ -38,46 +40,44 @@ public class ServerBoundBlockMorphPacket implements BlockMorphPacket {
 
 	@Override
 	public void handle(Player player) {
-		if (player instanceof PlayerAccessor mob) {
-			if (tag == null) throw new IllegalArgumentException("Payload is null!");
-			if (tag.contains("fuse")) {
-				mob.setTnt();
-				return;
+		if (player instanceof PlayerAccessor pl) {
+			if (this.tag instanceof CompoundTag morphTag) {
+				BlockState blockstate = Block.stateById(DataWorker.getTagFrom(morphTag, "s", IntTag.TYPE).map(IntTag::getAsInt).orElse(-1));
+				CompoundTag nbt = DataWorker.getTagFrom(morphTag, "d", CompoundTag.TYPE).orElse(null);
+				this.doMorph(pl, blockstate, nbt);
+			} else {
+				pl.getManager().getTntHandler().tryActivateDirect();
 			}
-			BlockState blockstate = NbtUtils.readBlockState(player.level().holderLookup(Registries.BLOCK), tag.getCompound("BlockState"));
-			CompoundTag nbt = tag.contains("Tags", 10) ? tag.getCompound("Tags") : null;
-			this.doMorph(mob, blockstate, nbt);
 		}
 	}
 
-	private void doMorph(PlayerAccessor player, BlockState state, CompoundTag nbt) {
-		ConfigEnums.ScreenAccess access = MorphUtils.getScreenAccess(player.player());
+	private void doMorph(PlayerAccessor pl, BlockState state, CompoundTag nbt) {
+		ConfigEnums.ScreenAccess access = MorphUtils.getScreenAccess(pl.player());
+		BlockState currentState = pl.getBlockState(InPlayerBlockPos.ZERO);
 		if (!access.morph) {
-			if (!player.getBlockState(InPlayerBlockPos.ZERO).is(state.getBlock())) {
+			if (!currentState.is(state.getBlock())) {
 				throw new IllegalArgumentException("You not have access to change your blockstate.");
 			}
 		}
 		if (!access.config) {
-			if (nbt != null || !state.getBlock().defaultBlockState().equals(state)) {
+			if (nbt != null || state != state.getBlock().defaultBlockState()) {
 				throw new IllegalArgumentException("You not have access to config your block.");
 			}
 		}
-		BannedBlock reason = player.applyBlockMorph(state, nbt, BannedBlock.Source.NETWORK);
+		BannedBlock reason = pl.applyBlockMorph(state, nbt, BannedBlock.Source.NETWORK);
 		if (reason != null && reason != BannedBlock.ALREADY_MORPHED) {
 			throw new IllegalArgumentException(reason.reason());
 		}
 	}
 
 	public static ServerBoundBlockMorphPacket create(BlockState state, @Nullable CompoundTag tagMorph) {
-		CompoundTag tag = new CompoundTag();
-		tag.put("BlockState", NbtUtils.writeBlockState(state));
-		if (tagMorph != null) tag.put("Tags", tagMorph);
-		return new ServerBoundBlockMorphPacket(tag);
+		CompoundTag root = new CompoundTag();
+		root.putInt("s", Block.getId(state));
+		if (tagMorph != null) root.put("d", tagMorph);
+		return new ServerBoundBlockMorphPacket(root);
 	}
 
-	public static ServerBoundBlockMorphPacket fuse() {
-		CompoundTag tag = new CompoundTag();
-		tag.putBoolean("fuse", true);
-		return new ServerBoundBlockMorphPacket(tag);
+	public static ServerBoundBlockMorphPacket fuseTnt() {
+		return new ServerBoundBlockMorphPacket((CompoundTag) null);
 	}
 }

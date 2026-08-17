@@ -9,9 +9,9 @@ import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.screens.utils.SpriteImageButton;
 import net.blockomorph.utils.BannedBlock;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.PlayerAccessor;
+import net.blockomorph.core.PlayerAccessor;
 import net.blockomorph.utils.SavedBlock;
-import net.blockomorph.utils.coords.InPlayerBlockPos;
+import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -53,11 +53,11 @@ public class MorphScreen extends AbstractMorphScreen {
 	protected void initAdditional(Consumer<AbstractWidget> action) {
 		action.accept(new SpriteImageButton(leftPos + 10, topPos + this.imageHeight + 1, 26, 26, UNMORPH_BUTTON_SPRITE, button -> {
 			MorphUtils.sendServer(ServerBoundBlockMorphPacket.create(Blocks.AIR.defaultBlockState(), null));
-		}, () -> this.player.isFullActive(), true));
+		}, () -> this.player.isBlockomorphFullActive(), true));
 
 		action.accept(this.fuseButton = new SpriteImageButton(leftPos - 28, topPos + this.imageHeight + 1, 26, 26, FUSE_BUTTON_SPRITE, button -> {
-			MorphUtils.sendServer(ServerBoundBlockMorphPacket.fuse());
-		}, () -> this.player.getTnt() == null, true));
+			MorphUtils.sendServer(ServerBoundBlockMorphPacket.fuseTnt());
+		}, () -> this.player.getActiveMorphTnt() == null, true));
 		this.fuseButtonVisibilityCheck();
 	}
 
@@ -147,7 +147,7 @@ public class MorphScreen extends AbstractMorphScreen {
 		CompoundTag tg = this.player.getTag(InPlayerBlockPos.ZERO);
 
 		if (state.equals(playerState)) {
-			if (block.getTag() == null || tg.equals(block.getTag())) {
+			if (block.getTag() == null || tg == null || tg.equals(block.getTag())) {
 				gui.blitMonoImage(SELECTED_FRAME, x, y, BLOCK_FRAME_SIZE, BLOCK_FRAME_SIZE);
 			}
 		}

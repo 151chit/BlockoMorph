@@ -1,12 +1,13 @@
 package net.blockomorph.utils;
 
-import net.minecraft.client.Minecraft;
+import net.blockomorph.core.serialization.DataWorker;
+import net.blockomorph.screens.utils.GuiUtils;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.block.state.BlockState;
 
-public class SavedBlock {
+public class SavedBlock {//todo remove and replace
 	private final BlockState blockstate;
 	private final CompoundTag nbt;
 	private final String key;
@@ -37,8 +38,9 @@ public class SavedBlock {
 	}
 
 	public static SavedBlock fromTag(CompoundTag tag, String k) {
-		CompoundTag nbt = tag.getCompound("Tag");
-		BlockState state = NbtUtils.readBlockState(Minecraft.getInstance().level.holderLookup(Registries.BLOCK), tag.getCompound("BlockState"));
+		CompoundTag nbt = DataWorker.getTagFrom(tag, "Tag", CompoundTag.TYPE).orElseGet(CompoundTag::new);
+		CompoundTag stateTag = DataWorker.getTagFrom(tag, "BlockState", CompoundTag.TYPE).orElseGet(CompoundTag::new);
+		BlockState state = NbtUtils.readBlockState(GuiUtils.MC.level.holderLookup(Registries.BLOCK), stateTag);
 		return new SavedBlock(state, nbt, k);
 	}
 

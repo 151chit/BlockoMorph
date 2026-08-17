@@ -1,9 +1,13 @@
+import net.blockomorph.fabric.FastInjectRemapperHolder
+import net.fabricmc.loom.api.remapping.RemapperParameters
+
 plugins {
     id 'fabric-loom'
     id 'maven-publish'
 }
 
 loom {
+    addRemapperExtension(FastInjectRemapperHolder.class, RemapperParameters.None.class, {})
     runs {
         client {
             client()
