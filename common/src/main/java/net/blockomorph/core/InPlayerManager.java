@@ -5,6 +5,7 @@ import net.blockomorph.core.coords.blockPosPointer.BlockPosBounds;
 import net.blockomorph.core.coords.MorphedPlayerSection;
 import net.blockomorph.core.serialization.PlayerLoader;
 import net.blockomorph.core.serialization.PlayerWorldSerializer;
+import net.blockomorph.core.serialization.io.BlockEntityAndEntityIO;
 import net.blockomorph.core.storage.BlocksInPlayerCursor3D;
 import net.blockomorph.core.storage.BlocksInPlayerStorage;
 import net.blockomorph.core.storage.InPlayerGameEventListenersStorage;
@@ -38,6 +39,7 @@ public class InPlayerManager implements PlayerBlocksEditor {
 	public static final int ZERO_POS = InPlayerBlockPos.ZERO_INT;
 	public static final int HEAVY_MODE = 27;
 	private final IntArrayList blocksForErase = new IntArrayList(BlocksInPlayerStorage.ONE_AXIS);
+	private final BlockEntityAndEntityIO guiTagLoader = new BlockEntityAndEntityIO(25, 200);
 	private final PlayerTicks<Block> blockTicks;
 	private final PlayerTicks<Fluid> fluidTicks;
 	private final HitBoxCalculator hitBoxCalculator;
@@ -298,7 +300,8 @@ public class InPlayerManager implements PlayerBlocksEditor {
 		this.setBlock(ZERO_POS, state, 3);
 		BlockInPlayer2 block = this.storage.get(ZERO_POS);
 		if (block != null && tag != null) {
-			List<String> errs = block.loadFullTag(tag);
+			List<String> errs = block.getBlockEntity() != null ?
+					this.guiTagLoader.loadInBlockEntity(block.getBlockEntity(), this.fallbackLevel.registryAccess(), tag) : null;
 			if (errs != null) {
 				serverPlayer.connection.send(ClientBoundServerBlockEntityTagPacket.createForError(errs, true).toVanillaClientbound());
 			} else {

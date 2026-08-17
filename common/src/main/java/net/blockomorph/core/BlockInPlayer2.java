@@ -2,10 +2,8 @@ package net.blockomorph.core;
 
 import net.blockomorph.core.coords.*;
 import net.blockomorph.core.storage.BlocksFastStorage;
-import net.blockomorph.utils.MorphedBlockProblemReporter;
 import net.blockomorph.utils.config.Config;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.Blocks;
@@ -15,12 +13,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEventListener;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.ValueInput;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 @SuppressWarnings("deprecation")
@@ -98,21 +92,6 @@ public class BlockInPlayer2 implements BlocksFastStorage.InPlayerBlockPosed {
 
 	public boolean shouldDoFluidAction() {
 		return this.blockState.getBlock() instanceof LiquidBlock || (!this.blockState.getFluidState().isEmpty() && this.shouldShowFluidState());
-	}
-
-	@Nullable
-	public List<String> loadFullTag(CompoundTag tg) {
-		if (this.blockEntity != null) {
-			try {
-				MorphedBlockProblemReporter collector = new MorphedBlockProblemReporter(25, 200);
-				ValueInput valueInput = TagValueInput.create(collector, this.manager.level().registryAccess(), tg);
-				this.blockEntity.loadWithComponents(valueInput);
-				return collector.getProblemsIfNotEmpty();
-			} catch (Throwable e) {
-				return List.of(Objects.requireNonNullElse(e.getMessage(), e.getClass().getName()));
-			}
-		}
-		return null;
 	}
 
 	protected void onPlace(BlockState newState, BlockState oldState, int flags) {

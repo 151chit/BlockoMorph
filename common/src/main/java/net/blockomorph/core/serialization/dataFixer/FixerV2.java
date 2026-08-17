@@ -4,6 +4,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.blockomorph.core.serialization.BlockPalette;
+import net.blockomorph.core.serialization.DataWorker;
 import net.blockomorph.core.serialization.PlayerWorldSerializer;
 import net.blockomorph.core.storage.BlocksInPlayerStorage;
 import net.blockomorph.core.tick.PlayerTicks;
@@ -12,10 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.*;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -46,30 +44,35 @@ class FixerV2 extends DataFixerHandler.DataFixer {
 	}
 
 	private void readBlocks(CompoundTag oldRoot, UUID playerId, RegistryAccess registry, Int2ObjectMap<BlockState> states, CompoundTag rootBeTag) {
-		for (String posHolderKey : oldRoot.keySet()) {
+		for (String posHolderKey : DataWorker.keysCompound(oldRoot)) {
 			int pos = this.decodeStringPos(posHolderKey);
 			if (pos == -1) {
 				MorphUtils.LOGGER.error("Block with irregular pos in V2 data: {} for player: {}", posHolderKey, playerId);
 				continue;
 			}
 
-			CompoundTag blockHolder = oldRoot.getCompound(posHolderKey).orElse(null);
+			CompoundTag blockHolder = DataWorker.getTagFrom(oldRoot, posHolderKey, CompoundTag.TYPE).orElse(null);
 			if (blockHolder == null) {
 				MorphUtils.LOGGER.error("Pos without block in V2 data: {} for player: {}", posHolderKey, playerId);
 				continue;
 			}
 
-			BlockState blockState = NbtUtils.readBlockState(registry.lookupOrThrow(Registries.BLOCK), blockHolder.getCompoundOrEmpty("BlockState"));
-			if (blockState.is(Blocks.AIR)) {
+			CompoundTag stateTag = DataWorker.getTagFrom(blockHolder, "BlockState", CompoundTag.TYPE).orElse(null);
+			if (stateTag == null) {
 				MorphUtils.LOGGER.error("Empty block in V2 data: {} for player: {}", posHolderKey, playerId);
+				continue;
+			}
+			BlockState blockState = NbtUtils.readBlockState(registry.lookupOrThrow(Registries.BLOCK), stateTag);
+			if (blockState.is(Blocks.AIR)) {
+				MorphUtils.LOGGER.error("Invalid block in V2 data: {} for player: {}", posHolderKey, playerId);
 				continue;
 			}
 			states.put(pos, blockState);
 
-			CompoundTag beTagContainer = blockHolder.getCompound("BlockEntityTag").orElse(null);
+			CompoundTag beTagContainer = DataWorker.getTagFrom(blockHolder, "BlockEntityTag", CompoundTag.TYPE).orElse(null);
 			if (beTagContainer != null && !beTagContainer.isEmpty()) {
 				CompoundTag beTag = new CompoundTag();
-				String id = beTagContainer.getString("id").orElse(null);
+				String id = stringValue(beTagContainer, "id");
 				beTagContainer.remove("id");
 				beTag.put("data", beTagContainer);
 				if (id != null) {
@@ -81,26 +84,25 @@ class FixerV2 extends DataFixerHandler.DataFixer {
 	}
 
 	private void readTicks(CompoundTag oldRoot, UUID playerId, CompoundTag ticksRoot) {
-		CompoundTag ticks = oldRoot.getCompound("ticks").orElse(null);
-		if (ticks != null) {
-			ticks.getCompound("blockTicks").ifPresent(blockHolder -> {
+		DataWorker.getTagFrom(oldRoot, "ticks", CompoundTag.TYPE).ifPresent(ticks -> {
+			DataWorker.getTagFrom(ticks, "blockTicks", CompoundTag.TYPE).ifPresent(blockHolder -> {
 				ListTag tg = new ListTag();
 				ticksRoot.put("blocks", tg);
 				readTicksTyped(blockHolder, playerId, tg);
 			});
-			ticks.getCompound("fluidTicks").ifPresent(fluidHolder -> {
+			DataWorker.getTagFrom(ticks, "fluidTicks", CompoundTag.TYPE).ifPresent(fluidHolder -> {
 				ListTag tg = new ListTag();
 				ticksRoot.put("fluids", tg);
 				readTicksTyped(fluidHolder, playerId, tg);
 			});
-		}
+		});
 	}
 
 	private void readTicksTyped(CompoundTag oldHolder, UUID playerId, ListTag ticksHolder) {
 		for (int i = 0; i < PlayerTicks.ORDER.length; i++) {
 			ticksHolder.add(new ListTag());
 		}
-		for (Tag tag : oldHolder.values()) {
+		for (Tag tag : DataWorker.valuesCompound(oldHolder)) {
 			if (!(tag instanceof ListTag chunk)) continue;
 			CachedTicksChunk cachedChunk = null;
 			for (Tag blockElement : chunk) {
@@ -111,12 +113,12 @@ class FixerV2 extends DataFixerHandler.DataFixer {
 	}
 
 	private CachedTicksChunk handleTick(CompoundTag blockTag, UUID playerId, ListTag ticksHolder, CachedTicksChunk cachedBox) {
-		Integer x = blockTag.getInt("x").orElse(null);
-		Integer y = blockTag.getInt("y").orElse(null);
-		Integer z = blockTag.getInt("z").orElse(null);
-		String type = blockTag.getString("i").orElse(null);
-		Integer time = blockTag.getInt("t").orElse(null);
-		Integer priority = blockTag.getInt("p").orElse(null);
+		Integer x = intValue(blockTag, "x");
+		Integer y = intValue(blockTag, "y");
+		Integer z = intValue(blockTag, "z");
+		String type = stringValue(blockTag, "i");
+		Integer time = intValue(blockTag, "t");
+		Integer priority = intValue(blockTag, "p");
 		if (x == null || y == null || z == null || type == null || time == null || priority == null)
 			return cachedBox;
 		if (!InPlayerBlockPos.isValid(x, y, z)) {
@@ -142,13 +144,21 @@ class FixerV2 extends DataFixerHandler.DataFixer {
 		return cachedBox;
 	}
 
+	private static Integer intValue(CompoundTag tag, String name) {
+		return DataWorker.getTagFrom(tag, name, IntTag.TYPE).map(IntTag::value).orElse(null);
+	}
+
+	private static String stringValue(CompoundTag tag, String name) {
+		return DataWorker.getTagFrom(tag, name, StringTag.TYPE).map(StringTag::value).orElse(null);
+	}
+
 	private record CachedTicksChunk(long pos, ListTag box) {}
 
 	private ListTag findBoxForChunk(int chunkX, int chunkZ, ListTag ticksHolder) {
 		for (int i = 0; i < PlayerTicks.ORDER.length; i++) {
 			ChunkPos orderPos = PlayerTicks.ORDER[i];
 			if (orderPos.x == chunkX && orderPos.z == chunkZ) {
-				return ticksHolder.getList(i).orElseThrow();
+				return DataWorker.getTagFrom(ticksHolder, i, ListTag.TYPE).orElseThrow();
 			}
 		}
 		throw new IllegalStateException("Irregular chunk pos: " + new ChunkPos(chunkX, chunkZ));

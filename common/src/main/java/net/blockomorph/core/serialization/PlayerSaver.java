@@ -2,8 +2,8 @@ package net.blockomorph.core.serialization;
 
 import net.blockomorph.core.TntHandler;
 import net.blockomorph.core.coords.InPlayerBlockPos;
+import net.blockomorph.core.serialization.io.BlockEntityAndEntityIO;
 import net.blockomorph.utils.MorphUtils;
-import net.blockomorph.utils.MorphedBlockProblemReporter;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -13,7 +13,6 @@ import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.ticks.SavedTick;
 
 import java.nio.file.Files;
@@ -24,11 +23,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 
 public class PlayerSaver implements DataWorker {
+	private final BlockEntityAndEntityIO saver = new BlockEntityAndEntityIO();
 	private final PlayerWorldSerializer serializer;
 	private List<SavedTick<Block>>[] blockTicks;
 	private List<SavedTick<Fluid>>[] fluidTicks;
 	private CompoundTag blocks;
-	private final MorphedBlockProblemReporter reporter = new MorphedBlockProblemReporter(20, 500);
 	private ArrayList<BlockEntity> blockEntities;
 	private final BlockPos zeroPos;
 	private long lifetime;
@@ -120,10 +119,9 @@ public class PlayerSaver implements DataWorker {
 		TntHandler tntHandler = this.serializer.manager.getTntHandler();
 		PrimedTnt tnt = tntHandler.getActiveTnt();
 		if (tnt != null) {
-			TagValueOutput output = TagValueOutput.createWithContext(this.reporter, this.serializer.manager.level().registryAccess());
-			tnt.save(output);
-			this.tntTag = output.buildResult();
-			this.reporter.logRaw("save tnt data from playerOwner: " + this.serializer.playerId);
+			var result = this.saver.saveEntity(tnt, this.serializer.manager.level().registryAccess());
+			BlockEntityAndEntityIO.log(result.errors(), "save tnt data from playerOwner: " + this.serializer.playerId);
+			this.tntTag = result.result();
 		}
 	}
 
@@ -149,16 +147,15 @@ public class PlayerSaver implements DataWorker {
 	}
 
 	private CompoundTag saveBE(BlockEntity blockEntity) {
-		TagValueOutput output = TagValueOutput.createWithContext(this.reporter, this.serializer.manager.level().registryAccess());
-		blockEntity.saveWithoutMetadata(output);
-		this.reporter.logRaw("save blockentity for playerOwner " + this.serializer.playerId + " in: " +
+		var result = this.saver.saveBlockEntity(blockEntity, this.serializer.manager.level().registryAccess());
+		BlockEntityAndEntityIO.log(result.errors(), "save blockentity for playerOwner " + this.serializer.playerId + " in: " +
 				blockEntity.getBlockPos().subtract(this.serializer.manager.getZeroKey()).toShortString());
 
 		CompoundTag blockEntityRoot = new CompoundTag();
 		ResourceLocation blockEntityTypeId = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType());
 		if (blockEntityTypeId != null)
-			blockEntityRoot.put("id", StringTag.valueOf(blockEntityTypeId.toString()));
-		blockEntityRoot.put("data", output.buildResult());
+			blockEntityRoot.putString("id", blockEntityTypeId.toString());
+		blockEntityRoot.put("data", result.result());
 		return blockEntityRoot;
 	}
 
