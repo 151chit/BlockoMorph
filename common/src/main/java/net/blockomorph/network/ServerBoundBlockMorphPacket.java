@@ -1,11 +1,13 @@
 package net.blockomorph.network;
 
+import net.blockomorph.core.serialization.DataWorker;
 import net.blockomorph.utils.BannedBlock;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.core.PlayerAccessor;
 import net.blockomorph.utils.config.enums.ConfigEnums;
 import net.blockomorph.core.coords.InPlayerBlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -40,8 +42,8 @@ public final class ServerBoundBlockMorphPacket implements BlockMorphPacket {
 	public void handle(Player player) {
 		if (player instanceof PlayerAccessor pl) {
 			if (this.tag instanceof CompoundTag morphTag) {
-				BlockState blockstate = Block.stateById(morphTag.getInt("s").orElse(-1));
-				CompoundTag nbt = morphTag.getCompound("t").orElse(null);
+				BlockState blockstate = Block.stateById(DataWorker.getTagFrom(morphTag, "s", IntTag.TYPE).map(IntTag::value).orElse(-1));
+				CompoundTag nbt = DataWorker.getTagFrom(morphTag, "d", CompoundTag.TYPE).orElse(null);
 				this.doMorph(pl, blockstate, nbt);
 			} else {
 				pl.getManager().getTntHandler().tryActivateDirect();
@@ -71,7 +73,7 @@ public final class ServerBoundBlockMorphPacket implements BlockMorphPacket {
 	public static ServerBoundBlockMorphPacket create(BlockState state, @Nullable CompoundTag tagMorph) {
 		CompoundTag root = new CompoundTag();
 		root.putInt("s", Block.getId(state));
-		if (tagMorph != null) root.put("t", tagMorph);
+		if (tagMorph != null) root.put("d", tagMorph);
 		return new ServerBoundBlockMorphPacket(root);
 	}
 
