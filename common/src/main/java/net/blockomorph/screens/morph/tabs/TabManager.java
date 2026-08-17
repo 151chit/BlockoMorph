@@ -4,7 +4,7 @@ import net.blockomorph.screens.morph.AbstractMorphScreen;
 import net.blockomorph.screens.utils.GuiUtils;
 import net.blockomorph.screens.utils.ListenerEditBox;
 import net.blockomorph.screens.utils.ScrollerManager;
-import net.blockomorph.utils.MorphedBlockProblemReporter;
+import net.blockomorph.core.serialization.io.BlockEntityAndEntityIO;
 import net.blockomorph.utils.SavedBlock;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -18,8 +18,6 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.ValueInput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -27,6 +25,7 @@ import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 
 public class TabManager {
+	private static final BlockEntityAndEntityIO LOADER = new BlockEntityAndEntityIO(0, 0);
 	private static final ResourceLocation TABS_SPRITE = GuiUtils.res("textures/screens/block_selector_tabs.png");
 	public static final int BLOCK_FRAME_SIZE = 36;
 	public static final int ROW_WIDTH = 4;
@@ -110,8 +109,7 @@ public class TabManager {
 			blockEntity.setLevel(GuiUtils.MC.level);
 			blockEntity.setBlockState(block.getState());
 			if (block.getTag() != null) {
-				ValueInput tagValueInput = TagValueInput.create(new MorphedBlockProblemReporter(0, null), GuiUtils.MC.level.registryAccess(), block.getTag());
-				blockEntity.loadWithComponents(tagValueInput);
+				LOADER.loadInBlockEntity(blockEntity, GuiUtils.MC.level.registryAccess(), block.getTag());//todo
 			}
 		}
 		return blockEntity;
