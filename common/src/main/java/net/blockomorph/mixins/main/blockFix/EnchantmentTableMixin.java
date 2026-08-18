@@ -1,7 +1,6 @@
 package net.blockomorph.mixins.main.blockFix;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
@@ -23,7 +22,7 @@ public class EnchantmentTableMixin {
 	@Inject(method = "bookAnimationTick", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/block/entity/EnchantingTableBlockEntity;tRot:F", opcode = Opcodes.PUTFIELD, shift = At.Shift.AFTER, ordinal = 0))
 	private static void getRealBlockPos(Level lv, BlockPos pos, BlockState p_155506_, EnchantingTableBlockEntity table, CallbackInfo ci, @Local Player player) {
 		InPlayerBlockPos.check(pos, (pl, realPos) -> {
-			Vec3 vec = MorphMath.getRealBlockPos(pl, realPos);
+			Vec3 vec = MorphUtils.getRealBlockPos(pl, realPos);
 			Vec3 vec3 = player.position();
 			double x = vec3.x - (vec.x + 0.5D);
 			double z = vec3.z - (vec.z + 0.5D);

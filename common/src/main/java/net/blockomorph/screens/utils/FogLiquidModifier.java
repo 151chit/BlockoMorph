@@ -1,12 +1,15 @@
 package net.blockomorph.screens.utils;
 
 import net.blockomorph.utils.BlockInPlayer2;
-import net.blockomorph.utils.MorphMath;
+import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.platform.ClientPlatformUtils;
 import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
@@ -33,7 +36,7 @@ public final class FogLiquidModifier {
 				if (block.shouldDoFluidAction()) {
 					FluidState fluidState = block.getBlockState().getFluidState();
 					if (includeVanilla || (!fluidState.getType().isSame(Fluids.WATER) && !fluidState.getType().isSame(Fluids.LAVA))) {
-						double y = MorphMath.getRealBlockPos(block.getPlayer(), block.getOffset()).y;
+						double y = MorphUtils.getRealBlockPos(block.getPlayer(), block.getOffset()).y;
 						double height = fluidState.getHeight(camera.getEntity().level(), block.getPos());
 						if (y + height > position.y) {
 							fogData.set(ClientPlatformUtils.INSTANCE.calculateData(camera.getEntity().level(), block));

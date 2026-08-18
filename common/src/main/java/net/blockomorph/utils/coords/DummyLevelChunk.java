@@ -1,7 +1,6 @@
 package net.blockomorph.utils.coords;
 
 import net.blockomorph.utils.BlockInPlayer2;
-import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.accessors.ClientLevelAccessor;
 import net.minecraft.core.BlockPos;
@@ -120,7 +119,7 @@ public class DummyLevelChunk extends EmptyLevelChunk {
 			} else if (level instanceof ClientLevelAccessor acc && acc.isExternalMorphedBlockGetterLocked()) {
 				cir.setReturnValue(state);
 			} else if (state.isAir() && !realPos.equals(InPlayerBlockPos.ZERO)) {
-				Vec3 vec = MorphMath.getRealBlockPos(pl, realPos).add(0.5, 0, 0.5);
+				Vec3 vec = MorphUtils.getCetneredRealBlockPos(pl, realPos);
 				cir.setReturnValue(level.getBlockState(BlockPos.containing(vec)));
 			} else {
 				cir.setReturnValue(state);
@@ -130,11 +129,7 @@ public class DummyLevelChunk extends EmptyLevelChunk {
 
 	public static void getBlockEntity(Level level, BlockPos pos, CallbackInfoReturnable<BlockEntity> cir) {
 		InPlayerBlockPos.check(pos, (pl, realPos) -> {
-			BlockEntity blockEntity = pl.getBlockEntity(realPos);
-			if (blockEntity == null && !(level instanceof ClientLevelAccessor acc && acc.isExternalMorphedBlockGetterLocked())) {
-				Vec3 vec = MorphMath.getRealBlockPos(pl, realPos).add(0.5, 0, 0.5);
-				cir.setReturnValue(level.getBlockEntity(BlockPos.containing(vec)));
-			} else cir.setReturnValue(blockEntity);
+			cir.setReturnValue(pl.getBlockEntity(realPos));
 		}, null, level);
 	}
 
@@ -142,7 +137,7 @@ public class DummyLevelChunk extends EmptyLevelChunk {
 		InPlayerBlockPos.check(pos, (pl, realPos) -> {
 			BlockState state = pl.getBlockState(realPos);
 			if (state == null || (state.isAir() && !realPos.equals(InPlayerBlockPos.ZERO))) {
-				Vec3 vec = MorphMath.getCenteredRealBlockPos(pl, realPos);
+				Vec3 vec = MorphUtils.getCetneredRealBlockPos(pl, realPos);
 				cir.setReturnValue(level.getFluidState(BlockPos.containing(vec)));
 			} else {
 				cir.setReturnValue(state.getFluidState());

@@ -1,6 +1,6 @@
 package net.blockomorph.mixins.main.blockFix;
 
-import net.blockomorph.utils.MorphMath;
+import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +25,7 @@ public class SignMixin extends BlockEntity {
 		InPlayerBlockPos.check(this.getBlockPos(), (pl, realPos) -> {
 			if (this.getBlockState().getBlock() instanceof SignBlock signblock) {
 				Vec3 vec3 = signblock.getSignHitboxCenterPosition(this.getBlockState());
-				Vec3 real = MorphMath.getRealBlockPos(pl, realPos);
+				Vec3 real = MorphUtils.getRealBlockPos(pl, realPos);
 				double d0 = player.getX() - (real.x + vec3.x);
 				double d1 = player.getZ() - (real.z + vec3.z);
 				float f = signblock.getYRotationDegrees(this.getBlockState());

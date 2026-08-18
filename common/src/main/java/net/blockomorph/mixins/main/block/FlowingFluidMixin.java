@@ -1,4 +1,4 @@
-package net.blockomorph.mixins.main.block.morphAdapt;
+package net.blockomorph.mixins.main.block;
 
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
@@ -15,7 +15,8 @@ public class FlowingFluidMixin {
 
 	@Inject(method = "spread", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FlowingFluid;spreadToSides(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/material/FluidState;Lnet/minecraft/world/level/block/state/BlockState;)V"), cancellable = true)
 	public void checkMorphedInLiquidBlock(Level level, BlockPos blockPos, FluidState fluidState, CallbackInfo ci) {
-		InPlayerBlockPos pos = InPlayerBlockPos.getBlockPosInPlayer(blockPos);
-		if (pos != null && pos.equals(InPlayerBlockPos.ZERO)) ci.cancel();
+		InPlayerBlockPos.check(blockPos, (pl, realPos) -> {
+			if (realPos.equals(InPlayerBlockPos.ZERO)) ci.cancel();
+		}, null, level);
 	}
 }

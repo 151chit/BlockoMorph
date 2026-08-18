@@ -1,12 +1,11 @@
 package net.blockomorph.mixins.main.block;
 
-import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 @Mixin(Block.class)
 public class BlockMixin {
@@ -30,6 +31,10 @@ public class BlockMixin {
 
 	@ModifyVariable(method = "shouldRenderFace", at = @At(value = "STORE"), ordinal = 1)
 	private static BlockState getRealState(BlockState neighbour, BlockState parent, BlockGetter lv, BlockPos parentPos, Direction dirToFace, BlockPos neighbourPos) {
-		return MorphUtils.lockExternalMorphedGetter(neighbour, lv instanceof LevelReader lr ? lr : null, neighbourPos);
+		AtomicReference<BlockState> input = new AtomicReference<>(neighbour);
+		InPlayerBlockPos.check(neighbourPos, (pl, realPos) -> {
+			input.set(pl.getBlockState(realPos));
+		}, null, !(lv instanceof Level level) || level.isClientSide);
+		return input.get();
 	}
 }

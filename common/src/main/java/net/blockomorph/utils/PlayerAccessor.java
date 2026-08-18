@@ -4,7 +4,6 @@ import net.blockomorph.network.ClientBoundMorphUpdatePacket;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
 import net.blockomorph.utils.playerSection.PlayerSectionHandler;
 import net.blockomorph.utils.playerSection.SafeIterableStorage;
-import net.blockomorph.utils.blockUpdate.RedstoneUpdateManager;
 import net.blockomorph.utils.tick.InPlayerBlockEntityTickManager;
 import net.blockomorph.utils.tnt.TntHandler;
 import net.minecraft.nbt.CompoundTag;
@@ -52,10 +51,7 @@ public interface PlayerAccessor {
 	HitBoxCalculator getHitBoxHandler();
 
 	SafeIterableStorage<GameEventListener> getListenersStorage();
-
 	PlayerSectionHandler getSectionHandler();
-
-	RedstoneUpdateManager getRestoneUpdater();
 
 	InPlayerBlockEntityTickManager getBlockEntityTickManager();
 

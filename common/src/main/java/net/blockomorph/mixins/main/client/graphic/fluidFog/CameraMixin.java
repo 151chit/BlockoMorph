@@ -1,7 +1,6 @@
 package net.blockomorph.mixins.main.client.graphic.fluidFog;
 
 import net.blockomorph.utils.BlockInPlayer2;
-import net.blockomorph.utils.MorphMath;
 import net.blockomorph.utils.MorphUtils;
 import net.blockomorph.utils.playerSection.PlayersMultiSectionStorage;
 import net.minecraft.client.Camera;
@@ -46,7 +45,7 @@ public abstract class CameraMixin {
 						cir.setReturnValue(FogType.POWDER_SNOW);
 					} else if (block.shouldDoFluidAction()) {
 						FluidState fluidState = block.getBlockState().getFluidState();
-						if (position.y < (MorphMath.getRealBlockPos(block.getPlayer(), block.getOffset()).y + fluidState.getHeight(this.level, block.getPos()))) {
+						if (position.y < (MorphUtils.getRealBlockPos(block.getPlayer(), block.getOffset()).y + fluidState.getHeight(this.level, block.getPos()))) {
 							if (fluidState.is(FluidTags.WATER)) {
 								cir.setReturnValue(FogType.WATER);
 							} else if (fluidState.is(FluidTags.LAVA)) {

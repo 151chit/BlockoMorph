@@ -1,4 +1,4 @@
-package net.blockomorph.mixins.main.block.morphAdapt;
+package net.blockomorph.mixins.main.blockFix;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.blockomorph.utils.coords.InPlayerBlockPos;
